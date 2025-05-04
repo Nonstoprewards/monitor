@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Trade Monitor</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -19,15 +22,15 @@
       border: 1px solid #e5e7eb;
     }
     th {
-      background-color: #1e40af; /* Dark blue */
+      background-color: #1e40af;
       color: white;
       font-size: 0.9rem;
     }
     tr:nth-child(even) {
-      background-color: #f0fdf4; /* Light green */
+      background-color: #f0fdf4;
     }
     tr:hover {
-      background-color: #dbeafe; /* Light blue hover */
+      background-color: #dbeafe;
     }
     .pagination-arrow {
       cursor: pointer;
@@ -55,7 +58,7 @@
       }
       table {
         font-size: 0.75rem;
-        min-width: 600px; /* Ensures table scrolls horizontally */
+        min-width: 600px;
       }
       th, td {
         padding: 6px;
@@ -108,18 +111,26 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js?v=1"></script>
   <script>
     console.log('Script loaded');
 
+    // Supabase configuration
     const supabaseUrl = 'https://bprfbjsxbkitrbqszqpz.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcmZianN4YmtpdHJicXN6cXB6Iiwicm9sZSI6ImFub24iLCJpAXQiOjE3NDU4OTQzMzksImV4cCI6MjA2MTQ3MDMzOX0.Uc2iM_H3vEd4dnTLi_B2EncReqlYHXWyZ9zGHsXh4mM';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcmZianN4YmtpdHJicXN6cXB6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4OTQzMzksImV4cCI6MjA2MTQ3MDMzOX0.Uc2iM_H3vEd4dnTLi_B2EncReqlYHXWyZ9zGHsXh4mM';
     let supabase;
     let currentPage = 1;
     const tradesPerPage = 25;
     let allTrades = [];
+    let isFetching = false; // Prevent duplicate fetches
 
     async function initAndFetchTrades(page = 1) {
+      if (isFetching) {
+        console.log('Fetch already in progress, skipping...');
+        return;
+      }
+      isFetching = true;
+
       const status = document.getElementById('status');
       const tradesBody = document.getElementById('tradesBody');
       const currentPageSpan = document.getElementById('currentPage');
@@ -133,7 +144,7 @@
       try {
         console.log('Initializing Supabase client');
         if (typeof window.supabase === 'undefined') {
-          throw new Error('Supabase library not loaded');
+          throw new Error('Supabase library not loaded. Check CDN or network.');
         }
         supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
         console.log('Supabase client initialized');
@@ -145,8 +156,13 @@
           .order('timestamp', { ascending: false });
 
         if (error) {
-          console.error('Fetch error:', error.message, error.details || '', error.hint || '', error.code || '');
-          status.textContent = `Error: ${error.message}${error.details ? ' - ' + error.details : ''}`;
+          console.error('Fetch error:', {
+            message: error.message,
+            code: error.code,
+            details: error.details,
+            hint: error.hint
+          });
+          status.textContent = `Error: ${error.message}${error.details ? ' - ' + error.details : ''} (Code: ${error.code || 'N/A'})`;
           status.classList.add('text-red-600');
           return;
         }
@@ -170,9 +186,14 @@
           updatePagination();
         }
       } catch (err) {
-        console.error('Error:', err.message, err.stack);
+        console.error('Unexpected error:', {
+          message: err.message,
+          stack: err.stack
+        });
         status.textContent = `Error: ${err.message}`;
         status.classList.add('text-red-600');
+      } finally {
+        isFetching = false;
       }
     }
 
@@ -220,12 +241,12 @@
     document.getElementById('topRefreshBtn').addEventListener('click', () => {
       console.log('Top refresh button clicked');
       initAndFetchTrades(currentPage);
-    });
+    }, { once: true });
 
     document.getElementById('bottomRefreshBtn').addEventListener('click', () => {
       console.log('Bottom refresh button clicked');
       initAndFetchTrades(currentPage);
-    });
+    }, { once: true });
 
     // Initial Load
     initAndFetchTrades();
