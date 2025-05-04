@@ -37,6 +37,11 @@
       padding: 8px;
       color: #1e40af;
       font-size: 1.5rem;
+      min-width: 44px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .pagination-arrow.disabled {
       color: #d1d5db;
@@ -57,22 +62,37 @@
         font-size: 1.5rem;
       }
       table {
-        font-size: 0.75rem;
-        min-width: 600px;
+        font-size: 0.875rem;
+        min-width: 400px; /* Reduced for smaller screens */
       }
       th, td {
-        padding: 6px;
+        padding: 8px;
       }
       .refresh-btn {
-        padding: 6px 12px;
+        padding: 8px 16px;
         font-size: 0.875rem;
+        min-width: 120px;
+        min-height: 44px;
       }
       .pagination-arrow {
-        padding: 4px;
+        padding: 6px;
         font-size: 1.25rem;
       }
       .pagination-text {
         font-size: 0.875rem;
+      }
+      #status {
+        font-size: 0.875rem;
+        margin-top: 1.5rem;
+      }
+    }
+    @media (max-width: 400px) {
+      table {
+        min-width: 300px;
+      }
+      th, td {
+        padding: 6px;
+        font-size: 0.75rem;
       }
     }
   </style>
@@ -99,7 +119,7 @@
           <tbody id="tradesBody"></tbody>
         </table>
       </div>
-      <div class="flex flex-col sm:flex-row justify-between items-center mt-4 space-y-4 sm:space-y-0">
+      <div class="flex flex-col sm:flex-row justify-between items-center mt-6 space-y-6 sm:space-y-0">
         <div class="flex items-center space-x-2">
           <span id="prevPage" class="pagination-arrow disabled">◀</span>
           <span class="pagination-text text-gray-700">Page <span id="currentPage">1</span></span>
@@ -122,7 +142,7 @@
     let currentPage = 1;
     const tradesPerPage = 25;
     let allTrades = [];
-    let isFetching = false; // Prevent duplicate fetches
+    let isFetching = false;
 
     async function initAndFetchTrades(page = 1) {
       if (isFetching) {
