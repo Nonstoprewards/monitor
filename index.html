@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trade Monitor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      text-align: left;
+      padding: 12px;
+      border: 1px solid #e5e7eb;
+    }
+    th {
+      background-color: #1e40af; /* Dark blue */
+      color: white;
+      font-size: 0.9rem;
+    }
+    tr:nth-child(even) {
+      background-color: #f0fdf4; /* Light green */
+    }
+    tr:hover {
+      background-color: #dbeafe; /* Light blue hover */
+    }
+    .pagination-arrow {
+      cursor: pointer;
+      padding: 8px;
+      color: #1e40af;
+      font-size: 1.5rem;
+    }
+    .pagination-arrow.disabled {
+      color: #d1d5db;
+      cursor: not-allowed;
+    }
+    a {
+      color: #1e40af;
+      text-decoration: underline;
+    }
+    a:hover {
+      color: #3b82f6;
+    }
+    @media (max-width: 640px) {
+      .container {
+        padding: 1rem;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+      table {
+        font-size: 0.75rem;
+        min-width: 600px; /* Ensures table scrolls horizontally */
+      }
+      th, td {
+        padding: 6px;
+      }
+      .refresh-btn {
+        padding: 6px 12px;
+        font-size: 0.875rem;
+      }
+      .pagination-arrow {
+        padding: 4px;
+        font-size: 1.25rem;
+      }
+      .pagination-text {
+        font-size: 0.875rem;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+  <div class="container mx-auto p-6 max-w-7xl">
+    <div class="bg-white shadow-xl rounded-lg p-6 sm:p-8">
+      <h1 class="text-3xl sm:text-3xl font-bold text-blue-900 mb-6">Trade Monitor</h1>
+      <div class="flex justify-end mb-4">
+        <button id="topRefreshBtn" class="refresh-btn bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Refresh Trades</button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full">
+          <thead>
+            <tr>
+              <th>Token Address</th>
+              <th>Action</th>
+              <th>SOL Amount</th>
+              <th>Token Amount</th>
+              <th>Profit (SOL)</th>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+          <tbody id="tradesBody"></tbody>
+        </table>
+      </div>
+      <div class="flex flex-col sm:flex-row justify-between items-center mt-4 space-y-4 sm:space-y-0">
+        <div class="flex items-center space-x-2">
+          <span id="prevPage" class="pagination-arrow disabled">◀</span>
+          <span class="pagination-text text-gray-700">Page <span id="currentPage">1</span></span>
+          <span id="nextPage" class="pagination-arrow disabled">▶</span>
+        </div>
+        <button id="bottomRefreshBtn" class="refresh-btn bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Refresh Trades</button>
+      </div>
+      <p id="status" class="mt-4 text-gray-600 text-sm sm:text-base">Loading trades...</p>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script>
+    console.log('Script loaded');
+
+    const supabaseUrl = 'https://bprfbjsxbkitrbqszqpz.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcmZianN4YmtpdHJicXN6cXB6Iiwicm9sZSI6ImFub24iLCJpAXQiOjE3NDU4OTQzMzksImV4cCI6MjA2MTQ3MDMzOX0.Uc2iM_H3vEd4dnTLi_B2EncReqlYHXWyZ9zGHsXh4mM';
+    let supabase;
+    let currentPage = 1;
+    const tradesPerPage = 25;
+    let allTrades = [];
+
+    async function initAndFetchTrades(page = 1) {
+      const status = document.getElementById('status');
+      const tradesBody = document.getElementById('tradesBody');
+      const currentPageSpan = document.getElementById('currentPage');
+      const prevPage = document.getElementById('prevPage');
+      const nextPage = document.getElementById('nextPage');
+
+      status.textContent = 'Loading trades...';
+      status.classList.remove('text-red-600', 'text-green-600');
+      status.classList.add('text-gray-600');
+
+      try {
+        console.log('Initializing Supabase client');
+        if (typeof window.supabase === 'undefined') {
+          throw new Error('Supabase library not loaded');
+        }
+        supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        console.log('Supabase client initialized');
+
+        console.log('Fetching trades');
+        const { data, error } = await supabase
+          .from('trades')
+          .select('id,token_address,action,sol_amount,token_amount,timestamp,profit')
+          .order('timestamp', { ascending: false });
+
+        if (error) {
+          console.error('Fetch error:', error.message, error.details || '', error.hint || '', error.code || '');
+          status.textContent = `Error: ${error.message}${error.details ? ' - ' + error.details : ''}`;
+          status.classList.add('text-red-600');
+          return;
+        }
+
+        console.log('Trades fetched:', data);
+        allTrades = data;
+
+        if (data.length === 0) {
+          status.textContent = 'No trades found';
+          status.classList.add('text-gray-600');
+          tradesBody.innerHTML = '';
+          currentPageSpan.textContent = '1';
+          prevPage.classList.add('disabled');
+          nextPage.classList.add('disabled');
+        } else {
+          status.textContent = 'Trades loaded';
+          status.classList.add('text-green-600');
+          currentPage = page;
+          renderPage(page);
+          currentPageSpan.textContent = page;
+          updatePagination();
+        }
+      } catch (err) {
+        console.error('Error:', err.message, err.stack);
+        status.textContent = `Error: ${err.message}`;
+        status.classList.add('text-red-600');
+      }
+    }
+
+    function renderPage(page) {
+      const tradesBody = document.getElementById('tradesBody');
+      tradesBody.innerHTML = '';
+      const start = (page - 1) * tradesPerPage;
+      const end = start + tradesPerPage;
+      const pageTrades = allTrades.slice(start, end);
+
+      pageTrades.forEach(trade => {
+        const row = document.createElement('tr');
+        const tokenAddress = trade.token_address || '-';
+        const dexLink = tokenAddress !== '-' ? `https://dexscreener.com/solana/${tokenAddress}` : '#';
+        row.innerHTML = `
+          <td class="py-2 px-4"><a href="${dexLink}" target="_blank" rel="noopener noreferrer">${tokenAddress.slice(0, 6)}...${tokenAddress.slice(-4)}</a></td>
+          <td class="py-2 px-4">${trade.action ? trade.action.toUpperCase() : '-'}</td>
+          <td class="py-2 px-4">${trade.sol_amount != null ? trade.sol_amount.toFixed(4) : '-'}</td>
+          <td class="py-2 px-4">${trade.token_amount != null ? trade.token_amount.toFixed(2) : '-'}</td>
+          <td class="py-2 px-4">${trade.profit != null ? trade.profit.toFixed(4) : '-'}</td>
+          <td class="py-2 px-4">${trade.timestamp ? new Date(trade.timestamp).toLocaleString() : '-'}</td>
+        `;
+        tradesBody.appendChild(row);
+      });
+    }
+
+    function updatePagination() {
+      const prevPage = document.getElementById('prevPage');
+      const nextPage = document.getElementById('nextPage');
+      const totalPages = Math.ceil(allTrades.length / tradesPerPage);
+
+      prevPage.classList.toggle('disabled', currentPage === 1);
+      nextPage.classList.toggle('disabled', currentPage >= totalPages);
+
+      prevPage.onclick = currentPage > 1 ? () => {
+        initAndFetchTrades(currentPage - 1);
+      } : null;
+
+      nextPage.onclick = currentPage < totalPages ? () => {
+        initAndFetchTrades(currentPage + 1);
+      } : null;
+    }
+
+    // Refresh Button Handlers
+    document.getElementById('topRefreshBtn').addEventListener('click', () => {
+      console.log('Top refresh button clicked');
+      initAndFetchTrades(currentPage);
+    });
+
+    document.getElementById('bottomRefreshBtn').addEventListener('click', () => {
+      console.log('Bottom refresh button clicked');
+      initAndFetchTrades(currentPage);
+    });
+
+    // Initial Load
+    initAndFetchTrades();
+  </script>
+</body>
+</html>
