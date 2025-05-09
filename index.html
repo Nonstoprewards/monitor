@@ -12,6 +12,9 @@
         body {
             font-family: 'Inter', sans-serif;
         }
+        .table-container {
+            overflow-x: auto;
+        }
         table {
             border-collapse: collapse;
             width: 100%;
@@ -25,6 +28,7 @@
             background-color: #1e40af;
             color: white;
             font-size: 0.9rem;
+            white-space: nowrap;
         }
         tr:nth-child(even) {
             background-color: #f0fdf4;
@@ -62,6 +66,26 @@
             color: #dc3545;
             font-weight: 600;
         }
+        /* Card layout for mobile */
+        .card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            background-color: #fff;
+        }
+        .card:nth-child(even) {
+            background-color: #f0fdf4;
+        }
+        .card:hover {
+            background-color: #dbeafe;
+        }
+        .card-label {
+            font-weight: 600;
+            color: #1e40af;
+            margin-right: 8px;
+        }
+        /* Responsive styles */
         @media (max-width: 640px) {
             .container {
                 padding: 1rem;
@@ -69,18 +93,12 @@
             h1 {
                 font-size: 1.5rem;
             }
-            table {
-                font-size: 0.875rem;
-                min-width: 400px;
-            }
-            th, td {
-                padding: 8px;
-            }
             .refresh-btn {
                 padding: 8px 16px;
                 font-size: 0.875rem;
                 min-width: 120px;
                 min-height: 44px;
+                width: 100%;
             }
             .pagination-arrow {
                 padding: 6px;
@@ -93,14 +111,37 @@
                 font-size: 0.875rem;
                 margin-top: 1.5rem;
             }
+            /* Hide table on mobile, show cards */
+            .table-container {
+                display: none;
+            }
+            .card-container {
+                display: block;
+            }
+        }
+        @media (min-width: 641px) {
+            .card-container {
+                display: none;
+            }
         }
         @media (max-width: 400px) {
-            table {
-                min-width: 300px;
-            }
-            th, td {
-                padding: 6px;
+            .card {
+                padding: 8px;
                 font-size: 0.75rem;
+            }
+            .card-label, .card-value {
+                font-size: 0.75rem;
+            }
+        }
+        /* Tablet adjustments */
+        @media (max-width: 1024px) and (min-width: 641px) {
+            th, td {
+                padding: 10px;
+                font-size: 0.875rem;
+            }
+            .refresh-btn {
+                padding: 8px 20px;
+                font-size: 1rem;
             }
         }
     </style>
@@ -113,24 +154,29 @@
                 <button id="topRefreshBtn" class="refresh-btn bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Refresh Trades</button>
             </div>
             
-            <div class="overflow-x-auto mb-6">
+            <div class="mb-6">
                 <h2 class="text-xl font-semibold text-blue-900 mb-4">Active Trades</h2>
                 <p id="active-status" class="text-gray-600 text-sm mb-2 status">Loading active trades...</p>
-                <table class="min-w-full">
-                    <thead>
-                        <tr>
-                            <th>Token</th>
-                            <th>Symbol</th>
-                            <th>Buy Price (USD)</th>
-                            <th>Current Price (USD)</th>
-                            <th>Market Cap (USD)</th>
-                            <th>24h Volume (USD)</th>
-                            <th>Profit (%)</th>
-                            <th>Buy Time</th>
-                        </tr>
-                    </thead>
-                    <tbody id="activeTradesBody"></tbody>
-                </table>
+                <div class="table-container">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr>
+                                <th>Token</th>
+                                <th>Symbol</th>
+                                <th>Buy Price (USD)</th>
+                                <th>Current Price (USD)</th>
+                                <th>Market Cap (USD)</th>
+                                <th>24h Volume (USD)</th>
+                                <th>Profit (%)</th>
+                                <th>Buy Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activeTradesBody"></tbody>
+                    </table>
+                </div>
+                <div class="card-container">
+                    <div id="activeTradesCards"></div>
+                </div>
                 <div class="flex justify-between items-center mt-4">
                     <div class="flex items-center space-x-2">
                         <span id="activePrevPage" class="pagination-arrow disabled">◀</span>
@@ -140,24 +186,29 @@
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
+            <div class="mb-6">
                 <h2 class="text-xl font-semibold text-blue-900 mb-4">Completed Trades</h2>
                 <p id="completed-status" class="text-gray-600 text-sm mb-2 status">Loading completed trades...</p>
-                <table class="min-w-full">
-                    <thead>
-                        <tr>
-                            <th>Token</th>
-                            <th>Symbol</th>
-                            <th>Buy Price (USD)</th>
-                            <th>Sell Price (USD)</th>
-                            <th>Profit (SOL)</th>
-                            <th>Profit (%)</th>
-                            <th>Buy Time</th>
-                            <th>Sell Time</th>
-                        </tr>
-                    </thead>
-                    <tbody id="completedTradesBody"></tbody>
-                </table>
+                <div class="table-container">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr>
+                                <th>Token</th>
+                                <th>Symbol</th>
+                                <th>Buy Price (USD)</th>
+                                <th>Sell Price (USD)</th>
+                                <th>Profit (SOL)</th>
+                                <th>Profit (%)</th>
+                                <th>Buy Time</th>
+                                <th>Sell Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="completedTradesBody"></tbody>
+                    </table>
+                </div>
+                <div class="card-container">
+                    <div id="completedTradesCards"></div>
+                </div>
                 <div class="flex justify-between items-center mt-4">
                     <div class="flex items-center space-x-2">
                         <span id="completedPrevPage" class="pagination-arrow disabled">◀</span>
@@ -482,7 +533,9 @@
             const activeStatus = document.getElementById('active-status');
             const completedStatus = document.getElementById('completed-status');
             const activeTradesBody = document.getElementById('activeTradesBody');
+            const activeTradesCards = document.getElementById('activeTradesCards');
             const completedTradesBody = document.getElementById('completedTradesBody');
+            const completedTradesCards = document.getElementById('completedTradesCards');
 
             activeStatus.textContent = 'Loading active trades...';
             completedStatus.textContent = 'Loading completed trades...';
@@ -530,6 +583,7 @@
                 if (activeTrades.length === 0) {
                     activeStatus.textContent = 'No active trades found';
                     activeTradesBody.innerHTML = '';
+                    activeTradesCards.innerHTML = '';
                 } else {
                     activeStatus.textContent = `Loaded ${activeTrades.length} active trades`;
                     activeStatus.classList.add('text-green-600');
@@ -539,10 +593,11 @@
                 if (completedTrades.length === 0) {
                     completedStatus.textContent = 'No completed trades found';
                     completedTradesBody.innerHTML = '';
+                    completedTradesCards.innerHTML = '';
                 } else {
                     completedStatus.textContent = `Loaded ${completedTrades.length} completed trades`;
                     completedStatus.classList.add('text-green-600');
-                    renderCompletedPage(completedPage);
+                    await renderCompletedPage(completedPage);
                 }
 
                 updatePagination();
@@ -562,7 +617,9 @@
 
         async function renderActivePage(page) {
             const activeTradesBody = document.getElementById('activeTradesBody');
+            const activeTradesCards = document.getElementById('activeTradesCards');
             activeTradesBody.innerHTML = '';
+            activeTradesCards.innerHTML = '';
             const start = (page - 1) * tradesPerPage;
             const end = start + tradesPerPage;
             const pageTrades = activeTrades.slice(start, end);
@@ -581,6 +638,7 @@
                 const profitPercent = data.currentPrice && !isNaN(parseFloat(data.currentPrice)) && trade.buy_price_usd ? 
                     (((parseFloat(data.currentPrice) - trade.buy_price_usd) / trade.buy_price_usd) * 100).toFixed(2) : 'N/A';
 
+                // Table row for larger screens
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td class="py-2 px-4"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6)}...${trade.token_address.slice(-4)}</a></td>
@@ -593,17 +651,59 @@
                     <td class="py-2 px-4">${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</td>
                 `;
                 activeTradesBody.appendChild(row);
+
+                // Card for mobile
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="flex mb-2">
+                        <span class="card-label">Token:</span>
+                        <span class="card-value"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6)}...${trade.token_address.slice(-4)}</a></span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">Symbol:</span>
+                        <span class="card-value">${trade.token_symbol || '-'}</span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">Buy Price:</span>
+                        <span class="card-value">${trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-'} USD</span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">Current Price:</span>
+                        <span class="card-value">${data.currentPrice} USD</span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">Market Cap:</span>
+                        <span class="card-value">${data.marketCap} USD</span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">24h Volume:</span>
+                        <span class="card-value">${data.volume24h} USD</span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">Profit:</span>
+                        <span class="card-value ${profitPercent !== 'N/A' && profitPercent >= 0 ? 'profit-positive' : 'profit-negative'}">${profitPercent}%</span>
+                    </div>
+                    <div class="flex">
+                        <span class="card-label">Buy Time:</span>
+                        <span class="card-value">${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</span>
+                    </div>
+                `;
+                activeTradesCards.appendChild(card);
             }
         }
 
-        function renderCompletedPage(page) {
+        async function renderCompletedPage(page) {
             const completedTradesBody = document.getElementById('completedTradesBody');
+            const completedTradesCards = document.getElementById('completedTradesCards');
             completedTradesBody.innerHTML = '';
+            completedTradesCards.innerHTML = '';
             const start = (page - 1) * tradesPerPage;
             const end = start + tradesPerPage;
             const pageTrades = completedTrades.slice(start, end);
 
-            pageTrades.forEach(trade => {
+            for (const trade of pageTrades) {
+                // Table row for larger screens
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td class="py-2 px-4"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6)}...${trade.token_address.slice(-4)}</a></td>
@@ -616,7 +716,46 @@
                     <td class="py-2 px-4">${trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-'}</td>
                 `;
                 completedTradesBody.appendChild(row);
-            });
+
+                // Card for mobile
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="flex mb-2">
+                        <span class="card-label">Token:</span>
+                        <span class="card-value"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6)}...${trade.token_address.slice(-4)}</a></span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">Symbol:</span>
+                        <span class="card-value">${trade.token_symbol || '-'}</span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">Buy Price:</span>
+                        <span class="card-value">${trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-'} USD</span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">Sell Price:</span>
+                        <span class="card-value">${trade.sell_price_usd ? trade.sell_price_usd.toFixed(6) : '-'} USD</span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">Profit (SOL):</span>
+                        <span class="card-value ${trade.profit_sol >= 0 ? 'profit-positive' : 'profit-negative'}">${trade.profit_sol ? trade.profit_sol.toFixed(4) : '-'} SOL</span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">Profit (%):</span>
+                        <span class="card-value ${trade.profit_percentage >= 0 ? 'profit-positive' : 'profit-negative'}">${trade.profit_percentage ? trade.profit_percentage.toFixed(2) : '-'}%</span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">Buy Time:</span>
+                        <span class="card-value">${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</span>
+                    </div>
+                    <div class="flex">
+                        <span class="card-label">Sell Time:</span>
+                        <span class="card-value">${trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-'}</span>
+                    </div>
+                `;
+                completedTradesCards.appendChild(card);
+            }
         }
 
         function updatePagination() {
