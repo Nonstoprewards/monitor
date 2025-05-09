@@ -1,275 +1,687 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  <title>Trade Monitor</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-    }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-    }
-    th, td {
-      text-align: left;
-      padding: 12px;
-      border: 1px solid #e5e7eb;
-    }
-    th {
-      background-color: #1e40af;
-      color: white;
-      font-size: 0.9rem;
-    }
-    tr:nth-child(even) {
-      background-color: #f0fdf4;
-    }
-    tr:hover {
-      background-color: #dbeafe;
-    }
-    .pagination-arrow {
-      cursor: pointer;
-      padding: 8px;
-      color: #1e40af;
-      font-size: 1.5rem;
-      min-width: 44px;
-      min-height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .pagination-arrow.disabled {
-      color: #d1d5db;
-      cursor: not-allowed;
-    }
-    a {
-      color: #1e40af;
-      text-decoration: underline;
-    }
-    a:hover {
-      color: #3b82f6;
-    }
-    @media (max-width: 640px) {
-      .container {
-        padding: 1rem;
-      }
-      h1 {
-        font-size: 1.5rem;
-      }
-      table {
-        font-size: 0.875rem;
-        min-width: 400px; /* Reduced for smaller screens */
-      }
-      th, td {
-        padding: 8px;
-      }
-      .refresh-btn {
-        padding: 8px 16px;
-        font-size: 0.875rem;
-        min-width: 120px;
-        min-height: 44px;
-      }
-      .pagination-arrow {
-        padding: 6px;
-        font-size: 1.25rem;
-      }
-      .pagination-text {
-        font-size: 0.875rem;
-      }
-      #status {
-        font-size: 0.875rem;
-        margin-top: 1.5rem;
-      }
-    }
-    @media (max-width: 400px) {
-      table {
-        min-width: 300px;
-      }
-      th, td {
-        padding: 6px;
-        font-size: 0.75rem;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Pump.Fun Trading Bot Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+        }
+        th {
+            background-color: #1e40af;
+            color: white;
+            font-size: 0.9rem;
+        }
+        tr:nth-child(even) {
+            background-color: #f0fdf4;
+        }
+        tr:hover {
+            background-color: #dbeafe;
+        }
+        .pagination-arrow {
+            cursor: pointer;
+            padding: 8px;
+            color: #1e40af;
+            font-size: 1.5rem;
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .pagination-arrow.disabled {
+            color: #d1d5db;
+            cursor: not-allowed;
+        }
+        a {
+            color: #1e40af;
+            text-decoration: underline;
+        }
+        a:hover {
+            color: #3b82f6;
+        }
+        .profit-positive {
+            color: #28a745;
+            font-weight: 600;
+        }
+        .profit-negative {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        @media (max-width: 640px) {
+            .container {
+                padding: 1rem;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+            table {
+                font-size: 0.875rem;
+                min-width: 400px;
+            }
+            th, td {
+                padding: 8px;
+            }
+            .refresh-btn {
+                padding: 8px 16px;
+                font-size: 0.875rem;
+                min-width: 120px;
+                min-height: 44px;
+            }
+            .pagination-arrow {
+                padding: 6px;
+                font-size: 1.25rem;
+            }
+            .pagination-text {
+                font-size: 0.875rem;
+            }
+            .status {
+                font-size: 0.875rem;
+                margin-top: 1.5rem;
+            }
+        }
+        @media (max-width: 400px) {
+            table {
+                min-width: 300px;
+            }
+            th, td {
+                padding: 6px;
+                font-size: 0.75rem;
+            }
+        }
+    </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
-  <div class="container mx-auto p-6 max-w-7xl">
-    <div class="bg-white shadow-xl rounded-lg p-6 sm:p-8">
-      <h1 class="text-3xl sm:text-3xl font-bold text-blue-900 mb-6">Trade Monitor</h1>
-      <div class="flex justify-end mb-4">
-        <button id="topRefreshBtn" class="refresh-btn bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Refresh Trades</button>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="min-w-full">
-          <thead>
-            <tr>
-              <th>Token Address</th>
-              <th>Action</th>
-              <th>SOL Amount</th>
-              <th>Token Amount</th>
-              <th>Profit (SOL)</th>
-              <th>Timestamp</th>
-            </tr>
-          </thead>
-          <tbody id="tradesBody"></tbody>
-        </table>
-      </div>
-      <div class="flex flex-col sm:flex-row justify-between items-center mt-6 space-y-6 sm:space-y-0">
-        <div class="flex items-center space-x-2">
-          <span id="prevPage" class="pagination-arrow disabled">◀</span>
-          <span class="pagination-text text-gray-700">Page <span id="currentPage">1</span></span>
-          <span id="nextPage" class="pagination-arrow disabled">▶</span>
+    <div class="container mx-auto p-6 max-w-7xl">
+        <div class="bg-white shadow-xl rounded-lg p-6 sm:p-8">
+            <h1 class="text-3xl sm:text-3xl font-bold text-blue-900 mb-6">Pump.Fun Trading Bot Dashboard</h1>
+            <div class="flex justify-end mb-4">
+                <button id="topRefreshBtn" class="refresh-btn bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Refresh Trades</button>
+            </div>
+            
+            <div class="overflow-x-auto mb-6">
+                <h2 class="text-xl font-semibold text-blue-900 mb-4">Active Trades</h2>
+                <p id="active-status" class="text-gray-600 text-sm mb-2 status">Loading active trades...</p>
+                <table class="min-w-full">
+                    <thead>
+                        <tr>
+                            <th>Token</th>
+                            <th>Symbol</th>
+                            <th>Buy Price (USD)</th>
+                            <th>Current Price (USD)</th>
+                            <th>Market Cap (USD)</th>
+                            <th>24h Volume (USD)</th>
+                            <th>Profit (%)</th>
+                            <th>Buy Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activeTradesBody"></tbody>
+                </table>
+                <div class="flex justify-between items-center mt-4">
+                    <div class="flex items-center space-x-2">
+                        <span id="activePrevPage" class="pagination-arrow disabled">◀</span>
+                        <span class="pagination-text text-gray-700">Page <span id="activeCurrentPage">1</span></span>
+                        <span id="activeNextPage" class="pagination-arrow disabled">▶</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <h2 class="text-xl font-semibold text-blue-900 mb-4">Completed Trades</h2>
+                <p id="completed-status" class="text-gray-600 text-sm mb-2 status">Loading completed trades...</p>
+                <table class="min-w-full">
+                    <thead>
+                        <tr>
+                            <th>Token</th>
+                            <th>Symbol</th>
+                            <th>Buy Price (USD)</th>
+                            <th>Sell Price (USD)</th>
+                            <th>Profit (SOL)</th>
+                            <th>Profit (%)</th>
+                            <th>Buy Time</th>
+                            <th>Sell Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="completedTradesBody"></tbody>
+                </table>
+                <div class="flex justify-between items-center mt-4">
+                    <div class="flex items-center space-x-2">
+                        <span id="completedPrevPage" class="pagination-arrow disabled">◀</span>
+                        <span class="pagination-text text-gray-700">Page <span id="completedCurrentPage">1</span></span>
+                        <span id="completedNextPage" class="pagination-arrow disabled">▶</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end mt-6">
+                <button id="bottomRefreshBtn" class="refresh-btn bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Refresh Trades</button>
+            </div>
         </div>
-        <button id="bottomRefreshBtn" class="refresh-btn bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Refresh Trades</button>
-      </div>
-      <p id="status" class="mt-4 text-gray-600 text-sm sm:text-base">Loading trades...</p>
     </div>
-  </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js?v=1"></script>
-  <script>
-    console.log('Script loaded');
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+    <script>
+        console.log('Script loaded');
 
-    // Supabase configuration
-    const supabaseUrl = 'https://bprfbjsxbkitrbqszqpz.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcmZianN4YmtpdHJicXN6cXB6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4OTQzMzksImV4cCI6MjA2MTQ3MDMzOX0.Uc2iM_H3vEd4dnTLi_B2EncReqlYHXWyZ9zGHsXh4mM';
-    let supabase;
-    let currentPage = 1;
-    const tradesPerPage = 25;
-    let allTrades = [];
-    let isFetching = false;
+        // Supabase configuration
+        const supabaseUrl = 'https://bprfbjsxbkitrbqszqpz.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcmZianN4YmtpdHJicXN6cXB6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4OTQzMzksImV4cCI6MjA2MTQ3MDMzOX0.Uc2iM_H3vEd4dnTLi_B2EncReqlYHXWyZ9zGHsXh4mM';
+        let supabase;
+        let activePage = 1;
+        let completedPage = 1;
+        const tradesPerPage = 25;
+        let activeTrades = [];
+        let completedTrades = [];
+        let isFetching = false;
+        const priceCache = new Map(); // Cache for price responses
+        const overviewCache = new Map(); // Cache for Birdeye token_overview responses
+        const CACHE_DURATION = 60000; // 60s cache
 
-    async function initAndFetchTrades(page = 1) {
-      if (isFetching) {
-        console.log('Fetch already in progress, skipping...');
-        return;
-      }
-      isFetching = true;
+        // APIs
+        const DEXSCREENER_API = 'https://api.dexscreener.com';
+        const BIRDEYE_API = 'https://public-api.birdeye.so';
+        const BIRDEYE_API_KEY = 'a9c9dfcce5fb467b80439fa49a83b448'; // Move to server-side in production
 
-      const status = document.getElementById('status');
-      const tradesBody = document.getElementById('tradesBody');
-      const currentPageSpan = document.getElementById('currentPage');
-      const prevPage = document.getElementById('prevPage');
-      const nextPage = document.getElementById('nextPage');
-
-      status.textContent = 'Loading trades...';
-      status.classList.remove('text-red-600', 'text-green-600');
-      status.classList.add('text-gray-600');
-
-      try {
-        console.log('Initializing Supabase client');
-        if (typeof window.supabase === 'undefined') {
-          throw new Error('Supabase library not loaded. Check CDN or network.');
-        }
-        supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-        console.log('Supabase client initialized');
-
-        console.log('Fetching trades');
-        const { data, error } = await supabase
-          .from('trades')
-          .select('id,token_address,action,sol_amount,token_amount,timestamp,profit')
-          .order('timestamp', { ascending: false });
-
-        if (error) {
-          console.error('Fetch error:', {
-            message: error.message,
-            code: error.code,
-            details: error.details,
-            hint: error.hint
-          });
-          status.textContent = `Error: ${error.message}${error.details ? ' - ' + error.details : ''} (Code: ${error.code || 'N/A'})`;
-          status.classList.add('text-red-600');
-          return;
+        // Basic Solana address validation (43-44 characters, base58)
+        function isValidSolanaAddress(address) {
+            return /^[1-9A-HJ-NP-Za-km-z]{43,44}$/.test(address);
         }
 
-        console.log('Trades fetched:', data);
-        allTrades = data;
+        async function fetchDexScreenerData(tokenAddresses) {
+            const results = {};
+            const validAddresses = tokenAddresses.filter(address => {
+                if (!isValidSolanaAddress(address)) {
+                    console.warn(`Invalid Solana address: ${address}`);
+                    results[address] = {
+                        currentPrice: 'Invalid Address',
+                        marketCap: 'Invalid Address',
+                        volume24h: 'Invalid Address'
+                    };
+                    return false;
+                }
+                return true;
+            });
 
-        if (data.length === 0) {
-          status.textContent = 'No trades found';
-          status.classList.add('text-gray-600');
-          tradesBody.innerHTML = '';
-          currentPageSpan.textContent = '1';
-          prevPage.classList.add('disabled');
-          nextPage.classList.add('disabled');
-        } else {
-          status.textContent = 'Trades loaded';
-          status.classList.add('text-green-600');
-          currentPage = page;
-          renderPage(page);
-          currentPageSpan.textContent = page;
-          updatePagination();
+            if (validAddresses.length === 0) {
+                console.log('No valid addresses to fetch from DexScreener');
+                return results;
+            }
+
+            // Batch addresses (max 30 per request)
+            const batchSize = 30;
+            const batches = [];
+            for (let i = 0; i < validAddresses.length; i += batchSize) {
+                batches.push(validAddresses.slice(i, i + batchSize));
+            }
+
+            for (const batch of batches) {
+                try {
+                    // Check cache
+                    const uncachedAddresses = batch.filter(address => {
+                        const cached = priceCache.get(`dexscreener:${address}`);
+                        return !cached || Date.now() - cached.timestamp >= CACHE_DURATION;
+                    });
+
+                    if (uncachedAddresses.length === 0) {
+                        console.log(`All DexScreener addresses in batch cached: ${batch.join(', ')}`);
+                        batch.forEach(address => {
+                            results[address] = priceCache.get(`dexscreener:${address}`).data;
+                        });
+                        continue;
+                    }
+
+                    console.log(`Fetching DexScreener data for addresses: ${uncachedAddresses.join(', ')}`);
+                    const response = await fetch(`${DEXSCREENER_API}/tokens/v1/solana/${uncachedAddresses.join(',')}`, {
+                        headers: { 'Accept': 'application/json' }
+                    });
+
+                    let errorMessage = '';
+                    if (!response.ok) {
+                        if (response.status === 429) {
+                            errorMessage = 'Rate Limit Exceeded';
+                            console.warn(`DexScreener rate limit hit, retrying after 2s...`);
+                            await new Promise(resolve => setTimeout(resolve, 2000));
+                            const retryResponse = await fetch(`${DEXSCREENER_API}/tokens/v1/solana/${uncachedAddresses.join(',')}`, {
+                                headers: { 'Accept': 'application/json' }
+                            });
+                            if (!retryResponse.ok) {
+                                throw new Error(`HTTP ${retryResponse.status}: Rate limit retry failed`);
+                            }
+                            response = retryResponse;
+                        } else if (response.status === 404) {
+                            errorMessage = 'Not Indexed';
+                            throw new Error(`HTTP 404: Tokens not found`);
+                        } else {
+                            errorMessage = `HTTP ${response.status}`;
+                            throw new Error(`HTTP ${response.status}: Unknown error`);
+                        }
+                    }
+
+                    const json = await response.json();
+                    console.log(`DexScreener response: ${JSON.stringify(json)}`);
+
+                    for (const address of uncachedAddresses) {
+                        const tokenData = json.find(item => item.baseToken.address === address) || {};
+                        const currentPrice = tokenData.priceUsd ? parseFloat(tokenData.priceUsd).toFixed(6) : 'Not Indexed';
+                        const marketCap = tokenData.marketCap ? Math.round(tokenData.marketCap).toLocaleString() : 'Not Indexed';
+                        const volume24h = tokenData.volume?.h24 ? Math.round(tokenData.volume.h24).toLocaleString() : 'Not Indexed';
+
+                        const result = {
+                            currentPrice,
+                            marketCap,
+                            volume24h
+                        };
+                        results[address] = result;
+                        priceCache.set(`dexscreener:${address}`, {
+                            data: result,
+                            timestamp: Date.now()
+                        });
+                    }
+                } catch (err) {
+                    console.error(`DexScreener batch fetch error: ${err.message}`);
+                    for (const address of batch) {
+                        if (!results[address]) {
+                            results[address] = {
+                                currentPrice: err.message.includes('Not Indexed') ? 'Not Indexed' : 'Error',
+                                marketCap: 'Error',
+                                volume24h: 'Error'
+                            };
+                        }
+                    }
+                }
+            }
+
+            return results;
         }
-      } catch (err) {
-        console.error('Unexpected error:', {
-          message: err.message,
-          stack: err.stack
+
+        async function fetchBirdeyeData(tokenAddresses) {
+            const results = {};
+            const validAddresses = tokenAddresses.filter(address => {
+                if (!isValidSolanaAddress(address)) {
+                    console.warn(`Invalid Solana address: ${address}`);
+                    results[address] = {
+                        currentPrice: 'Invalid Address',
+                        marketCap: 'Invalid Address',
+                        volume24h: 'Invalid Address'
+                    };
+                    return false;
+                }
+                return true;
+            });
+
+            for (const address of validAddresses) {
+                const cacheKey = `birdeye:${address}`;
+                const cached = priceCache.get(cacheKey);
+
+                if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+                    console.log(`Using cached Birdeye price data for ${address}`);
+                    results[address] = cached.data;
+                    continue;
+                }
+
+                try {
+                    console.log(`Fetching Birdeye price for ${address}`);
+                    const response = await fetch(`${BIRDEYE_API}/public/price?address=${address}`, {
+                        headers: {
+                            'accept': 'application/json',
+                            'X-API-KEY': BIRDEYE_API_KEY
+                        }
+                    });
+
+                    let errorMessage = '';
+                    if (!response.ok) {
+                        if (response.status === 429) {
+                            errorMessage = 'Rate Limit Exceeded';
+                            console.warn(`Birdeye rate limit hit for ${address}, retrying after 2s...`);
+                            await new Promise(resolve => setTimeout(resolve, 2000));
+                            const retryResponse = await fetch(`${BIRDEYE_API}/public/price?address=${address}`, {
+                                headers: {
+                                    'accept': 'application/json',
+                                    'X-API-KEY': BIRDEYE_API_KEY
+                                }
+                            });
+                            if (!retryResponse.ok) {
+                                throw new Error(`HTTP ${retryResponse.status}: Rate limit retry failed`);
+                            }
+                            response = retryResponse;
+                        } else if (response.status === 401) {
+                            errorMessage = 'Invalid API Key';
+                            throw new Error(`HTTP 401: Invalid API key`);
+                        } else if (response.status === 404) {
+                            errorMessage = 'Not Indexed';
+                            throw new Error(`HTTP 404: Token not found`);
+                        } else {
+                            errorMessage = `HTTP ${response.status}`;
+                            throw new Error(`HTTP ${response.status}: Unknown error`);
+                        }
+                    }
+
+                    const json = await response.json();
+                    console.log(`Birdeye price response for ${address}: ${JSON.stringify(json)}`);
+
+                    if (!json.success || !json.data) {
+                        errorMessage = 'Invalid Response';
+                        throw new Error('Invalid response structure: Missing success or data');
+                    }
+
+                    const tokenData = json.data;
+                    let currentPrice = tokenData.value ? parseFloat(tokenData.value).toFixed(6) : 'Not Indexed';
+                    let marketCap = 'Not Indexed';
+                    let volume24h = 'Not Indexed';
+
+                    if (currentPrice !== 'Not Indexed') {
+                        const overviewCached = overviewCache.get(address);
+                        if (overviewCached && Date.now() - overviewCached.timestamp < CACHE_DURATION) {
+                            console.log(`Using cached Birdeye token_overview for ${address}`);
+                            marketCap = overviewCached.marketCap;
+                            volume24h = overviewCached.volume24h;
+                        } else {
+                            try {
+                                console.log(`Fetching Birdeye token_overview for ${address}`);
+                                const overviewResponse = await fetch(`${BIRDEYE_API}/defi/token_overview?address=${address}&x-chain=solana`, {
+                                    headers: {
+                                        'accept': 'application/json',
+                                        'X-API-KEY': BIRDEYE_API_KEY
+                                    }
+                                });
+
+                                if (!overviewResponse.ok) {
+                                    throw new Error(`HTTP ${overviewResponse.status}`);
+                                }
+
+                                const overviewJson = await overviewResponse.json();
+                                console.log(`Birdeye token_overview response for ${address}: ${JSON.stringify(overviewJson)}`);
+
+                                if (overviewJson.success && overviewJson.data) {
+                                    const overviewData = overviewJson.data;
+                                    marketCap = overviewData.mc ? Math.round(overviewData.mc).toLocaleString() :
+                                        (tokenData.value ? Math.round(tokenData.value * 1000000000).toLocaleString() : 'Not Indexed');
+                                    volume24h = overviewData.v24hUSD ? Math.round(overviewData.v24hUSD).toLocaleString() : 'Not Indexed';
+                                    overviewCache.set(address, {
+                                        marketCap,
+                                        volume24h,
+                                        timestamp: Date.now()
+                                    });
+                                } else {
+                                    marketCap = tokenData.value ? Math.round(tokenData.value * 1000000000).toLocaleString() : 'Not Indexed';
+                                    volume24h = 'Not Indexed';
+                                }
+                            } catch (err) {
+                                console.error(`Birdeye token_overview error for ${address}: ${err.message}`);
+                                marketCap = tokenData.value ? Math.round(tokenData.value * 1000000000).toLocaleString() : 'Not Indexed';
+                                volume24h = 'Not Indexed';
+                            }
+                        }
+                    }
+
+                    const result = {
+                        currentPrice,
+                        marketCap,
+                        volume24h
+                    };
+                    results[address] = result;
+                    priceCache.set(cacheKey, {
+                        data: result,
+                        timestamp: Date.now()
+                    });
+                } catch (err) {
+                    console.error(`Birdeye price error for ${address}: ${err.message}`);
+                    results[address] = {
+                        currentPrice: err.message.includes('Not Indexed') ? 'Not Indexed' : err.message.includes('Rate limit') ? 'Rate Limit' : err.message.includes('Invalid API key') ? 'Invalid Key' : 'Error',
+                        marketCap: 'Error',
+                        volume24h: 'Error'
+                    };
+                }
+            }
+
+            return results;
+        }
+
+        async function fetchTokenData(tokenAddresses) {
+            // Try DexScreener first
+            let results = await fetchDexScreenerData(tokenAddresses);
+
+            // Fallback to Birdeye for tokens that failed
+            const failedAddresses = tokenAddresses.filter(address => {
+                const data = results[address];
+                return data && (data.currentPrice === 'Not Indexed' || data.currentPrice === 'Error' || data.currentPrice === 'Rate Limit');
+            });
+
+            if (failedAddresses.length > 0) {
+                console.log(`Falling back to Birdeye for addresses: ${failedAddresses.join(', ')}`);
+                const birdeyeResults = await fetchBirdeyeData(failedAddresses);
+                for (const address of failedAddresses) {
+                    results[address] = birdeyeResults[address];
+                }
+            }
+
+            return results;
+        }
+
+        async function initAndFetchTrades() {
+            if (isFetching) {
+                console.log('Fetch already in progress, skipping...');
+                return;
+            }
+            isFetching = true;
+
+            const activeStatus = document.getElementById('active-status');
+            const completedStatus = document.getElementById('completed-status');
+            const activeTradesBody = document.getElementById('activeTradesBody');
+            const completedTradesBody = document.getElementById('completedTradesBody');
+
+            activeStatus.textContent = 'Loading active trades...';
+            completedStatus.textContent = 'Loading completed trades...';
+            activeStatus.classList.remove('text-red-600', 'text-green-600');
+            completedStatus.classList.remove('text-red-600', 'text-green-600');
+            activeStatus.classList.add('text-gray-600');
+            completedStatus.classList.add('text-gray-600');
+
+            try {
+                console.log('Initializing Supabase client');
+                if (typeof window.supabase === 'undefined') {
+                    throw new Error('Supabase library not loaded. Check CDN or network.');
+                }
+                supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+                console.log('Supabase client initialized');
+
+                console.log('Fetching all trades');
+                const { data, error } = await supabase
+                    .from('trades')
+                    .select('*')
+                    .order('buy_timestamp', { ascending: false });
+
+                if (error) {
+                    console.error('Supabase fetch error:', {
+                        message: error.message,
+                        code: error.code,
+                        details: error.details,
+                        hint: error.hint
+                    });
+                    const errorMsg = `Error: ${error.message}${error.details ? ' - ' + error.details : ''} (Code: ${error.code || 'N/A'})`;
+                    activeStatus.textContent = errorMsg;
+                    completedStatus.textContent = errorMsg;
+                    activeStatus.classList.add('text-red-600');
+                    completedStatus.classList.add('text-red-600');
+                    return;
+                }
+
+                console.log('Trades fetched:', data);
+
+                // Process trades
+                activeTrades = data.filter(trade => trade.status === 'open' || !trade.sell_timestamp);
+                completedTrades = data.filter(trade => trade.status === 'closed' && trade.sell_timestamp);
+
+                // Update UI
+                if (activeTrades.length === 0) {
+                    activeStatus.textContent = 'No active trades found';
+                    activeTradesBody.innerHTML = '';
+                } else {
+                    activeStatus.textContent = `Loaded ${activeTrades.length} active trades`;
+                    activeStatus.classList.add('text-green-600');
+                    await renderActivePage(activePage);
+                }
+
+                if (completedTrades.length === 0) {
+                    completedStatus.textContent = 'No completed trades found';
+                    completedTradesBody.innerHTML = '';
+                } else {
+                    completedStatus.textContent = `Loaded ${completedTrades.length} completed trades`;
+                    completedStatus.classList.add('text-green-600');
+                    renderCompletedPage(completedPage);
+                }
+
+                updatePagination();
+            } catch (err) {
+                console.error('Unexpected error:', {
+                    message: err.message,
+                    stack: err.stack
+                });
+                activeStatus.textContent = `Error: ${err.message}`;
+                completedStatus.textContent = `Error: ${err.message}`;
+                activeStatus.classList.add('text-red-600');
+                completedStatus.classList.add('text-red-600');
+            } finally {
+                isFetching = false;
+            }
+        }
+
+        async function renderActivePage(page) {
+            const activeTradesBody = document.getElementById('activeTradesBody');
+            activeTradesBody.innerHTML = '';
+            const start = (page - 1) * tradesPerPage;
+            const end = start + tradesPerPage;
+            const pageTrades = activeTrades.slice(start, end);
+
+            // Fetch token data
+            const tokenAddresses = pageTrades.map(trade => trade.token_address);
+            const tokenData = await fetchTokenData(tokenAddresses);
+
+            for (const trade of pageTrades) {
+                const data = tokenData[trade.token_address] || {
+                    currentPrice: 'Not Indexed',
+                    marketCap: 'Not Indexed',
+                    volume24h: 'Not Indexed'
+                };
+
+                const profitPercent = data.currentPrice && !isNaN(parseFloat(data.currentPrice)) && trade.buy_price_usd ? 
+                    (((parseFloat(data.currentPrice) - trade.buy_price_usd) / trade.buy_price_usd) * 100).toFixed(2) : 'N/A';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="py-2 px-4"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6)}...${trade.token_address.slice(-4)}</a></td>
+                    <td class="py-2 px-4">${trade.token_symbol || '-'}</td>
+                    <td class="py-2 px-4">${trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-'}</td>
+                    <td class="py-2 px-4">${data.currentPrice}</td>
+                    <td class="py-2 px-4">${data.marketCap}</td>
+                    <td class="py-2 px-4">${data.volume24h}</td>
+                    <td class="py-2 px-4 ${profitPercent !== 'N/A' && profitPercent >= 0 ? 'profit-positive' : 'profit-negative'}">${profitPercent}%</td>
+                    <td class="py-2 px-4">${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</td>
+                `;
+                activeTradesBody.appendChild(row);
+            }
+        }
+
+        function renderCompletedPage(page) {
+            const completedTradesBody = document.getElementById('completedTradesBody');
+            completedTradesBody.innerHTML = '';
+            const start = (page - 1) * tradesPerPage;
+            const end = start + tradesPerPage;
+            const pageTrades = completedTrades.slice(start, end);
+
+            pageTrades.forEach(trade => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="py-2 px-4"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6)}...${trade.token_address.slice(-4)}</a></td>
+                    <td class="py-2 px-4">${trade.token_symbol || '-'}</td>
+                    <td class="py-2 px-4">${trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-'}</td>
+                    <td class="py-2 px-4">${trade.sell_price_usd ? trade.sell_price_usd.toFixed(6) : '-'}</td>
+                    <td class="py-2 px-4 ${trade.profit_sol >= 0 ? 'profit-positive' : 'profit-negative'}">${trade.profit_sol ? trade.profit_sol.toFixed(4) : '-'} SOL</td>
+                    <td class="py-2 px-4 ${trade.profit_percentage >= 0 ? 'profit-positive' : 'profit-negative'}">${trade.profit_percentage ? trade.profit_percentage.toFixed(2) : '-'}%</td>
+                    <td class="py-2 px-4">${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</td>
+                    <td class="py-2 px-4">${trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-'}</td>
+                `;
+                completedTradesBody.appendChild(row);
+            });
+        }
+
+        function updatePagination() {
+            const activePrevPage = document.getElementById('activePrevPage');
+            const activeNextPage = document.getElementById('activeNextPage');
+            const activeCurrentPageSpan = document.getElementById('activeCurrentPage');
+            const completedPrevPage = document.getElementById('completedPrevPage');
+            const completedNextPage = document.getElementById('completedNextPage');
+            const completedCurrentPageSpan = document.getElementById('completedCurrentPage');
+
+            const activeTotalPages = Math.ceil(activeTrades.length / tradesPerPage);
+            const completedTotalPages = Math.ceil(completedTrades.length / tradesPerPage);
+
+            activeCurrentPageSpan.textContent = activePage;
+            activePrevPage.classList.toggle('disabled', activePage === 1);
+            activeNextPage.classList.toggle('disabled', activePage >= activeTotalPages);
+            activePrevPage.onclick = activePage > 1 ? () => {
+                activePage--;
+                renderActivePage(activePage);
+                updatePagination();
+            } : null;
+            activeNextPage.onclick = activePage < activeTotalPages ? () => {
+                activePage++;
+                renderActivePage(activePage);
+                updatePagination();
+            } : null;
+
+            completedCurrentPageSpan.textContent = completedPage;
+            completedPrevPage.classList.toggle('disabled', completedPage === 1);
+            completedNextPage.classList.toggle('disabled', completedPage >= completedTotalPages);
+            completedPrevPage.onclick = completedPage > 1 ? () => {
+                completedPage--;
+                renderCompletedPage(completedPage);
+                updatePagination();
+            } : null;
+            completedNextPage.onclick = completedPage < completedTotalPages ? () => {
+                completedPage++;
+                renderCompletedPage(completedPage);
+                updatePagination();
+            } : null;
+        }
+
+        // Refresh Button Handlers
+        document.getElementById('topRefreshBtn').addEventListener('click', () => {
+            console.log('Top refresh button clicked');
+            priceCache.clear();
+            overviewCache.clear();
+            initAndFetchTrades();
         });
-        status.textContent = `Error: ${err.message}`;
-        status.classList.add('text-red-600');
-      } finally {
-        isFetching = false;
-      }
-    }
 
-    function renderPage(page) {
-      const tradesBody = document.getElementById('tradesBody');
-      tradesBody.innerHTML = '';
-      const start = (page - 1) * tradesPerPage;
-      const end = start + tradesPerPage;
-      const pageTrades = allTrades.slice(start, end);
+        document.getElementById('bottomRefreshBtn').addEventListener('click', () => {
+            console.log('Bottom refresh button clicked');
+            priceCache.clear();
+            overviewCache.clear();
+            initAndFetchTrades();
+        });
 
-      pageTrades.forEach(trade => {
-        const row = document.createElement('tr');
-        const tokenAddress = trade.token_address || '-';
-        const dexLink = tokenAddress !== '-' ? `https://dexscreener.com/solana/${tokenAddress}` : '#';
-        row.innerHTML = `
-          <td class="py-2 px-4"><a href="${dexLink}" target="_blank" rel="noopener noreferrer">${tokenAddress.slice(0, 6)}...${tokenAddress.slice(-4)}</a></td>
-          <td class="py-2 px-4">${trade.action ? trade.action.toUpperCase() : '-'}</td>
-          <td class="py-2 px-4">${trade.sol_amount != null ? trade.sol_amount.toFixed(4) : '-'}</td>
-          <td class="py-2 px-4">${trade.token_amount != null ? trade.token_amount.toFixed(2) : '-'}</td>
-          <td class="py-2 px-4">${trade.profit != null ? trade.profit.toFixed(4) : '-'}</td>
-          <td class="py-2 px-4">${trade.timestamp ? new Date(trade.timestamp).toLocaleString() : '-'}</td>
-        `;
-        tradesBody.appendChild(row);
-      });
-    }
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            console.log('Auto-refresh triggered');
+            initAndFetchTrades();
+        }, 30000);
 
-    function updatePagination() {
-      const prevPage = document.getElementById('prevPage');
-      const nextPage = document.getElementById('nextPage');
-      const totalPages = Math.ceil(allTrades.length / tradesPerPage);
-
-      prevPage.classList.toggle('disabled', currentPage === 1);
-      nextPage.classList.toggle('disabled', currentPage >= totalPages);
-
-      prevPage.onclick = currentPage > 1 ? () => {
-        initAndFetchTrades(currentPage - 1);
-      } : null;
-
-      nextPage.onclick = currentPage < totalPages ? () => {
-        initAndFetchTrades(currentPage + 1);
-      } : null;
-    }
-
-    // Refresh Button Handlers
-    document.getElementById('topRefreshBtn').addEventListener('click', () => {
-      console.log('Top refresh button clicked');
-      initAndFetchTrades(currentPage);
-    }, { once: true });
-
-    document.getElementById('bottomRefreshBtn').addEventListener('click', () => {
-      console.log('Bottom refresh button clicked');
-      initAndFetchTrades(currentPage);
-    }, { once: true });
-
-    // Initial Load
-    initAndFetchTrades();
-  </script>
+        // Initial Load
+        initAndFetchTrades();
+    </script>
 </body>
 </html>
