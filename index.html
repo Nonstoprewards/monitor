@@ -197,7 +197,6 @@
                                 <th>Symbol</th>
                                 <th>Buy Price (USD)</th>
                                 <th>Sell Price (USD)</th>
-                                <th>Profit (SOL)</th>
                                 <th>Profit (%)</th>
                                 <th>Buy Time</th>
                                 <th>Sell Time</th>
@@ -710,7 +709,6 @@
                     <td class="py-2 px-4">${trade.token_symbol || '-'}</td>
                     <td class="py-2 px-4">${trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-'}</td>
                     <td class="py-2 px-4">${trade.sell_price_usd ? trade.sell_price_usd.toFixed(6) : '-'}</td>
-                    <td class="py-2 px-4 ${trade.profit_sol >= 0 ? 'profit-positive' : 'profit-negative'}">${trade.profit_sol ? trade.profit_sol.toFixed(4) : '-'} SOL</td>
                     <td class="py-2 px-4 ${trade.profit_percentage >= 0 ? 'profit-positive' : 'profit-negative'}">${trade.profit_percentage ? trade.profit_percentage.toFixed(2) : '-'}%</td>
                     <td class="py-2 px-4">${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</td>
                     <td class="py-2 px-4">${trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-'}</td>
@@ -738,8 +736,6 @@
                         <span class="card-value">${trade.sell_price_usd ? trade.sell_price_usd.toFixed(6) : '-'} USD</span>
                     </div>
                     <div class="flex mb-2">
-                        <span class="card-label">Profit (SOL):</span>
-                        <span class="card-value ${trade.profit_sol >= 0 ? 'profit-positive' : 'profit-negative'}">${trade.profit_sol ? trade.profit_sol.toFixed(4) : '-'} SOL</span>
                     </div>
                     <div class="flex mb-2">
                         <span class="card-label">Profit (%):</span>
