@@ -94,6 +94,7 @@
             z-index: 10;
             position: relative;
         }
+        /* Restrict heart animations to sexy mode */
         .sexy th:hover::after {
             content: '♥';
             position: absolute;
@@ -182,11 +183,13 @@
             margin-bottom: 12px;
             background-color: #ffffff;
             transition: transform 0.2s, box-shadow 0.2s;
+            position: relative; /* For heart animation positioning */
         }
         .card:hover {
             transform: translateY(-3px);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
         }
+        /* Restrict heart animations to sexy mode */
         .sexy .card:hover::after {
             content: '♥';
             position: absolute;
@@ -213,6 +216,7 @@
         .btn:hover {
             transform: translateY(-2px);
         }
+        /* Restrict heart animations to sexy mode */
         .sexy .btn:hover::after {
             content: '♥';
             position: absolute;
@@ -430,130 +434,224 @@
             <div class="flex justify-end mt-6">
                 <button id="bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
                     <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                </button.
-System: You are Grok 3 built by xAI.
+                </button>
+            </div>
+        </div>
+    </div>
 
-I apologize, but the message was cut off, and I don’t have the complete HTML or context to fully respond. However, based on the provided bot code, the Supabase data for the `ducko` trade, and your earlier requests, I can address the core issues:
+    <!-- Supabase Client (Include your Supabase project details) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Initialize Supabase client
+        const supabase = Supabase.createClient('YOUR_SUPABASE_URL', 'YOUR_SUPABASE_ANON_KEY');
 
-1. **Decimal Issue in the Bot**: The bot’s `executeJupiterBuy` function incorrectly stores the `quantity` by using the raw `quote.outAmount` from the Jupiter API without adjusting for the token’s decimal places, leading to the inflated `245,506,167,290,138` tokens for `ducko` and a **-$6,677,767.75** loss for a ~$20 investment.
-2. **Supabase Error**: The dashboard’s `Error: Cannot read properties of undefined (reading 'data')` indicates an issue with the Supabase query response handling.
-3. **Theme Requests**: The Sexy Mode button should say “Sexy Mode” in regular mode and “Not Sexy Mode” in sexy mode, with heart animations restricted to sexy mode.
-
-Below, I’ll:
-- Provide a fix for the bot’s decimal issue.
-- Supply SQL to correct the `ducko` trade’s `quantity` in Supabase.
-- Complete the HTML with fixes for the Supabase error and theme requests.
-- Suggest additional bot improvements.
-
----
-
-### 1. Fixing the Bot’s Decimal Issue
-
-The bot’s `executeJupiterBuy` function stores the `quantity` as the raw `quote.outAmount` from the Jupiter API, which is in base units (e.g., for a token with 9 decimals, `1 token = 1,000,000,000 units`). For `ducko`:
-- **Stored Quantity**: `245,506,167,290,138`.
-- **Expected Quantity**: `200,000,000` tokens (based on `$20 / $0.0000001`).
-- The discrepancy suggests a missing division by `10^9` (assuming 9 decimals).
-
-**Updated `executeJupiterBuy`**:
-Modify the function to fetch the token’s decimals and normalize `quantity`:
-
-```javascript
-async function executeJupiterBuy(token) {
-    console.log(`Starting Jupiter buy for token: ${token.baseToken.address}`);
-    const maxRetries = 3;
-    let attempt = 1;
-
-    while (attempt <= maxRetries) {
-        try {
-            const tokenMint = new PublicKey(token.baseToken.address);
-            const buyPrice = parseFloat(token.priceUsd);
-
-            const { program: tokenProgram, hasExtensions } = await getTokenProgramAndExtensions(tokenMint, heliusConnection);
-            if (!tokenProgram) {
-                throw new Error(`Invalid or unsupported token program for mint ${tokenMint.toBase58()}`);
+        // Mock data for testing (replace with Supabase queries)
+        const mockActiveTrades = [
+            {
+                token_name: 'Ducky', token_symbol: 'DUCKY', buy_price_usd: 0.0000001, current_price_usd: 0.00000012,
+                market_cap: 100000, volume_24h: 5000, buy_timestamp: '2025-05-10T10:00:00Z', quantity: 200000000
             }
-
-            if (hasExtensions) {
-                console.warn(`Skipping ${tokenMint.toBase58()} due to unsupported Token-2022 extensions`);
-                await addTokenToExcluded(tokenMint.toBase58());
-                return null;
+        ];
+        const mockCompletedTrades = [
+            {
+                token_name: 'Ducky', token_symbol: 'DUCKY', buy_price_usd: 0.0000001, sell_price_usd: 0.00000015,
+                total_profit_usd: 10, buy_timestamp: '2025-05-10T10:00:00Z', sell_timestamp: '2025-05-10T12:00:00Z',
+                quantity: 200000000
             }
+        ];
 
-            const tokenAccount = await getOrCreateAssociatedTokenAccount(heliusConnection, wallet, tokenMint, wallet.publicKey);
+        // Initialize Chart.js
+        const ctx = document.getElementById('profitChart').getContext('2d');
+        const profitChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['2025-05-01', '2025-05-02', '2025-05-03'],
+                datasets: [{
+                    label: 'Profit (USD)',
+                    data: [0, 5, 10],
+                    borderColor: '#2c7a7b',
+                    fill: false
+                }]
+            },
+            options: { scales: { y: { beginAtZero: true } } }
+        });
 
-            // Fetch token decimals
-            const mintInfo = await splToken.getMint(heliusConnection, tokenMint, 'confirmed', tokenProgram);
-            const decimals = mintInfo.decimals;
-            console.log(`Token ${tokenMint.toBase58()} has ${decimals} decimals`);
+        // Button Event Listeners
+        document.getElementById('sexyModeToggle').addEventListener('click', () => {
+            const body = document.body;
+            const isSexy = body.classList.toggle('sexy');
+            const toggleBtn = document.getElementById('sexyModeToggle');
+            toggleBtn.innerHTML = isSexy
+                ? '<i class="fas fa-sun mr-2"></i> Not Sexy Mode'
+                : '<i class="fas fa-moon mr-2"></i> Sexy Mode';
+        });
 
-            const quoteResponse = await axios.get(`${JUPITER_API}/quote`, {
-                params: {
-                    inputMint: 'So11111111111111111111111111111111111111112',
-                    outputMint: tokenMint.toBase58(),
-                    amount: BUY_AMOUNT,
-                    slippageBps: 200,
-                },
-            });
-            const quote = quoteResponse.data;
-            const tokenQuantityBaseUnits = Number(quote.outAmount); // Base units
-            const tokenQuantity = tokenQuantityBaseUnits / Math.pow(10, decimals); // Convert to tokens
-            console.log(`Jupiter quote: inAmount=${quote.inAmount}, outAmount=${tokenQuantity} tokens (base units: ${tokenQuantityBaseUnits})`);
+        async function refreshTrades() {
+            try {
+                // Fetch active trades
+                document.getElementById('active-status').textContent = 'Loading active trades...';
+                let { data: activeTrades, error: activeError } = await supabase
+                    .from('trades')
+                    .select('*')
+                    .eq('status', 'open');
+                
+                if (activeError) throw new Error(`Active trades error: ${activeError.message}`);
+                activeTrades = activeTrades || mockActiveTrades; // Fallback to mock data if empty
 
-            const swapResponse = await axios.post(`${JUPITER_API}/swap`, {
-                quoteResponse: quote,
-                userPublicKey: wallet.publicKey.toBase58(),
-                wrapAndUnwrapSol: true,
-            });
-            const swapTransaction = swapResponse.data.swapTransaction;
+                const activeTradesBody = document.getElementById('activeTradesBody');
+                const activeTradesCards = document.getElementById('activeTradesCards');
+                activeTradesBody.innerHTML = '';
+                activeTradesCards.innerHTML = '';
 
-            const transactionBuf = Buffer.from(swapTransaction, 'base64');
-            const transaction = VersionedTransaction.deserialize(transactionBuf);
-            transaction.sign([wallet]);
+                activeTrades.forEach(trade => {
+                    const profitPercent = ((trade.current_price_usd - trade.buy_price_usd) / trade.buy_price_usd * 100).toFixed(2);
+                    const profitClass = profitPercent >= 0 ? 'profit-positive' : 'profit-negative';
 
-            const signature = await heliusConnection.sendTransaction(transaction, { maxRetries: 5, skipPreflight: false });
-            const confirmation = await heliusConnection.confirmTransaction(signature, 'confirmed');
-            if (confirmation.value.err) throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
-            console.log(`Jupiter buy executed: ${token.baseToken.symbol}, Tx: ${signature}`);
+                    // Table row
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${trade.token_name}</td>
+                        <td>${trade.token_symbol}</td>
+                        <td>$${trade.buy_price_usd.toFixed(8)}</td>
+                        <td>$${trade.current_price_usd.toFixed(8)}</td>
+                        <td>$${trade.market_cap.toLocaleString()}</td>
+                        <td>$${trade.volume_24h.toLocaleString()}</td>
+                        <td class="${profitClass}">${profitPercent}%</td>
+                        <td>${new Date(trade.buy_timestamp).toLocaleString()}</td>
+                    `;
+                    activeTradesBody.appendChild(row);
 
-            const accountInfo = await splToken.getAccount(heliusConnection, tokenAccount.address, 'confirmed', tokenProgram);
-            console.log(`Post-buy balance: ${accountInfo.amount} tokens`);
+                    // Card for mobile
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <p><span class="card-label">Token:</span> ${trade.token_name}</p>
+                        <p><span class="card-label">Symbol:</span> ${trade.token_symbol}</p>
+                        <p><span class="card-label">Buy Price:</span> $${trade.buy_price_usd.toFixed(8)}</p>
+                        <p><span class="card-label">Current Price:</span> $${trade.current_price_usd.toFixed(8)}</p>
+                        <p><span class="card-label">Market Cap:</span> $${trade.market_cap.toLocaleString()}</p>
+                        <p><span class="card-label">24h Volume:</span> $${trade.volume_24h.toLocaleString()}</p>
+                        <p><span class="card-label">Profit:</span> <span class="${profitClass}">${profitPercent}%</span></p>
+                        <p><span class="card-label">Buy Time:</span> ${new Date(trade.buy_timestamp).toLocaleString()}</p>
+                    `;
+                    activeTradesCards.appendChild(card);
+                });
 
-            const { data, error } = await supabase.from('trades').insert({
-                token_address: tokenMint.toBase58(),
-                token_name: token.baseToken.name,
-                token_symbol: token.baseToken.symbol,
-                wallet_address: wallet.publicKey.toBase58(),
-                buy_amount_sol: BUY_AMOUNT / LAMPORTS_PER_SOL,
-                buy_price_usd: buyPrice,
-                buy_market_cap: token.marketCap,
-                buy_timestamp: new Date().toISOString(),
-                transaction_hash_buy: signature,
-                token_account: tokenAccount.address.toBase58(),
-                status: 'open',
-                quantity: tokenQuantity,
-                current_price_usd: buyPrice,
-                market_cap: token.marketCap,
-                volume_24h: token.volume?.h24 || 0,
-            }).select('id').single();
+                document.getElementById('active-status').textContent = `Active trades loaded (${activeTrades.length})`;
 
-            if (error) throw new Error(`Error logging buy: ${error.message}`);
+                // Fetch completed trades
+                document.getElementById('completed-status').textContent = 'Loading completed trades...';
+                let { data: completedTrades, error: completedError } = await supabase
+                    .from('trades')
+                    .select('*')
+                    .eq('status', 'closed');
+                
+                if (completedError) throw new Error(`Completed trades error: ${completedError.message}`);
+                completedTrades = completedTrades || mockCompletedTrades; // Fallback to mock data if empty
 
-            const addedToExcluded = await addTokenToExcluded(tokenMint.toBase58());
-            if (!addedToExcluded) {
-                console.error(`Failed to add ${tokenMint.toBase58()} to excluded list, trade may be re-purchased`);
+                const completedTradesBody = document.getElementById('completedTradesBody');
+                const completedTradesCards = document.getElementById('completedTradesCards');
+                completedTradesBody.innerHTML = '';
+                completedTradesCards.innerHTML = '';
+
+                const filter = document.getElementById('profitFilter').value;
+                const filteredTrades = completedTrades.filter(trade => {
+                    const profitPercent = ((trade.sell_price_usd - trade.buy_price_usd) / trade.buy_price_usd * 100).toFixed(2);
+                    if (filter === 'positive') return profitPercent >= 0;
+                    if (filter === 'negative') return profitPercent < 0;
+                    return true;
+                });
+
+                filteredTrades.forEach(trade => {
+                    const profitPercent = ((trade.sell_price_usd - trade.buy_price_usd) / trade.buy_price_usd * 100).toFixed(2);
+                    const profitClass = profitPercent >= 0 ? 'profit-positive' : 'profit-negative';
+
+                    // Table row
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${trade.token_name}</td>
+                        <td>${trade.token_symbol}</td>
+                        <td>$${trade.buy_price_usd.toFixed(8)}</td>
+                        <td>$${trade.sell_price_usd.toFixed(8)}</td>
+                        <td class="${profitClass}">${profitPercent}%</td>
+                        <td class="${profitClass}">$${trade.total_profit_usd.toFixed(2)}</td>
+                        <td>${new Date(trade.buy_timestamp).toLocaleString()}</td>
+                        <td>${new Date(trade.sell_timestamp).toLocaleString()}</td>
+                    `;
+                    completedTradesBody.appendChild(row);
+
+                    // Card for mobile
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <p><span class="card-label">Token:</span> ${trade.token_name}</p>
+                        <p><span class="card-label">Symbol:</span> ${trade.token_symbol}</p>
+                        <p><span class="card-label">Buy Price:</span> $${trade.buy_price_usd.toFixed(8)}</p>
+                        <p><span class="card-label">Sell Price:</span> $${trade.sell_price_usd.toFixed(8)}</p>
+                        <p><span class="card-label">Profit:</span> <span class="${profitClass}">${profitPercent}%</span></p>
+                        <p><span class="card-label">Total Profit:</span> <span class="${profitClass}">$${trade.total_profit_usd.toFixed(2)}</span></p>
+                        <p><span class="card-label">Buy Time:</span> ${new Date(trade.buy_timestamp).toLocaleString()}</p>
+                        <p><span class="card-label">Sell Time:</span> ${new Date(trade.sell_timestamp).toLocaleString()}</p>
+                    `;
+                    completedTradesCards.appendChild(card);
+                });
+
+                document.getElementById('completed-status').textContent = `Completed trades loaded (${filteredTrades.length})`;
+
+                // Update total profit
+                const totalProfit = filteredTrades.reduce((sum, trade) => sum + trade.total_profit_usd, 0);
+                document.getElementById('totalProfit').textContent = `$${totalProfit.toFixed(2)}`;
+
+                // Update chart
+                profitChart.data.labels = filteredTrades.map(t => new Date(t.sell_timestamp).toLocaleDateString());
+                profitChart.data.datasets[0].data = filteredTrades.map(t => t.total_profit_usd);
+                profitChart.update();
+            } catch (error) {
+                console.error('Error refreshing trades:', error);
+                document.getElementById('active-status').textContent = 'Error loading active trades';
+                document.getElementById('completed-status').textContent = 'Error loading completed trades';
             }
-
-            console.log(`Jupiter buy completed for ${token.baseToken.address}, tradeId: ${data.id}`);
-            return { tradeId: data.id, buyPrice, buyTime: Date.now(), tokenAccount: tokenAccount.address };
-        } catch (error) {
-            console.error(`Jupiter buy attempt ${attempt} failed:`, error.message, error.stack);
-            if (attempt === maxRetries) {
-                console.error(`Jupiter buy failed after ${maxRetries} attempts`);
-                await addTokenToExcluded(token.baseToken.address);
-                return null;
-            }
-            attempt++;
-            await new Promise(resolve => setTimeout(resolve, 2000));
         }
-    }
-}
+
+        document.getElementById('topRefreshBtn').addEventListener('click', refreshTrades);
+        document.getElementById('bottomRefreshBtn').addEventListener('click', refreshTrades);
+
+        document.getElementById('exportBtn').addEventListener('click', async () => {
+            try {
+                const { data: completedTrades, error } = await supabase
+                    .from('trades')
+                    .select('*')
+                    .eq('status', 'closed');
+                
+                if (error) throw new Error(`Export error: ${error.message}`);
+                const trades = completedTrades || mockCompletedTrades;
+
+                const csv = [
+                    'Token,Symbol,Buy Price (USD),Sell Price (USD),Profit (%),Total Profit (USD),Buy Time,Sell Time',
+                    ...trades.map(t => `
+                        ${t.token_name},${t.token_symbol},${t.buy_price_usd},${t.sell_price_usd},
+                        ${((t.sell_price_usd - t.buy_price_usd) / t.buy_price_usd * 100).toFixed(2)},
+                        ${t.total_profit_usd},${t.buy_timestamp},${t.sell_timestamp}
+                    `)
+                ].join('\n');
+
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'completed_trades.csv';
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Error exporting trades:', error);
+                alert('Failed to export trades');
+            }
+        });
+
+        document.getElementById('profitFilter').addEventListener('change', refreshTrades);
+
+        // Initial load
+        refreshTrades();
+    </script>
+</body>
+</html>
