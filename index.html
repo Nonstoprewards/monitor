@@ -24,44 +24,44 @@
             font-weight: 600;
         }
         .sexy {
-            background-color: #1a202c;
-            color: #e2e8f0;
+            background-color: #1a0033;
+            color: #f8d1e9;
         }
         .sexy .bg-light {
-            background-color: #2d3748;
+            background-color: #4b0082;
         }
         .sexy .text-gray-700 {
-            color: #cbd5e0;
+            color: #f8d1e9;
         }
         .sexy .bg-teal-600 {
-            background-color: #2c7a7b;
+            background: linear-gradient(145deg, #ff69b4, #c71585);
         }
         .sexy .hover\:bg-teal-700:hover {
-            background-color: #285e61;
+            background: linear-gradient(145deg, #c71585, #ff69b4);
         }
         .sexy .profit-positive {
-            color: #68d391;
+            color: #98fb98;
         }
         .sexy .profit-negative {
-            color: #f56565;
+            color: #ff4040;
         }
         .sexy .card {
-            background-color: #2d3748;
-            border-color: #4a5568;
+            background-color: #4b0082;
+            border-color: #ff69b4;
         }
         .sexy .card:hover {
-            background-color: #4a5568;
+            background-color: #6a0dad;
             transform: translateY(-3px);
         }
         .sexy th {
-            background-color: #1e2a44;
+            background-color: #2e004f;
         }
         .sexy tr:nth-child(even) {
-            background-color: #2d3748;
+            background-color: #4b0082;
         }
         .sexy tr:hover {
-            background-color: #4a5568;
-            border-left: 3px solid #2c7a7b;
+            background-color: #6a0dad;
+            border-left: 3px solid #ff69b4;
         }
         .table-container {
             overflow-x: auto;
@@ -69,7 +69,8 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
         .sexy .table-container {
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 2px 10px rgba(255, 105, 180, 0.5);
+            border: 1px solid #ff69b4;
         }
         table {
             border-collapse: collapse;
@@ -81,7 +82,7 @@
             border: 1px solid #e2e8f0;
         }
         .sexy th, .sexy td {
-            border-color: #4a5568;
+            border-color: #ff69b4;
         }
         th {
             background-color: #1e2a44;
@@ -91,6 +92,23 @@
             position: sticky;
             top: 0;
             z-index: 10;
+            position: relative;
+        }
+        th:hover::after {
+            content: '♥';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff69b4;
+            font-size: 1rem;
+            animation: heartPulse 0.5s ease-out;
+            opacity: 0;
+        }
+        @keyframes heartPulse {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
         }
         tr:nth-child(even) {
             background-color: #edf2f7;
@@ -113,10 +131,13 @@
             transition: color 0.2s;
         }
         .sexy .pagination-arrow {
-            color: #81e6d9;
+            color: #ff69b4;
         }
         .pagination-arrow:hover {
             color: #285e61;
+        }
+        .sexy .pagination-arrow:hover {
+            color: #c71585;
         }
         .pagination-arrow.disabled {
             color: #a0aec0;
@@ -141,10 +162,10 @@
             width: 100%;
         }
         .sexy a {
-            color: #81e6d9;
+            color: #ff69b4;
         }
         .sexy a::after {
-            background-color: #81e6d9;
+            background-color: #ff69b4;
         }
         .profit-positive {
             color: #38a169;
@@ -166,13 +187,23 @@
             transform: translateY(-3px);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
         }
+        .card:hover::after {
+            content: '♥';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #ff69b4;
+            font-size: 1rem;
+            animation: heartPulse 0.5s ease-out;
+            opacity: 0;
+        }
         .card-label {
             font-weight: 600;
             color: #1e2a44;
             margin-right: 8px;
         }
         .sexy .card-label {
-            color: #e2e8f0;
+            color: #f8d1e9;
         }
         .btn {
             position: relative;
@@ -181,6 +212,17 @@
         }
         .btn:hover {
             transform: translateY(-2px);
+        }
+        .btn:hover::after {
+            content: '♥';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff69b4;
+            font-size: 1rem;
+            animation: heartPulse 0.5s ease-out;
+            opacity: 0;
         }
         .btn::after {
             content: '';
@@ -206,10 +248,9 @@
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
         .sexy .section-card {
-            background: linear-gradient(145deg, #2d3748, #1a202c);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(145deg, #4b0082, #1a0033);
+            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.5);
         }
-        /* Flash animation for Completed Trades table */
         .flash {
             animation: flash 0.5s ease-out;
         }
@@ -403,7 +444,7 @@
         let isFetching = false;
         const priceCache = new Map();
         const CACHE_DURATION = 60000; // 60 seconds
-        let lastCompletedTradeIds = new Set(); // Track IDs of completed trades
+        let lastCompletedTradeIds = new Set();
 
         // APIs
         const DEXSCREENER_API = 'https://api.dexscreener.com';
@@ -429,15 +470,15 @@
                     responsive: true,
                     scales: {
                         x: { 
-                            title: { display: true, text: 'Sell Time', color: document.body.classList.contains('sexy') ? '#e2e8f0' : '#2d3748' }
+                            title: { display: true, text: 'Sell Time', color: document.body.classList.contains('sexy') ? '#f8d1e9' : '#2d3748' }
                         },
                         y: { 
-                            title: { display: true, text: 'Profit (USD)', color: document.body.classList.contains('sexy') ? '#e2e8f0' : '#2d3748' }
+                            title: { display: true, text: 'Profit (USD)', color: document.body.classList.contains('sexy') ? '#f8d1e9' : '#2d3748' }
                         }
                     },
                     plugins: {
                         legend: {
-                            labels: { color: document.body.classList.contains('sexy') ? '#e2e8f0' : '#2d3748' }
+                            labels: { color: document.body.classList.contains('sexy') ? '#f8d1e9' : '#2d3748' }
                         }
                     }
                 }
@@ -462,9 +503,9 @@
             document.body.classList.toggle('sexy');
             const isSexy = document.body.classList.contains('sexy');
             localStorage.setItem('sexyMode', isSexy);
-            profitChart.options.scales.x.title.color = isSexy ? '#e2e8f0' : '#2d3748';
-            profitChart.options.scales.y.title.color = isSexy ? '#e2e8f0' : '#2d3748';
-            profitChart.options.plugins.legend.labels.color = isSexy ? '#e2e8f0' : '#2d3748';
+            profitChart.options.scales.x.title.color = isSexy ? '#f8d1e9' : '#2d3748';
+            profitChart.options.scales.y.title.color = isSexy ? '#f8d1e9' : '#2d3748';
+            profitChart.options.plugins.legend.labels.color = isSexy ? '#f8d1e9' : '#2d3748';
             profitChart.update();
             document.getElementById('sexyModeToggle').innerHTML = isSexy ? 
                 '<i class="fas fa-sun mr-2"></i> Light Mode' : 
@@ -504,7 +545,15 @@
                 try {
                     const uncachedAddresses = batch.filter(address => {
                         const cached = priceCache.get(`dexscreener:${address}`);
-                        return !cached || Date.now() - cached.timestamp >= CACHE_DURATION;
+                        if (!cached) {
+                            console.log(`No cache entry for address: ${address}`);
+                            return true;
+                        }
+                        if (Date.now() - cached.timestamp >= CACHE_DURATION) {
+                            console.log(`Cache expired for address: ${address}`);
+                            return true;
+                        }
+                        return false;
                     });
 
                     if (uncachedAddresses.length === 0) {
@@ -512,8 +561,9 @@
                             const cached = priceCache.get(`dexscreener:${address}`);
                             if (cached && cached.data) {
                                 results[address] = cached.data;
+                                console.log(`Using cached data for address: ${address}`);
                             } else {
-                                console.warn(`Cache miss for address ${address}, marking as uncached`);
+                                console.warn(`Cache miss or invalid cache for address: ${address}`);
                                 results[address] = { currentPrice: 'Not Cached', marketCap: 'Not Cached', volume24h: 'Not Cached' };
                             }
                         });
@@ -525,10 +575,11 @@
                         headers: { 'Accept': 'application/json' }
                     });
 
-                    let errorMessage = '';
                     if (!response.ok) {
+                        let errorMessage = `HTTP ${response.status}`;
                         if (response.status === 429) {
                             errorMessage = 'Rate Limit Exceeded';
+                            console.warn('Rate limit hit, retrying after delay...');
                             await new Promise(resolve => setTimeout(resolve, 2000));
                             const retryResponse = await fetch(`${DEXSCREENER_API}/tokens/v1/solana/${uncachedAddresses.join(',')}`, {
                                 headers: { 'Accept': 'application/json' }
@@ -539,20 +590,21 @@
                             errorMessage = 'Not Indexed';
                             throw new Error(`HTTP 404: Tokens not found`);
                         } else {
-                            errorMessage = `HTTP ${response.status}`;
-                            throw new Error(`HTTP ${response.status}: Unknown error`);
+                            throw new Error(errorMessage);
                         }
                     }
 
                     const json = await response.json();
+                    console.log(`DEXScreener response for batch:`, json);
                     for (const address of uncachedAddresses) {
-                        const tokenData = json.find(item => item.baseToken.address === address) || {};
+                        const tokenData = json.find(item => item?.baseToken?.address === address) || {};
                         const currentPrice = tokenData.priceUsd ? parseFloat(tokenData.priceUsd).toFixed(6) : 'Not Indexed';
                         const marketCap = tokenData.marketCap ? Math.round(tokenData.marketCap).toLocaleString() : 'Not Indexed';
                         const volume24h = tokenData.volume?.h24 ? Math.round(tokenData.volume.h24).toLocaleString() : 'Not Indexed';
                         const result = { currentPrice, marketCap, volume24h };
                         results[address] = result;
                         priceCache.set(`dexscreener:${address}`, { data: result, timestamp: Date.now() });
+                        console.log(`Cached data for address: ${address}`, result);
                     }
                 } catch (err) {
                     console.error(`DexScreener batch fetch error: ${err.message}`);
@@ -576,16 +628,20 @@
 
         function calculateTotalProfit() {
             const trades = filteredCompletedTrades.length > 0 ? filteredCompletedTrades : completedTrades;
+            let validTrades = 0;
             const total = trades.reduce((sum, trade) => {
                 if (trade.quantity != null && trade.buy_price_usd != null && trade.sell_price_usd != null) {
+                    validTrades++;
                     return sum + (trade.sell_price_usd - trade.buy_price_usd) * trade.quantity;
                 }
                 console.warn(`Skipping total profit calculation for trade ${trade.id || trade.token_address || 'unknown'}: missing quantity, buy_price_usd, or sell_price_usd`);
                 return sum;
             }, 0);
-            document.getElementById('totalProfit').textContent = isNaN(total) 
+            const result = validTrades === 0 || isNaN(total) 
                 ? 'N/A' 
                 : total.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+            console.log(`Calculated total profit: ${result}, valid trades: ${validTrades}`);
+            document.getElementById('totalProfit').textContent = result;
         }
 
         async function initAndFetchTrades() {
@@ -614,6 +670,7 @@
 
                 try {
                     supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+                    console.log('Supabase client initialized');
                 } catch (err) {
                     throw new Error(`Failed to initialize Supabase client: ${err.message}`);
                 }
@@ -646,18 +703,16 @@
 
                 console.log(`Fetched ${data.length} trades from Supabase`, data);
 
-                // Detect new completed trades
                 const currentCompletedTradeIds = new Set(completedTrades.map(trade => trade.id));
                 activeTrades = data.filter(trade => trade.status === 'open' || !trade.sell_timestamp);
                 completedTrades = data.filter(trade => trade.status === 'closed' && trade.sell_timestamp);
                 filteredCompletedTrades = completedTrades;
 
-                // Check for new completed trades
                 const newCompletedTrades = completedTrades.filter(trade => !lastCompletedTradeIds.has(trade.id));
                 if (newCompletedTrades.length > 0) {
                     console.log(`Detected ${newCompletedTrades.length} new completed trades`, newCompletedTrades.map(t => t.id));
                     completedTableContainer.classList.add('flash');
-                    setTimeout(() => completedTableContainer.classList.remove('flash'), 500); // Remove after animation
+                    setTimeout(() => completedTableContainer.classList.remove('flash'), 500);
                 }
                 lastCompletedTradeIds = new Set(completedTrades.map(trade => trade.id));
 
@@ -696,7 +751,6 @@
             }
         }
 
-        // Supabase real-time subscription for new completed trades
         function setupRealtimeSubscription() {
             supabase
                 .channel('trades')
@@ -713,7 +767,7 @@
                         const completedTableContainer = document.getElementById('completedTableContainer');
                         completedTableContainer.classList.add('flash');
                         setTimeout(() => completedTableContainer.classList.remove('flash'), 500);
-                        initAndFetchTrades(); // Refresh trades to update table
+                        initAndFetchTrades();
                     }
                 })
                 .subscribe((status, err) => {
@@ -743,7 +797,6 @@
                     marketCap: 'Not Indexed',
                     volume24h: 'Not Indexed'
                 };
-                // Use profit_percentage from Supabase, check for staleness
                 const isStale = trade.last_price_check && (Date.now() - new Date(trade.last_price_check).getTime()) > 60 * 1000;
                 const profitPercent = trade.profit_percentage != null 
                     ? `${trade.profit_percentage.toFixed(2)}${isStale ? ' (stale)' : ''}%`
@@ -909,7 +962,6 @@
             } : null;
         }
 
-        // Export Trades as CSV
         document.getElementById('exportBtn').addEventListener('click', () => {
             const trades = filteredCompletedTrades.length > 0 ? filteredCompletedTrades : completedTrades;
             const headers = ['Token', 'Symbol', 'Buy Price (USD)', 'Sell Price (USD)', 'Profit (%)', 'Total Profit (USD)', 'Buy Time', 'Sell Time'];
@@ -938,7 +990,6 @@
             URL.revokeObjectURL(url);
         });
 
-        // Filter Trades
         document.getElementById('profitFilter').addEventListener('change', (e) => {
             const filter = e.target.value;
             completedPage = 1;
@@ -955,7 +1006,6 @@
             updatePagination();
         });
 
-        // Refresh Button Handlers
         document.getElementById('topRefreshBtn').addEventListener('click', () => {
             priceCache.clear();
             initAndFetchTrades();
@@ -966,12 +1016,10 @@
             initAndFetchTrades();
         });
 
-        // Auto-refresh every 30 seconds
         setInterval(() => {
             initAndFetchTrades();
         }, 30000);
 
-        // Initial Load
         initProfitChart();
         initAndFetchTrades();
         setupRealtimeSubscription();
