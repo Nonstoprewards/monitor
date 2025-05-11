@@ -438,7 +438,7 @@
             const trades = filteredCompletedTrades.length > 0 ? filteredCompletedTrades : completedTrades;
             const sortedTrades = trades.sort((a, b) => new Date(a.sell_timestamp) - new Date(b.sell_timestamp));
             const labels = sortedTrades.map(trade => new Date(trade.sell_timestamp).toLocaleDateString());
-            const data = sortedTrades.map(trade => trade.quantity && trade.buy_price_usd && trade.sell_price_usd
+            const data = sortedTrades.map(trade => trade.quantity != null && trade.buy_price_usd != null && trade.sell_price_usd != null
                 ? (trade.sell_price_usd - trade.buy_price_usd) * trade.quantity
                 : 0);
 
@@ -498,10 +498,19 @@
                     });
 
                     if (uncachedAddresses.length === 0) {
-                        batch.forEach(address => results[address] = priceCache.get(`dexscreener:${address}`).data);
+                        batch.forEach(address => {
+                            const cached = priceCache.get(`dexscreener:${address}`);
+                            if (cached && cached.data) {
+                                results[address] = cached.data;
+                            } else {
+                                console.warn(`Cache miss for address ${address}, marking as uncached`);
+                                results[address] = { currentPrice: 'Not Cached', marketCap: 'Not Cached', volume24h: 'Not Cached' };
+                            }
+                        });
                         continue;
                     }
 
+                    console.log(`Fetching DEXScreener data for addresses: ${uncachedAddresses.join(', ')}`);
                     const response = await fetch(`${DEXSCREENER_API}/tokens/v1/solana/${uncachedAddresses.join(',')}`, {
                         headers: { 'Accept': 'application/json' }
                     });
@@ -558,12 +567,15 @@
         function calculateTotalProfit() {
             const trades = filteredCompletedTrades.length > 0 ? filteredCompletedTrades : completedTrades;
             const total = trades.reduce((sum, trade) => {
-                if (trade.quantity && trade.buy_price_usd && trade.sell_price_usd) {
+                if (trade.quantity != null && trade.buy_price_usd != null && trade.sell_price_usd != null) {
                     return sum + (trade.sell_price_usd - trade.buy_price_usd) * trade.quantity;
                 }
+                console.warn(`Skipping total profit calculation for trade ${trade.id || trade.token_address || 'unknown'}: missing quantity, buy_price_usd, or sell_price_usd`);
                 return sum;
             }, 0);
-            document.getElementById('totalProfit').textContent = total.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+            document.getElementById('totalProfit').textContent = isNaN(total) 
+                ? 'N/A' 
+                : total.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
         }
 
         async function initAndFetchTrades() {
@@ -588,15 +600,22 @@
                 if (typeof window.supabase === 'undefined') {
                     throw new Error('Supabase library not loaded. Check CDN or network.');
                 }
-                supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
+                try {
+                    supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+                } catch (err) {
+                    throw new Error(`Failed to initialize Supabase client: ${err.message}`);
+                }
+
+                console.log('Fetching trades from Supabase...');
                 const { data, error } = await supabase
                     .from('trades')
                     .select('*, profit_percentage, last_price_check')
                     .order('buy_timestamp', { ascending: false });
 
                 if (error) {
-                    const errorMsg = `Error: ${error.message}${error.details ? ' - ' + error.details : ''} (Code: ${error.code || 'N/A'})`;
+                    const errorMsg = `Supabase error: ${error.message}${error.details ? ' - ' + error.details : ''} (Code: ${error.code || 'N/A'})`;
+                    console.error(errorMsg);
                     activeStatus.textContent = errorMsg;
                     completedStatus.textContent = errorMsg;
                     activeStatus.classList.add('text-red-600');
@@ -604,6 +623,17 @@
                     return;
                 }
 
+                if (!data || !Array.isArray(data)) {
+                    const errorMsg = 'Invalid Supabase response: data is undefined or not an array';
+                    console.error(errorMsg, data);
+                    activeStatus.textContent = errorMsg;
+                    completedStatus.textContent = errorMsg;
+                    activeStatus.classList.add('text-red-600');
+                    completedStatus.classList.add('text-red-600');
+                    return;
+                }
+
+                console.log(`Fetched ${data.length} trades from Supabase`, data);
                 activeTrades = data.filter(trade => trade.status === 'open' || !trade.sell_timestamp);
                 completedTrades = data.filter(trade => trade.status === 'closed' && trade.sell_timestamp);
                 filteredCompletedTrades = completedTrades;
@@ -632,8 +662,10 @@
                 updateProfitChart();
                 updatePagination();
             } catch (err) {
-                activeStatus.textContent = `Error: ${err.message}`;
-                completedStatus.textContent = `Error: ${err.message}`;
+                const errorMsg = `Error: ${err.message}`;
+                console.error(errorMsg, err.stack);
+                activeStatus.textContent = errorMsg;
+                completedStatus.textContent = errorMsg;
                 activeStatus.classList.add('text-red-600');
                 completedStatus.classList.add('text-red-600');
             } finally {
@@ -650,7 +682,7 @@
             const end = start + tradesPerPage;
             const pageTrades = activeTrades.slice(start, end);
 
-            const tokenAddresses = pageTrades.map(trade => trade.token_address);
+            const tokenAddresses = pageTrades.map(trade => trade.token_address).filter(addr => addr);
             const tokenData = await fetchTokenData(tokenAddresses);
 
             for (const trade of pageTrades) {
@@ -667,7 +699,7 @@
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td class="py-2 px-4"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6)}...${trade.token_address.slice(-4)}</a></td>
+                    <td class="py-2 px-4"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address ? trade.token_address.slice(0, 6) + '...' + trade.token_address.slice(-4) : '-'}</a></td>
                     <td class="py-2 px-4">${trade.token_symbol || '-'}</td>
                     <td class="py-2 px-4">${trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-'}</td>
                     <td class="py-2 px-4">${data.currentPrice}</td>
@@ -683,7 +715,7 @@
                 card.innerHTML = `
                     <div class="flex mb-2">
                         <span class="card-label">Token:</span>
-                        <span class="card-value"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6)}...${trade.token_address.slice(-4)}</a></span>
+                        <span class="card-value"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address ? trade.token_address.slice(0, 6) + '...' + trade.token_address.slice(-4) : '-'}</a></span>
                     </div>
                     <div class="flex mb-2">
                         <span class="card-label">Symbol:</span>
@@ -728,18 +760,18 @@
             const pageTrades = filteredCompletedTrades.slice(start, end);
 
             for (const trade of pageTrades) {
-                const totalProfit = trade.quantity && trade.buy_price_usd && trade.sell_price_usd
+                const totalProfit = trade.quantity != null && trade.buy_price_usd != null && trade.sell_price_usd != null
                     ? ((trade.sell_price_usd - trade.buy_price_usd) * trade.quantity).toFixed(2)
                     : 'N/A';
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td class="py-2 px-4"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6)}...${trade.token_address.slice(-4)}</a></td>
+                    <td class="py-2 px-4"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address ? trade.token_address.slice(0, 6) + '...' + trade.token_address.slice(-4) : '-'}</a></td>
                     <td class="py-2 px-4">${trade.token_symbol || '-'}</td>
                     <td class="py-2 px-4">${trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-'}</td>
                     <td class="py-2 px-4">${trade.sell_price_usd ? trade.sell_price_usd.toFixed(6) : '-'}</td>
-                    <td class="py-2 px-4 ${trade.profit_percentage >= 0 ? 'profit-positive' : 'profit-negative'}">${trade.profit_percentage ? trade.profit_percentage.toFixed(2) : '-'}%</td>
-                    <td class="py-2 px-4 ${totalProfit !== 'N/A' && totalProfit >= 0 ? 'profit-positive' : 'profit-negative'}">${totalProfit !== 'N/A' ? totalProfit : '-'}</td>
+                    <td class="py-2 px-4 ${trade.profit_percentage != null && trade.profit_percentage >= 0 ? 'profit-positive' : 'profit-negative'}">${trade.profit_percentage != null ? trade.profit_percentage.toFixed(2) : 'N/A'}%</td>
+                    <td class="py-2 px-4 ${totalProfit !== 'N/A' && parseFloat(totalProfit) >= 0 ? 'profit-positive' : 'profit-negative'}">${totalProfit !== 'N/A' ? totalProfit : 'N/A'}</td>
                     <td class="py-2 px-4">${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</td>
                     <td class="py-2 px-4">${trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-'}</td>
                 `;
@@ -750,7 +782,7 @@
                 card.innerHTML = `
                     <div class="flex mb-2">
                         <span class="card-label">Token:</span>
-                        <span class="card-value"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6)}...${trade.token_address.slice(-4)}</a></span>
+                        <span class="card-value"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address ? trade.token_address.slice(0, 6) + '...' + trade.token_address.slice(-4) : '-'}</a></span>
                     </div>
                     <div class="flex mb-2">
                         <span class="card-label">Symbol:</span>
@@ -766,11 +798,11 @@
                     </div>
                     <div class="flex mb-2">
                         <span class="card-label">Profit (%):</span>
-                        <span class="card-value ${trade.profit_percentage >= 0 ? 'profit-positive' : 'profit-negative'}">${trade.profit_percentage ? trade.profit_percentage.toFixed(2) : '-'}%</span>
+                        <span class="card-value ${trade.profit_percentage != null && trade.profit_percentage >= 0 ? 'profit-positive' : 'profit-negative'}">${trade.profit_percentage != null ? trade.profit_percentage.toFixed(2) : 'N/A'}%</span>
                     </div>
                     <div class="flex mb-2">
                         <span class="card-label">Total Profit:</span>
-                        <span class="card-value ${totalProfit !== 'N/A' && totalProfit >= 0 ? 'profit-positive' : 'profit-negative'}">${totalProfit !== 'N/A' ? totalProfit + ' USD' : '-'}</span>
+                        <span class="card-value ${totalProfit !== 'N/A' && parseFloat(totalProfit) >= 0 ? 'profit-positive' : 'profit-negative'}">${totalProfit !== 'N/A' ? totalProfit + ' USD' : 'N/A'}</span>
                     </div>
                     <div class="flex mb-2">
                         <span class="card-label">Buy Time:</span>
@@ -830,15 +862,15 @@
             const trades = filteredCompletedTrades.length > 0 ? filteredCompletedTrades : completedTrades;
             const headers = ['Token', 'Symbol', 'Buy Price (USD)', 'Sell Price (USD)', 'Profit (%)', 'Total Profit (USD)', 'Buy Time', 'Sell Time'];
             const rows = trades.map(trade => {
-                const totalProfit = trade.quantity && trade.buy_price_usd && trade.sell_price_usd
+                const totalProfit = trade.quantity != null && trade.buy_price_usd != null && trade.sell_price_usd != null
                     ? ((trade.sell_price_usd - trade.buy_price_usd) * trade.quantity).toFixed(2)
                     : 'N/A';
                 return [
-                    trade.token_address,
+                    trade.token_address || '-',
                     trade.token_symbol || '-',
                     trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-',
                     trade.sell_price_usd ? trade.sell_price_usd.toFixed(6) : '-',
-                    trade.profit_percentage ? trade.profit_percentage.toFixed(2) : '-',
+                    trade.profit_percentage != null ? trade.profit_percentage.toFixed(2) : 'N/A',
                     totalProfit,
                     trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-',
                     trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-'
@@ -859,9 +891,9 @@
             const filter = e.target.value;
             completedPage = 1;
             if (filter === 'positive') {
-                filteredCompletedTrades = completedTrades.filter(trade => trade.profit_percentage >= 0);
+                filteredCompletedTrades = completedTrades.filter(trade => trade.profit_percentage != null && trade.profit_percentage >= 0);
             } else if (filter === 'negative') {
-                filteredCompletedTrades = completedTrades.filter(trade => trade.profit_percentage < 0);
+                filteredCompletedTrades = completedTrades.filter(trade => trade.profit_percentage != null && trade.profit_percentage < 0);
             } else {
                 filteredCompletedTrades = completedTrades;
             }
