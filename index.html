@@ -9,60 +9,67 @@
     <title>Pump.Fun Trading Bot Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Open+Sans:wght@400;600&display=swap');
+
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Open Sans', sans-serif;
+            background-color: #f4f7fa;
+            color: #2d3748;
             transition: background-color 0.3s, color 0.3s;
         }
+        h1, h2 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
         .dark {
-            background-color: #1f2937;
-            color: #f3f4f6;
+            background-color: #1a202c;
+            color: #e2e8f0;
         }
-        .dark .bg-white {
-            background-color: #374151;
+        .dark .bg-light {
+            background-color: #2d3748;
         }
-        .dark .bg-gray-100 {
-            background-color: #1f2937;
+        .dark .text-gray-700 {
+            color: #cbd5e0;
         }
-        .dark .text-gray-600 {
-            color: #d1d5db;
+        .dark .bg-teal-600 {
+            background-color: #2c7a7b;
         }
-        .dark .text-blue-900 {
-            color: #93c5fd;
-        }
-        .dark .bg-blue-600 {
-            background-color: #2563eb;
-        }
-        .dark .hover\:bg-blue-700:hover {
-            background-color: #1d4ed8;
+        .dark .hover\:bg-teal-700:hover {
+            background-color: #285e61;
         }
         .dark .profit-positive {
-            color: #34d399;
+            color: #68d391;
         }
         .dark .profit-negative {
-            color: #f87171;
+            color: #f56565;
         }
         .dark .card {
-            background-color: #4b5563;
-            border-color: #6b7280;
-        }
-        .dark .card:nth-child(even) {
-            background-color: #374151;
+            background-color: #2d3748;
+            border-color: #4a5568;
         }
         .dark .card:hover {
-            background-color: #6b7280;
+            background-color: #4a5568;
+            transform: translateY(-3px);
         }
         .dark th {
-            background-color: #1e3a8a;
+            background-color: #1e2a44;
         }
         .dark tr:nth-child(even) {
-            background-color: #374151;
+            background-color: #2d3748;
         }
         .dark tr:hover {
-            background-color: #4b5563;
+            background-color: #4a5568;
+            border-left: 3px solid #2c7a7b;
         }
         .table-container {
             overflow-x: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .dark .table-container {
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
         table {
             border-collapse: collapse;
@@ -71,102 +78,148 @@
         th, td {
             text-align: left;
             padding: 12px;
-            border: 1px solid #e5e7eb;
+            border: 1px solid #e2e8f0;
         }
         .dark th, .dark td {
-            border-color: #6b7280;
+            border-color: #4a5568;
         }
         th {
-            background-color: #1e40af;
-            color: white;
-            font-size: 0.9rem;
+            background-color: #1e2a44;
+            color: #ffffff;
+            font-size: 0.85rem;
             white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
         tr:nth-child(even) {
-            background-color: #f0fdf4;
+            background-color: #edf2f7;
         }
         tr:hover {
-            background-color: #dbeafe;
-            transition: background-color 0.2s;
+            background-color: #e6fffa;
+            border-left: 3px solid #2c7a7b;
+            transition: all 0.2s ease;
         }
         .pagination-arrow {
             cursor: pointer;
             padding: 8px;
-            color: #1e40af;
+            color: #2c7a7b;
             font-size: 1.5rem;
             min-width: 44px;
             min-height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: color 0.2s;
         }
         .dark .pagination-arrow {
-            color: #93c5fd;
+            color: #81e6d9;
+        }
+        .pagination-arrow:hover {
+            color: #285e61;
         }
         .pagination-arrow.disabled {
-            color: #d1d5db;
+            color: #a0aec0;
             cursor: not-allowed;
         }
         a {
-            color: #1e40af;
-            text-decoration: underline;
+            color: #2c7a7b;
+            position: relative;
+            text-decoration: none;
         }
-        a:hover {
-            color: #3b82f6;
+        a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -2px;
+            left: 0;
+            background-color: #2c7a7b;
+            transition: width 0.3s ease;
+        }
+        a:hover::after {
+            width: 100%;
         }
         .dark a {
-            color: #93c5fd;
+            color: #81e6d9;
         }
-        .dark a:hover {
-            color: #60a5fa;
+        .dark a::after {
+            background-color: #81e6d9;
         }
         .profit-positive {
-            color: #28a745;
+            color: #38a169;
             font-weight: 600;
         }
         .profit-negative {
-            color: #dc3545;
+            color: #e53e3e;
             font-weight: 600;
         }
         .card {
-            border: 1px solid #e5e7eb;
+            border: 1px solid #e2e8f0;
             border-radius: 8px;
             padding: 12px;
             margin-bottom: 12px;
-            background-color: #fff;
-            transition: background-color 0.2s;
-        }
-        .card:nth-child(even) {
-            background-color: #f0fdf4;
+            background-color: #ffffff;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
         .card:hover {
-            background-color: #dbeafe;
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
         }
         .card-label {
             font-weight: 600;
-            color: #1e40af;
+            color: #1e2a44;
             margin-right: 8px;
         }
         .dark .card-label {
-            color: #93c5fd;
+            color: #e2e8f0;
         }
         .btn {
+            position: relative;
+            overflow: hidden;
             transition: transform 0.2s, background-color 0.2s;
         }
         .btn:hover {
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+        }
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.4s, height 0.4s;
+        }
+        .btn:active::after {
+            width: 200px;
+            height: 200px;
+            transition: width 0.4s, height 0.4s;
+        }
+        .section-card {
+            background: linear-gradient(145deg, #ffffff, #edf2f7);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .dark .section-card {
+            background: linear-gradient(145deg, #2d3748, #1a202c);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
         @media (max-width: 640px) {
             .container {
                 padding: 1rem;
             }
             h1 {
-                font-size: 1.5rem;
+                font-size: 1.75rem;
             }
-            .refresh-btn, .export-btn, .filter-btn {
-                padding: 8px 16px;
+            .btn {
+                padding: 10px 16px;
                 font-size: 0.875rem;
-                min-height: 44px;
+                min-height: 48px;
                 width: 100%;
             }
             .pagination-arrow {
@@ -194,11 +247,11 @@
         }
         @media (max-width: 400px) {
             .card {
-                padding: 8px;
-                font-size: 0.75rem;
+                padding: 10px;
+                font-size: 0.8rem;
             }
             .card-label, .card-value {
-                font-size: 0.75rem;
+                font-size: 0.8rem;
             }
         }
         @media (max-width: 1024px) and (min-width: 641px) {
@@ -206,41 +259,41 @@
                 padding: 10px;
                 font-size: 0.875rem;
             }
-            .refresh-btn, .export-btn, .filter-btn {
-                padding: 8px 20px;
-                font-size: 1rem;
+            .btn {
+                padding: 10px 20px;
+                font-size: 0.875rem;
             }
-        }
-        .shadow-glow {
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        }
-        .dark .shadow-glow {
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<body class="flex items-center justify-center min-h-screen">
     <div class="container mx-auto p-6 max-w-7xl">
-        <div class="bg-white shadow-glow rounded-xl p-6 sm:p-8">
+        <div class="section-card">
             <div class="flex justify-between items-center mb-6">
-                <h1 class="text-3xl sm:text-4xl font-bold text-blue-900">Pump.Fun Trading Bot Dashboard</h1>
-                <button id="darkModeToggle" class="btn bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300">Toggle Dark Mode</button>
+                <h1 class="text-3xl sm:text-4xl text-navy">Pump.Fun Trading Bot Dashboard</h1>
+                <button id="darkModeToggle" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                    <i class="fas fa-moon mr-2"></i> Dark Mode
+                </button>
             </div>
-            <div class="flex flex-col sm:flex-row justify-end mb-6 space-y-2 sm:space-y-0 sm:space-x-2">
-                <button id="topRefreshBtn" class="refresh-btn btn bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Refresh Trades</button>
-                <button id="exportBtn" class="export-btn btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">Export Trades</button>
+            <div class="flex flex-col sm:flex-row justify-end mb-6 space-y-2 sm:space-y-0 sm:space-x-3">
+                <button id="topRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                    <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
+                </button>
+                <button id="exportBtn" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
+                    <i class="fas fa-file-export mr-2"></i> Export Trades
+                </button>
             </div>
 
             <!-- Summary Section -->
-            <div class="mb-6 bg-blue-50 dark:bg-blue-900/50 p-4 rounded-lg">
-                <h2 class="text-xl font-semibold text-blue-900 dark:text-blue-200 mb-2">Summary</h2>
-                <p class="text-gray-600 dark:text-gray-300">Total Completed Profit: <span id="totalProfit" class="font-semibold text-blue-900 dark:text-blue-200">Calculating...</span></p>
+            <div class="mb-6 section-card">
+                <h2 class="text-xl text-navy mb-2">Summary</h2>
+                <p class="text-gray-700">Total Completed Profit: <span id="totalProfit" class="font-semibold text-navy">Calculating...</span></p>
             </div>
 
             <!-- Active Trades Section -->
-            <div class="mb-6">
-                <h2 class="text-xl font-semibold text-blue-900 dark:text-blue-200 mb-4">Active Trades</h2>
-                <p id="active-status" class="text-gray-600 dark:text-gray-300 text-sm mb-2 status">Loading active trades...</p>
+            <div class="mb-6 section-card">
+                <h2 class="text-xl text-navy mb-4">Active Trades</h2>
+                <p id="active-status" class="text-gray-700 text-sm mb-2 status">Loading active trades...</p>
                 <div class="table-container">
                     <table class="min-w-full">
                         <thead>
@@ -264,18 +317,18 @@
                 <div class="flex justify-between items-center mt-4">
                     <div class="flex items-center space-x-2">
                         <span id="activePrevPage" class="pagination-arrow disabled">◀</span>
-                        <span class="pagination-text text-gray-700 dark:text-gray-300">Page <span id="activeCurrentPage">1</span></span>
+                        <span class="pagination-text text-gray-700">Page <span id="activeCurrentPage">1</span></span>
                         <span id="activeNextPage" class="pagination-arrow disabled">▶</span>
                     </div>
                 </div>
             </div>
 
             <!-- Completed Trades Section -->
-            <div class="mb-6">
-                <h2 class="text-xl font-semibold text-blue-900 dark:text-blue-200 mb-4">Completed Trades</h2>
+            <div class="mb-6 section-card">
+                <h2 class="text-xl text-navy mb-4">Completed Trades</h2>
                 <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                    <p id="completed-status" class="text-gray-600 dark:text-gray-300 text-sm mb-2 sm:mb-0 status">Loading completed trades...</p>
-                    <select id="profitFilter" class="filter-btn bg-gray-200 text-gray-800 px-4 py-2 rounded-lg focus:outline-none">
+                    <p id="completed-status" class="text-gray-700 text-sm mb-2 sm:mb-0 status">Loading completed trades...</p>
+                    <select id="profitFilter" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
                         <option value="all">All Trades</option>
                         <option value="positive">Positive Profit</option>
                         <option value="negative">Negative Profit</option>
@@ -304,20 +357,22 @@
                 <div class="flex justify-between items-center mt-4">
                     <div class="flex items-center space-x-2">
                         <span id="completedPrevPage" class="pagination-arrow disabled">◀</span>
-                        <span class="pagination-text text-gray-700 dark:text-gray-300">Page <span id="completedCurrentPage">1</span></span>
+                        <span class="pagination-text text-gray-700">Page <span id="completedCurrentPage">1</span></span>
                         <span id="completedNextPage" class="pagination-arrow disabled">▶</span>
                     </div>
                 </div>
             </div>
 
             <!-- Profit Trend Chart -->
-            <div class="mb-6">
-                <h2 class="text-xl font-semibold text-blue-900 dark:text-blue-200 mb-4">Profit Trend</h2>
+            <div class="mb-6 section-card">
+                <h2 class="text-xl text-navy mb-4">Profit Trend</h2>
                 <canvas id="profitChart" class="w-full h-64"></canvas>
             </div>
 
             <div class="flex justify-end mt-6">
-                <button id="bottomRefreshBtn" class="refresh-btn btn bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Refresh Trades</button>
+                <button id="bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                    <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
+                </button>
             </div>
         </div>
     </div>
@@ -357,8 +412,8 @@
                     datasets: [{
                         label: 'Total Profit (USD)',
                         data: [],
-                        borderColor: '#1e40af',
-                        backgroundColor: 'rgba(30, 64, 175, 0.2)',
+                        borderColor: '#2c7a7b',
+                        backgroundColor: 'rgba(44, 122, 123, 0.2)',
                         fill: true,
                         tension: 0.4
                     }]
@@ -366,8 +421,17 @@
                 options: {
                     responsive: true,
                     scales: {
-                        x: { title: { display: true, text: 'Sell Time' } },
-                        y: { title: { display: true, text: 'Profit (USD)' } }
+                        x: { 
+                            title: { display: true, text: 'Sell Time', color: document.body.classList.contains('dark') ? '#e2e8f0' : '#2d3748' }
+                        },
+                        y: { 
+                            title: { display: true, text: 'Profit (USD)', color: document.body.classList.contains('dark') ? '#e2e8f0' : '#2d3748' }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: document.body.classList.contains('dark') ? '#e2e8f0' : '#2d3748' }
+                        }
                     }
                 }
             });
@@ -389,14 +453,20 @@
         // Dark Mode Toggle
         document.getElementById('darkModeToggle').addEventListener('click', () => {
             document.body.classList.toggle('dark');
-            localStorage.setItem('darkMode', document.body.classList.contains('dark'));
-            profitChart.options.scales.x.title.color = document.body.classList.contains('dark') ? '#f3f4f6' : '#1f2937';
-            profitChart.options.scales.y.title.color = document.body.classList.contains('dark') ? '#f3f4f6' : '#1f2937';
+            const isDark = document.body.classList.contains('dark');
+            localStorage.setItem('darkMode', isDark);
+            profitChart.options.scales.x.title.color = isDark ? '#e2e8f0' : '#2d3748';
+            profitChart.options.scales.y.title.color = isDark ? '#e2e8f0' : '#2d3748';
+            profitChart.options.plugins.legend.labels.color = isDark ? '#e2e8f0' : '#2d3748';
             profitChart.update();
+            document.getElementById('darkModeToggle').innerHTML = isDark ? 
+                '<i class="fas fa-sun mr-2"></i> Light Mode' : 
+                '<i class="fas fa-moon mr-2"></i> Dark Mode';
         });
 
         if (localStorage.getItem('darkMode') === 'true') {
             document.body.classList.add('dark');
+            document.getElementById('darkModeToggle').innerHTML = '<i class="fas fa-sun mr-2"></i> Light Mode';
         }
 
         // Basic Solana address validation
@@ -631,8 +701,8 @@
             completedStatus.textContent = 'Loading completed trades...';
             activeStatus.classList.remove('text-red-600', 'text-green-600');
             completedStatus.classList.remove('text-red-600', 'text-green-600');
-            activeStatus.classList.add('text-gray-600');
-            completedStatus.classList.add('text-gray-600');
+            activeStatus.classList.add('text-gray-700');
+            completedStatus.classList.add('text-gray-700');
 
             try {
                 if (typeof window.supabase === 'undefined') {
