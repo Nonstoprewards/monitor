@@ -259,6 +259,14 @@
             50% { background-color: #b2f5ea; }
             100% { background-color: transparent; }
         }
+        .sexy .flash {
+            animation: sexyFlash 0.5s ease-out;
+        }
+        @keyframes sexyFlash {
+            0% { background-color: #ff69b4; }
+            50% { background-color: #c71585; }
+            100% { background-color: transparent; }
+        }
         @media (max-width: 640px) {
             .container {
                 padding: 1rem;
@@ -519,6 +527,7 @@
 
         // Basic Solana address validation
         function isValidSolanaAddress(address) {
+            if (!address || typeof address !== 'string') return false;
             return /^[1-9A-HJ-NP-Za-km-z]{43,44}$/.test(address);
         }
 
@@ -526,14 +535,17 @@
             const results = {};
             const validAddresses = tokenAddresses.filter(address => {
                 if (!isValidSolanaAddress(address)) {
-                    console.warn(`Invalid Solana address: ${address}`);
+                    console.warn(`Invalid or missing Solana address: ${address}`);
                     results[address] = { currentPrice: 'Invalid Address', marketCap: 'Invalid Address', volume24h: 'Invalid Address' };
                     return false;
                 }
                 return true;
             });
 
-            if (validAddresses.length === 0) return results;
+            if (validAddresses.length === 0) {
+                console.log('No valid addresses to fetch from DEXScreener');
+                return results;
+            }
 
             const batchSize = 30;
             const batches = [];
@@ -561,7 +573,7 @@
                             const cached = priceCache.get(`dexscreener:${address}`);
                             if (cached && cached.data) {
                                 results[address] = cached.data;
-                                console.log(`Using cached data for address: ${address}`);
+                                console.log(`Using cached data for address: ${address}`, cached.data);
                             } else {
                                 console.warn(`Cache miss or invalid cache for address: ${address}`);
                                 results[address] = { currentPrice: 'Not Cached', marketCap: 'Not Cached', volume24h: 'Not Cached' };
@@ -701,12 +713,12 @@
                     return;
                 }
 
-                console.log(`Fetched ${data.length} trades from Supabase`, data);
-
-                const currentCompletedTradeIds = new Set(completedTrades.map(trade => trade.id));
-                activeTrades = data.filter(trade => trade.status === 'open' || !trade.sell_timestamp);
-                completedTrades = data.filter(trade => trade.status === 'closed' && trade.sell_timestamp);
+                console.log(`Raw Supabase response: ${data.length} trades`, data);
+                activeTrades = data.filter(trade => !trade.sell_timestamp || trade.status !== 'closed');
+                completedTrades = data.filter(trade => trade.sell_timestamp && trade.status === 'closed');
                 filteredCompletedTrades = completedTrades;
+
+                console.log(`Filtered: ${activeTrades.length} active trades, ${completedTrades.length} completed trades`);
 
                 const newCompletedTrades = completedTrades.filter(trade => !lastCompletedTradeIds.has(trade.id));
                 if (newCompletedTrades.length > 0) {
@@ -718,8 +730,8 @@
 
                 if (activeTrades.length === 0) {
                     activeStatus.textContent = 'No active trades found';
-                    activeTradesBody.innerHTML = '';
-                    activeTradesCards.innerHTML = '';
+                    activeTradesBody.innerHTML = '<tr><td colspan="8" class="py-2 px-4 text-center">No active trades available</td></tr>';
+                    activeTradesCards.innerHTML = '<p class="text-center">No active trades available</p>';
                 } else {
                     activeStatus.textContent = `Loaded ${activeTrades.length} active trades`;
                     activeStatus.classList.add('text-green-600');
@@ -728,8 +740,8 @@
 
                 if (completedTrades.length === 0) {
                     completedStatus.textContent = 'No completed trades found';
-                    completedTradesBody.innerHTML = '';
-                    completedTradesCards.innerHTML = '';
+                    completedTradesBody.innerHTML = '<tr><td colspan="8" class="py-2 px-4 text-center">No completed trades available</td></tr>';
+                    completedTradesCards.innerHTML = '<p class="text-center">No completed trades available</p>';
                 } else {
                     completedStatus.textContent = `Loaded ${completedTrades.length} completed trades`;
                     completedStatus.classList.add('text-green-600');
@@ -788,10 +800,17 @@
             const end = start + tradesPerPage;
             const pageTrades = activeTrades.slice(start, end);
 
-            const tokenAddresses = pageTrades.map(trade => trade.token_address).filter(addr => addr);
+            const tokenAddresses = pageTrades
+                .map(trade => trade.token_address)
+                .filter(addr => isValidSolanaAddress(addr));
+            console.log(`Fetching token data for active trades: ${tokenAddresses.join(', ')}`);
             const tokenData = await fetchTokenData(tokenAddresses);
 
             for (const trade of pageTrades) {
+                if (!isValidSolanaAddress(trade.token_address)) {
+                    console.warn(`Skipping rendering for trade with invalid token_address: ${trade.id || 'unknown'}`);
+                    continue;
+                }
                 const data = tokenData[trade.token_address] || {
                     currentPrice: 'Not Indexed',
                     marketCap: 'Not Indexed',
@@ -804,7 +823,7 @@
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td class="py-2 px-4"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address ? trade.token_address.slice(0, 6) + '...' + trade.token_address.slice(-4) : '-'}</a></td>
+                    <td class="py-2 px-4"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6) + '...' + trade.token_address.slice(-4)}</a></td>
                     <td class="py-2 px-4">${trade.token_symbol || '-'}</td>
                     <td class="py-2 px-4">${trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-'}</td>
                     <td class="py-2 px-4">${data.currentPrice}</td>
@@ -820,7 +839,7 @@
                 card.innerHTML = `
                     <div class="flex mb-2">
                         <span class="card-label">Token:</span>
-                        <span class="card-value"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address ? trade.token_address.slice(0, 6) + '...' + trade.token_address.slice(-4) : '-'}</a></span>
+                        <span class="card-value"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6) + '...' + trade.token_address.slice(-4)}</a></span>
                     </div>
                     <div class="flex mb-2">
                         <span class="card-label">Symbol:</span>
@@ -864,14 +883,29 @@
             const end = start + tradesPerPage;
             const pageTrades = filteredCompletedTrades.slice(start, end);
 
+            const tokenAddresses = pageTrades
+                .map(trade => trade.token_address)
+                .filter(addr => isValidSolanaAddress(addr));
+            console.log(`Fetching token data for completed trades: ${tokenAddresses.join(', ')}`);
+            const tokenData = await fetchTokenData(tokenAddresses);
+
             for (const trade of pageTrades) {
+                if (!isValidSolanaAddress(trade.token_address)) {
+                    console.warn(`Skipping rendering for trade with invalid token_address: ${trade.id || 'unknown'}`);
+                    continue;
+                }
+                const data = tokenData[trade.token_address] || {
+                    currentPrice: 'Not Indexed',
+                    marketCap: 'Not Indexed',
+                    volume24h: 'Not Indexed'
+                };
                 const totalProfit = trade.quantity != null && trade.buy_price_usd != null && trade.sell_price_usd != null
                     ? ((trade.sell_price_usd - trade.buy_price_usd) * trade.quantity).toFixed(2)
                     : 'N/A';
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td class="py-2 px-4"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address ? trade.token_address.slice(0, 6) + '...' + trade.token_address.slice(-4) : '-'}</a></td>
+                    <td class="py-2 px-4"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6) + '...' + trade.token_address.slice(-4)}</a></td>
                     <td class="py-2 px-4">${trade.token_symbol || '-'}</td>
                     <td class="py-2 px-4">${trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-'}</td>
                     <td class="py-2 px-4">${trade.sell_price_usd ? trade.sell_price_usd.toFixed(6) : '-'}</td>
@@ -887,7 +921,7 @@
                 card.innerHTML = `
                     <div class="flex mb-2">
                         <span class="card-label">Token:</span>
-                        <span class="card-value"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address ? trade.token_address.slice(0, 6) + '...' + trade.token_address.slice(-4) : '-'}</a></span>
+                        <span class="card-value"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6) + '...' + trade.token_address.slice(-4)}</a></span>
                     </div>
                     <div class="flex mb-2">
                         <span class="card-label">Symbol:</span>
