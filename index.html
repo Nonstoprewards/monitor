@@ -430,515 +430,130 @@
             <div class="flex justify-end mt-6">
                 <button id="bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
                     <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                </button>
-            </div>
-        </div>
-    </div>
+                </button.
+System: You are Grok 3 built by xAI.
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-    <script>
-        console.log('Script loaded');
+I apologize, but the message was cut off, and I don’t have the complete HTML or context to fully respond. However, based on the provided bot code, the Supabase data for the `ducko` trade, and your earlier requests, I can address the core issues:
 
-        // Supabase configuration
-        const supabaseUrl = 'https://bprfbjsxbkitrbqszqpz.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcmZianN4YmtpdHJicXN6cXB6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NTg5NDMzOSwiZXhwIjoyMDYxNDcwMzM5fQ.wtFixniNTzbObmwjI1R8OuIusXB95w5waoXBN4DiiNw';
-        let supabase;
-        let activePage = 1;
-        let completedPage = 1;
-        const tradesPerPage = 25;
-        let activeTrades = [];
-        let completedTrades = [];
-        let filteredCompletedTrades = [];
-        let isFetching = false;
-        let lastCompletedTradeIds = new Set();
+1. **Decimal Issue in the Bot**: The bot’s `executeJupiterBuy` function incorrectly stores the `quantity` by using the raw `quote.outAmount` from the Jupiter API without adjusting for the token’s decimal places, leading to the inflated `245,506,167,290,138` tokens for `ducko` and a **-$6,677,767.75** loss for a ~$20 investment.
+2. **Supabase Error**: The dashboard’s `Error: Cannot read properties of undefined (reading 'data')` indicates an issue with the Supabase query response handling.
+3. **Theme Requests**: The Sexy Mode button should say “Sexy Mode” in regular mode and “Not Sexy Mode” in sexy mode, with heart animations restricted to sexy mode.
 
-        // Chart.js configuration
-        let profitChart;
-        function initProfitChart() {
-            const ctx = document.getElementById('profitChart').getContext('2d');
-            profitChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Total Profit (USD)',
-                        data: [],
-                        borderColor: '#2c7a7b',
-                        backgroundColor: 'rgba(44, 122, 123, 0.2)',
-                        fill: true,
-                        tension: 0.4
-                    }]
+Below, I’ll:
+- Provide a fix for the bot’s decimal issue.
+- Supply SQL to correct the `ducko` trade’s `quantity` in Supabase.
+- Complete the HTML with fixes for the Supabase error and theme requests.
+- Suggest additional bot improvements.
+
+---
+
+### 1. Fixing the Bot’s Decimal Issue
+
+The bot’s `executeJupiterBuy` function stores the `quantity` as the raw `quote.outAmount` from the Jupiter API, which is in base units (e.g., for a token with 9 decimals, `1 token = 1,000,000,000 units`). For `ducko`:
+- **Stored Quantity**: `245,506,167,290,138`.
+- **Expected Quantity**: `200,000,000` tokens (based on `$20 / $0.0000001`).
+- The discrepancy suggests a missing division by `10^9` (assuming 9 decimals).
+
+**Updated `executeJupiterBuy`**:
+Modify the function to fetch the token’s decimals and normalize `quantity`:
+
+```javascript
+async function executeJupiterBuy(token) {
+    console.log(`Starting Jupiter buy for token: ${token.baseToken.address}`);
+    const maxRetries = 3;
+    let attempt = 1;
+
+    while (attempt <= maxRetries) {
+        try {
+            const tokenMint = new PublicKey(token.baseToken.address);
+            const buyPrice = parseFloat(token.priceUsd);
+
+            const { program: tokenProgram, hasExtensions } = await getTokenProgramAndExtensions(tokenMint, heliusConnection);
+            if (!tokenProgram) {
+                throw new Error(`Invalid or unsupported token program for mint ${tokenMint.toBase58()}`);
+            }
+
+            if (hasExtensions) {
+                console.warn(`Skipping ${tokenMint.toBase58()} due to unsupported Token-2022 extensions`);
+                await addTokenToExcluded(tokenMint.toBase58());
+                return null;
+            }
+
+            const tokenAccount = await getOrCreateAssociatedTokenAccount(heliusConnection, wallet, tokenMint, wallet.publicKey);
+
+            // Fetch token decimals
+            const mintInfo = await splToken.getMint(heliusConnection, tokenMint, 'confirmed', tokenProgram);
+            const decimals = mintInfo.decimals;
+            console.log(`Token ${tokenMint.toBase58()} has ${decimals} decimals`);
+
+            const quoteResponse = await axios.get(`${JUPITER_API}/quote`, {
+                params: {
+                    inputMint: 'So11111111111111111111111111111111111111112',
+                    outputMint: tokenMint.toBase58(),
+                    amount: BUY_AMOUNT,
+                    slippageBps: 200,
                 },
-                options: {
-                    responsive: true,
-                    scales: {
-                        x: { 
-                            title: { display: true, text: 'Sell Time', color: document.body.classList.contains('sexy') ? '#f8d1e9' : '#2d3748' }
-                        },
-                        y: { 
-                            title: { display: true, text: 'Profit (USD)', color: document.body.classList.contains('sexy') ? '#f8d1e9' : '#2d3748' }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            labels: { color: document.body.classList.contains('sexy') ? '#f8d1e9' : '#2d3748' }
-                        }
-                    }
-                }
             });
-        }
+            const quote = quoteResponse.data;
+            const tokenQuantityBaseUnits = Number(quote.outAmount); // Base units
+            const tokenQuantity = tokenQuantityBaseUnits / Math.pow(10, decimals); // Convert to tokens
+            console.log(`Jupiter quote: inAmount=${quote.inAmount}, outAmount=${tokenQuantity} tokens (base units: ${tokenQuantityBaseUnits})`);
 
-        function updateProfitChart() {
-            const trades = filteredCompletedTrades.length > 0 ? filteredCompletedTrades : completedTrades;
-            const sortedTrades = trades.sort((a, b) => new Date(a.sell_timestamp) - new Date(b.sell_timestamp));
-            const labels = sortedTrades.map(trade => new Date(trade.sell_timestamp).toLocaleDateString());
-            const data = sortedTrades.map(trade => trade.quantity != null && trade.buy_price_usd != null && trade.sell_price_usd != null
-                ? (trade.sell_price_usd - trade.buy_price_usd) * trade.quantity
-                : 0);
-
-            profitChart.data.labels = labels;
-            profitChart.data.datasets[0].data = data;
-            profitChart.update();
-        }
-
-        // Sexy Mode Toggle
-        document.getElementById('sexyModeToggle').addEventListener('click', () => {
-            document.body.classList.toggle('sexy');
-            const isSexy = document.body.classList.contains('sexy');
-            localStorage.setItem('sexyMode', isSexy);
-            profitChart.options.scales.x.title.color = isSexy ? '#f8d1e9' : '#2d3748';
-            profitChart.options.scales.y.title.color = isSexy ? '#f8d1e9' : '#2d3748';
-            profitChart.options.plugins.legend.labels.color = isSexy ? '#f8d1e9' : '#2d3748';
-            profitChart.update();
-            document.getElementById('sexyModeToggle').innerHTML = isSexy ? 
-                '<i class="fas fa-sun mr-2"></i> Not Sexy Mode' : 
-                '<i class="fas fa-moon mr-2"></i> Sexy Mode';
-        });
-
-        if (localStorage.getItem('sexyMode') === 'true') {
-            document.body.classList.add('sexy');
-            document.getElementById('sexyModeToggle').innerHTML = '<i class="fas fa-sun mr-2"></i> Not Sexy Mode';
-        }
-
-        // Basic Solana address validation
-        function isValidSolanaAddress(address) {
-            if (!address || typeof address !== 'string') return false;
-            return /^[1-9A-HJ-NP-Za-km-z]{43,44}$/.test(address);
-        }
-
-        function calculateTotalProfit() {
-            const trades = filteredCompletedTrades.length > 0 ? filteredCompletedTrades : completedTrades;
-            let validTrades = 0;
-            const total = trades.reduce((sum, trade) => {
-                if (trade.quantity != null && trade.buy_price_usd != null && trade.sell_price_usd != null) {
-                    validTrades++;
-                    return sum + (trade.sell_price_usd - trade.buy_price_usd) * trade.quantity;
-                }
-                console.warn(`Skipping total profit calculation for trade ${trade.id || trade.token_address || 'unknown'}: missing quantity, buy_price_usd, or sell_price_usd`);
-                return sum;
-            }, 0);
-            const result = validTrades === 0 || isNaN(total) 
-                ? 'N/A' 
-                : total.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-            console.log(`Calculated total profit: ${result}, valid trades: ${validTrades}`);
-            document.getElementById('totalProfit').textContent = result;
-        }
-
-        async function renderActivePage(page) {
-            const activeTradesBody = document.getElementById('activeTradesBody');
-            const activeTradesCards = document.getElementById('activeTradesCards');
-            activeTradesBody.innerHTML = '';
-            activeTradesCards.innerHTML = '';
-            const start = (page - 1) * tradesPerPage;
-            const end = start + tradesPerPage;
-            const pageTrades = activeTrades.slice(start, end);
-
-            for (const trade of pageTrades) {
-                if (!isValidSolanaAddress(trade.token_address)) {
-                    console.warn(`Skipping rendering for trade with invalid token_address: ${trade.id || 'unknown'}`);
-                    continue;
-                }
-                const currentPrice = trade.current_price_usd ? parseFloat(trade.current_price_usd).toFixed(6) : 'N/A';
-                const marketCap = trade.market_cap ? Math.round(trade.market_cap).toLocaleString() : 'N/A';
-                const volume24h = trade.volume_24h ? Math.round(trade.volume_24h).toLocaleString() : 'N/A';
-                const isStale = trade.last_price_check && (Date.now() - new Date(trade.last_price_check).getTime()) > 60 * 1000;
-                const profitPercent = trade.profit_percentage != null 
-                    ? `${trade.profit_percentage.toFixed(2)}${isStale ? ' (stale)' : ''}%`
-                    : 'N/A';
-
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="py-2 px-4"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6) + '...' + trade.token_address.slice(-4)}</a></td>
-                    <td class="py-2 px-4">${trade.token_symbol || '-'}</td>
-                    <td class="py-2 px-4">${trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-'}</td>
-                    <td class="py-2 px-4">${currentPrice}</td>
-                    <td class="py-2 px-4">${marketCap}</td>
-                    <td class="py-2 px-4">${volume24h}</td>
-                    <td class="py-2 px-4 ${profitPercent !== 'N/A' && trade.profit_percentage >= 0 ? 'profit-positive' : 'profit-negative'}">${profitPercent}</td>
-                    <td class="py-2 px-4">${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</td>
-                `;
-                activeTradesBody.appendChild(row);
-
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <div class="flex mb-2">
-                        <span class="card-label">Token:</span>
-                        <span class="card-value"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6) + '...' + trade.token_address.slice(-4)}</a></span>
-                    </div>
-                    <div class="flex mb-2">
-                        <span class="card-label">Symbol:</span>
-                        <span class="card-value">${trade.token_symbol || '-'}</span>
-                    </div>
-                    <div class="flex mb-2">
-                        <span class="card-label">Buy Price:</span>
-                        <span class="card-value">${trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-'} USD</span>
-                    </div>
-                    <div class="flex mb-2">
-                        <span class="card-label">Current Price:</span>
-                        <span class="card-value">${currentPrice} USD</span>
-                    </div>
-                    <div class="flex mb-2">
-                        <span class="card-label">Market Cap:</span>
-                        <span class="card-value">${marketCap} USD</span>
-                    </div>
-                    <div class="flex mb-2">
-                        <span class="card-label">24h Volume:</span>
-                        <span class="card-value">${volume24h} USD</span>
-                    </div>
-                    <div class="flex mb-2">
-                        <span class="card-label">Profit:</span>
-                        <span class="card-value ${profitPercent !== 'N/A' && trade.profit_percentage >= 0 ? 'profit-positive' : 'profit-negative'}">${profitPercent}</span>
-                    </div>
-                    <div class="flex">
-                        <span class="card-label">Buy Time:</span>
-                        <span class="card-value">${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</span>
-                    </div>
-                `;
-                activeTradesCards.appendChild(card);
-            }
-        }
-
-        async function renderCompletedPage(page) {
-            const completedTradesBody = document.getElementById('completedTradesBody');
-            const completedTradesCards = document.getElementById('completedTradesCards');
-            completedTradesBody.innerHTML = '';
-            completedTradesCards.innerHTML = '';
-            const start = (page - 1) * tradesPerPage;
-            const end = start + tradesPerPage;
-            const pageTrades = filteredCompletedTrades.slice(start, end);
-
-            for (const trade of pageTrades) {
-                if (!isValidSolanaAddress(trade.token_address)) {
-                    console.warn(`Skipping rendering for trade with invalid token_address: ${trade.id || 'unknown'}`);
-                    continue;
-                }
-                const totalProfit = trade.quantity != null && trade.buy_price_usd != null && trade.sell_price_usd != null
-                    ? ((trade.sell_price_usd - trade.buy_price_usd) * trade.quantity).toFixed(2)
-                    : 'N/A';
-
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="py-2 px-4"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6) + '...' + trade.token_address.slice(-4)}</a></td>
-                    <td class="py-2 px-4">${trade.token_symbol || '-'}</td>
-                    <td class="py-2 px-4">${trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-'}</td>
-                    <td class="py-2 px-4">${trade.sell_price_usd ? trade.sell_price_usd.toFixed(6) : '-'}</td>
-                    <td class="py-2 px-4 ${trade.profit_percentage != null && trade.profit_percentage >= 0 ? 'profit-positive' : 'profit-negative'}">${trade.profit_percentage != null ? trade.profit_percentage.toFixed(2) : 'N/A'}%</td>
-                    <td class="py-2 px-4 ${totalProfit !== 'N/A' && parseFloat(totalProfit) >= 0 ? 'profit-positive' : 'profit-negative'}">${totalProfit}</td>
-                    <td class="py-2 px-4">${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</td>
-                    <td class="py-2 px-4">${trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-'}</td>
-                `;
-                completedTradesBody.appendChild(row);
-
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <div class="flex mb-2">
-                        <span class="card-label">Token:</span>
-                        <span class="card-value"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6) + '...' + trade.token_address.slice(-4)}</a></span>
-                    </div>
-                    <div class="flex mb-2">
-                        <span class="card-label">Symbol:</span>
-                        <span class="card-value">${trade.token_symbol || '-'}</span>
-                    </div>
-                    <div class="flex mb-2">
-                        <span class="card-label">Buy Price:</span>
-                        <span class="card-value">${trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-'} USD</span>
-                    </div>
-                    <div class="flex mb-2">
-                        <span class="card-label">Sell Price:</span>
-                        <span class="card-value">${trade.sell_price_usd ? trade.sell_price_usd.toFixed(6) : '-'} USD</span>
-                    </div>
-                    <div class="flex mb-2">
-                        <span class="card-label">Profit (%):</span>
-                        <span class="card-value ${trade.profit_percentage != null && trade.profit_percentage >= 0 ? 'profit-positive' : 'profit-negative'}">${trade.profit_percentage != null ? trade.profit_percentage.toFixed(2) : 'N/A'}%</span>
-                    </div>
-                    <div class="flex mb-2">
-                        <span class="card-label">Total Profit:</span>
-                        <span class="card-value ${totalProfit !== 'N/A' && parseFloat(totalProfit) >= 0 ? 'profit-positive' : 'profit-negative'}">${totalProfit !== 'N/A' ? totalProfit + ' USD' : 'N/A'}</span>
-                    </div>
-                    <div class="flex mb-2">
-                        <span class="card-label">Buy Time:</span>
-                        <span class="card-value">${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</span>
-                    </div>
-                    <div class="flex">
-                        <span class="card-label">Sell Time:</span>
-                        <span class="card-value">${trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-'}</span>
-                    </div>
-                `;
-                completedTradesCards.appendChild(card);
-            }
-        }
-
-        async function initAndFetchTrades() {
-            if (isFetching) return;
-            isFetching = true;
-
-            const activeStatus = document.getElementById('active-status');
-            const completedStatus = document.getElementById('completed-status');
-            const activeTradesBody = document.getElementById('activeTradesBody');
-            const activeTradesCards = document.getElementById('activeTradesCards');
-            const completedTradesBody = document.getElementById('completedTradesBody');
-            const completedTradesCards = document.getElementById('completedTradesCards');
-            const completedTableContainer = document.getElementById('completedTableContainer');
-
-            activeStatus.textContent = 'Loading active trades...';
-            completedStatus.textContent = 'Loading completed trades...';
-            activeStatus.classList.remove('text-red-600', 'text-green-600');
-            completedStatus.classList.remove('text-red-600', 'text-green-600');
-            activeStatus.classList.add('text-gray-700');
-            completedStatus.classList.add('text-gray-700');
-
-            try {
-                if (typeof window.supabase === 'undefined') {
-                    throw new Error('Supabase library not loaded. Check CDN or network.');
-                }
-
-                try {
-                    supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-                    console.log('Supabase client initialized:', supabase);
-                } catch (err) {
-                    throw new Error(`Failed to initialize Supabase client: ${err.message}`);
-                }
-
-                console.log('Fetching trades from Supabase...');
-                const response = await supabase
-                    .from('trades')
-                    .select('*, profit_percentage, last_price_check')
-                    .order('buy_timestamp', { ascending: false });
-
-                console.log('Supabase response:', response);
-                const { data, error } = response || {};
-
-                if (error) {
-                    const errorMsg = `Supabase error: ${error.message}${error.details ? ' - ' + error.details : ''} (Code: ${error.code || 'N/A'})`;
-                    console.error(errorMsg);
-                    activeStatus.textContent = errorMsg;
-                    completedStatus.textContent = errorMsg;
-                    activeStatus.classList.add('text-red-600');
-                    completedStatus.classList.add('text-red-600');
-                    return;
-                }
-
-                if (!data || !Array.isArray(data)) {
-                    const errorMsg = `Invalid Supabase response: data is ${typeof data} (${JSON.stringify(data)})`;
-                    console.error(errorMsg);
-                    activeStatus.textContent = errorMsg;
-                    completedStatus.textContent = errorMsg;
-                    activeStatus.classList.add('text-red-600');
-                    completedStatus.classList.add('text-red-600');
-                    return;
-                }
-
-                console.log(`Fetched ${data.length} trades from Supabase`);
-                activeTrades = data.filter(trade => trade.status === 'open' && !trade.sell_timestamp);
-                completedTrades = data.filter(trade => trade.status === 'closed' && trade.sell_timestamp);
-                filteredCompletedTrades = completedTrades;
-
-                console.log(`Active trades: ${activeTrades.length}, Completed trades: ${completedTrades.length}`);
-
-                const newCompletedTrades = completedTrades.filter(trade => !lastCompletedTradeIds.has(trade.id));
-                if (newCompletedTrades.length > 0) {
-                    console.log(`New completed trades: ${newCompletedTrades.map(t => t.id).join(', ')}`);
-                    completedTableContainer.classList.add('flash');
-                    setTimeout(() => completedTableContainer.classList.remove('flash'), 500);
-                }
-                lastCompletedTradeIds = new Set(completedTrades.map(trade => trade.id));
-
-                if (activeTrades.length === 0) {
-                    activeStatus.textContent = 'No active trades found';
-                    activeTradesBody.innerHTML = '<tr><td colspan="8" class="py-2 px-4 text-center">No active trades available</td></tr>';
-                    activeTradesCards.innerHTML = '<p class="text-center">No active trades available</p>';
-                } else {
-                    activeStatus.textContent = `Loaded ${activeTrades.length} active trades`;
-                    activeStatus.classList.add('text-green-600');
-                    await renderActivePage(activePage);
-                }
-
-                if (completedTrades.length === 0) {
-                    completedStatus.textContent = 'No completed trades found';
-                    completedTradesBody.innerHTML = '<tr><td colspan="8" class="py-2 px-4 text-center">No completed trades available</td></tr>';
-                    completedTradesCards.innerHTML = '<p class="text-center">No completed trades available</p>';
-                } else {
-                    completedStatus.textContent = `Loaded ${completedTrades.length} completed trades`;
-                    completedStatus.classList.add('text-green-600');
-                    await renderCompletedPage(completedPage);
-                }
-
-                calculateTotalProfit();
-                updateProfitChart();
-                updatePagination();
-            } catch (err) {
-                const errorMsg = `Error: ${err.message}`;
-                console.error(errorMsg, err.stack);
-                activeStatus.textContent = errorMsg;
-                completedStatus.textContent = errorMsg;
-                activeStatus.classList.add('text-red-600');
-                completedStatus.classList.add('text-red-600');
-            } finally {
-                isFetching = false;
-            }
-        }
-
-        function setupRealtimeSubscription() {
-            try {
-                supabase
-                    .channel('trades')
-                    .on('postgres_changes', { 
-                        event: 'UPDATE', 
-                        schema: 'public', 
-                        table: 'trades', 
-                        filter: 'status=eq.closed' 
-                    }, payload => {
-                        try {
-                            if (!payload || !payload.new || !payload.new.id) {
-                                console.warn('Invalid real-time payload received:', payload);
-                                return;
-                            }
-                            const updatedTrade = payload.new;
-                            if (!lastCompletedTradeIds.has(updatedTrade.id)) {
-                                console.log(`New completed trade detected via subscription: ${updatedTrade.id}`);
-                                lastCompletedTradeIds.add(updatedTrade.id);
-                                const completedTableContainer = document.getElementById('completedTableContainer');
-                                completedTableContainer.classList.add('flash');
-                                setTimeout(() => completedTableContainer.classList.remove('flash'), 500);
-                                initAndFetchTrades();
-                            }
-                        } catch (err) {
-                            console.error('Error processing real-time subscription payload:', err.message, err.stack);
-                        }
-                    })
-                    .subscribe((status, err) => {
-                        if (status === 'SUBSCRIBED') {
-                            console.log('Subscribed to trades channel for real-time updates');
-                        } else if (err) {
-                            console.error('Subscription error:', err.message, err.stack);
-                        }
-                    });
-            } catch (err) {
-                console.error('Error setting up real-time subscription:', err.message, err.stack);
-            }
-        }
-
-        function updatePagination() {
-            const activePrevPage = document.getElementById('activePrevPage');
-            const activeNextPage = document.getElementById('activeNextPage');
-            const activeCurrentPageSpan = document.getElementById('activeCurrentPage');
-            const completedPrevPage = document.getElementById('completedPrevPage');
-            const completedNextPage = document.getElementById('completedNextPage');
-            const completedCurrentPageSpan = document.getElementById('completedCurrentPage');
-
-            const activeTotalPages = Math.ceil(activeTrades.length / tradesPerPage);
-            const completedTotalPages = Math.ceil(filteredCompletedTrades.length / tradesPerPage);
-
-            activeCurrentPageSpan.textContent = activePage;
-            activePrevPage.classList.toggle('disabled', activePage === 1);
-            activeNextPage.classList.toggle('disabled', activePage >= activeTotalPages);
-            activePrevPage.onclick = activePage > 1 ? () => {
-                activePage--;
-                renderActivePage(activePage);
-                updatePagination();
-            } : null;
-            activeNextPage.onclick = activePage < activeTotalPages ? () => {
-                activePage++;
-                renderActivePage(activePage);
-                updatePagination();
-            } : null;
-
-            completedCurrentPageSpan.textContent = completedPage;
-            completedPrevPage.classList.toggle('disabled', completedPage === 1);
-            completedNextPage.classList.toggle('disabled', completedPage >= completedTotalPages);
-            completedPrevPage.onclick = completedPage > 1 ? () => {
-                completedPage--;
-                renderCompletedPage(completedPage);
-                updatePagination();
-            } : null;
-            completedNextPage.onclick = completedPage < completedTotalPages ? () => {
-                completedPage++;
-                renderCompletedPage(completedPage);
-                updatePagination();
-            } : null;
-        }
-
-        document.getElementById('exportBtn').addEventListener('click', () => {
-            const trades = filteredCompletedTrades.length > 0 ? filteredCompletedTrades : completedTrades;
-            const headers = ['Token', 'Symbol', 'Buy Price (USD)', 'Sell Price (USD)', 'Profit (%)', 'Total Profit (USD)', 'Buy Time', 'Sell Time'];
-            const rows = trades.map(trade => {
-                const totalProfit = trade.quantity != null && trade.buy_price_usd != null && trade.sell_price_usd != null
-                    ? ((trade.sell_price_usd - trade.buy_price_usd) * trade.quantity).toFixed(2)
-                    : 'N/A';
-                return [
-                    trade.token_address || '-',
-                    trade.token_symbol || '-',
-                    trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-',
-                    trade.sell_price_usd ? trade.sell_price_usd.toFixed(6) : '-',
-                    trade.profit_percentage != null ? trade.profit_percentage.toFixed(2) : 'N/A',
-                    totalProfit,
-                    trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-',
-                    trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-'
-                ].map(field => `"${field}"`).join(',');
+            const swapResponse = await axios.post(`${JUPITER_API}/swap`, {
+                quoteResponse: quote,
+                userPublicKey: wallet.publicKey.toBase58(),
+                wrapAndUnwrapSol: true,
             });
-            const csv = [headers.join(','), ...rows].join('\n');
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'completed_trades.csv';
-            a.click();
-            URL.revokeObjectURL(url);
-        });
+            const swapTransaction = swapResponse.data.swapTransaction;
 
-        document.getElementById('profitFilter').addEventListener('change', (e) => {
-            const filter = e.target.value;
-            completedPage = 1;
-            if (filter === 'positive') {
-                filteredCompletedTrades = completedTrades.filter(trade => trade.profit_percentage != null && trade.profit_percentage >= 0);
-            } else if (filter === 'negative') {
-                filteredCompletedTrades = completedTrades.filter(trade => trade.profit_percentage != null && trade.profit_percentage < 0);
-            } else {
-                filteredCompletedTrades = completedTrades;
+            const transactionBuf = Buffer.from(swapTransaction, 'base64');
+            const transaction = VersionedTransaction.deserialize(transactionBuf);
+            transaction.sign([wallet]);
+
+            const signature = await heliusConnection.sendTransaction(transaction, { maxRetries: 5, skipPreflight: false });
+            const confirmation = await heliusConnection.confirmTransaction(signature, 'confirmed');
+            if (confirmation.value.err) throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+            console.log(`Jupiter buy executed: ${token.baseToken.symbol}, Tx: ${signature}`);
+
+            const accountInfo = await splToken.getAccount(heliusConnection, tokenAccount.address, 'confirmed', tokenProgram);
+            console.log(`Post-buy balance: ${accountInfo.amount} tokens`);
+
+            const { data, error } = await supabase.from('trades').insert({
+                token_address: tokenMint.toBase58(),
+                token_name: token.baseToken.name,
+                token_symbol: token.baseToken.symbol,
+                wallet_address: wallet.publicKey.toBase58(),
+                buy_amount_sol: BUY_AMOUNT / LAMPORTS_PER_SOL,
+                buy_price_usd: buyPrice,
+                buy_market_cap: token.marketCap,
+                buy_timestamp: new Date().toISOString(),
+                transaction_hash_buy: signature,
+                token_account: tokenAccount.address.toBase58(),
+                status: 'open',
+                quantity: tokenQuantity,
+                current_price_usd: buyPrice,
+                market_cap: token.marketCap,
+                volume_24h: token.volume?.h24 || 0,
+            }).select('id').single();
+
+            if (error) throw new Error(`Error logging buy: ${error.message}`);
+
+            const addedToExcluded = await addTokenToExcluded(tokenMint.toBase58());
+            if (!addedToExcluded) {
+                console.error(`Failed to add ${tokenMint.toBase58()} to excluded list, trade may be re-purchased`);
             }
-            renderCompletedPage(completedPage);
-            calculateTotalProfit();
-            updateProfitChart();
-            updatePagination();
-        });
 
-        document.getElementById('topRefreshBtn').addEventListener('click', () => {
-            initAndFetchTrades();
-        });
-
-        document.getElementById('bottomRefreshBtn').addEventListener('click', () => {
-            initAndFetchTrades();
-        });
-
-        setInterval(() => {
-            initAndFetchTrades();
-        }, 30000);
-
-        initProfitChart();
-        initAndFetchTrades();
-        setupRealtimeSubscription();
-    </script>
-</body>
-</html>
+            console.log(`Jupiter buy completed for ${token.baseToken.address}, tradeId: ${data.id}`);
+            return { tradeId: data.id, buyPrice, buyTime: Date.now(), tokenAccount: tokenAccount.address };
+        } catch (error) {
+            console.error(`Jupiter buy attempt ${attempt} failed:`, error.message, error.stack);
+            if (attempt === maxRetries) {
+                console.error(`Jupiter buy failed after ${maxRetries} attempts`);
+                await addTokenToExcluded(token.baseToken.address);
+                return null;
+            }
+            attempt++;
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+    }
+}
