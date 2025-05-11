@@ -94,7 +94,7 @@
             z-index: 10;
             position: relative;
         }
-        th:hover::after {
+        .sexy th:hover::after {
             content: '♥';
             position: absolute;
             top: 50%;
@@ -187,7 +187,7 @@
             transform: translateY(-3px);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
         }
-        .card:hover::after {
+        .sexy .card:hover::after {
             content: '♥';
             position: absolute;
             top: 10px;
@@ -213,7 +213,7 @@
         .btn:hover {
             transform: translateY(-2px);
         }
-        .btn:hover::after {
+        .sexy .btn:hover::after {
             content: '♥';
             position: absolute;
             top: 50%;
@@ -511,13 +511,13 @@
             profitChart.options.plugins.legend.labels.color = isSexy ? '#f8d1e9' : '#2d3748';
             profitChart.update();
             document.getElementById('sexyModeToggle').innerHTML = isSexy ? 
-                '<i class="fas fa-sun mr-2"></i> Light Mode' : 
+                '<i class="fas fa-sun mr-2"></i> Not Sexy Mode' : 
                 '<i class="fas fa-moon mr-2"></i> Sexy Mode';
         });
 
         if (localStorage.getItem('sexyMode') === 'true') {
             document.body.classList.add('sexy');
-            document.getElementById('sexyModeToggle').innerHTML = '<i class="fas fa-sun mr-2"></i> Light Mode';
+            document.getElementById('sexyModeToggle').innerHTML = '<i class="fas fa-sun mr-2"></i> Not Sexy Mode';
         }
 
         // Basic Solana address validation
@@ -644,7 +644,7 @@
                     <td class="py-2 px-4">${trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-'}</td>
                     <td class="py-2 px-4">${trade.sell_price_usd ? trade.sell_price_usd.toFixed(6) : '-'}</td>
                     <td class="py-2 px-4 ${trade.profit_percentage != null && trade.profit_percentage >= 0 ? 'profit-positive' : 'profit-negative'}">${trade.profit_percentage != null ? trade.profit_percentage.toFixed(2) : 'N/A'}%</td>
-                    <td class="py-2 px-4 ${totalProfit !== 'N/A' && parseFloat(totalProfit) >= 0 ? 'profit-positive' : 'profit-negative'}">${totalProfit !== 'N/A' ? totalProfit : 'N/A'}</td>
+                    <td class="py-2 px-4 ${totalProfit !== 'N/A' && parseFloat(totalProfit) >= 0 ? 'profit-positive' : 'profit-negative'}">${totalProfit}</td>
                     <td class="py-2 px-4">${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</td>
                     <td class="py-2 px-4">${trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-'}</td>
                 `;
@@ -716,16 +716,19 @@
 
                 try {
                     supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-                    console.log('Supabase client initialized');
+                    console.log('Supabase client initialized:', supabase);
                 } catch (err) {
                     throw new Error(`Failed to initialize Supabase client: ${err.message}`);
                 }
 
                 console.log('Fetching trades from Supabase...');
-                const { data, error } = await supabase
+                const response = await supabase
                     .from('trades')
                     .select('*, profit_percentage, last_price_check')
                     .order('buy_timestamp', { ascending: false });
+
+                console.log('Supabase response:', response);
+                const { data, error } = response || {};
 
                 if (error) {
                     const errorMsg = `Supabase error: ${error.message}${error.details ? ' - ' + error.details : ''} (Code: ${error.code || 'N/A'})`;
@@ -738,8 +741,8 @@
                 }
 
                 if (!data || !Array.isArray(data)) {
-                    const errorMsg = 'Invalid Supabase response: data is undefined or not an array';
-                    console.error(errorMsg, data);
+                    const errorMsg = `Invalid Supabase response: data is ${typeof data} (${JSON.stringify(data)})`;
+                    console.error(errorMsg);
                     activeStatus.textContent = errorMsg;
                     completedStatus.textContent = errorMsg;
                     activeStatus.classList.add('text-red-600');
@@ -798,31 +801,43 @@
         }
 
         function setupRealtimeSubscription() {
-            supabase
-                .channel('trades')
-                .on('postgres_changes', { 
-                    event: 'UPDATE', 
-                    schema: 'public', 
-                    table: 'trades', 
-                    filter: 'status=eq.closed' 
-                }, payload => {
-                    const updatedTrade = payload.new;
-                    if (!lastCompletedTradeIds.has(updatedTrade.id)) {
-                        console.log(`New completed trade detected via subscription: ${updatedTrade.id}`);
-                        lastCompletedTradeIds.add(updatedTrade.id);
-                        const completedTableContainer = document.getElementById('completedTableContainer');
-                        completedTableContainer.classList.add('flash');
-                        setTimeout(() => completedTableContainer.classList.remove('flash'), 500);
-                        initAndFetchTrades();
-                    }
-                })
-                .subscribe((status, err) => {
-                    if (status === 'SUBSCRIBED') {
-                        console.log('Subscribed to trades channel for real-time updates');
-                    } else if (err) {
-                        console.error('Subscription error:', err);
-                    }
-                });
+            try {
+                supabase
+                    .channel('trades')
+                    .on('postgres_changes', { 
+                        event: 'UPDATE', 
+                        schema: 'public', 
+                        table: 'trades', 
+                        filter: 'status=eq.closed' 
+                    }, payload => {
+                        try {
+                            if (!payload || !payload.new || !payload.new.id) {
+                                console.warn('Invalid real-time payload received:', payload);
+                                return;
+                            }
+                            const updatedTrade = payload.new;
+                            if (!lastCompletedTradeIds.has(updatedTrade.id)) {
+                                console.log(`New completed trade detected via subscription: ${updatedTrade.id}`);
+                                lastCompletedTradeIds.add(updatedTrade.id);
+                                const completedTableContainer = document.getElementById('completedTableContainer');
+                                completedTableContainer.classList.add('flash');
+                                setTimeout(() => completedTableContainer.classList.remove('flash'), 500);
+                                initAndFetchTrades();
+                            }
+                        } catch (err) {
+                            console.error('Error processing real-time subscription payload:', err.message, err.stack);
+                        }
+                    })
+                    .subscribe((status, err) => {
+                        if (status === 'SUBSCRIBED') {
+                            console.log('Subscribed to trades channel for real-time updates');
+                        } else if (err) {
+                            console.error('Subscription error:', err.message, err.stack);
+                        }
+                    });
+            } catch (err) {
+                console.error('Error setting up real-time subscription:', err.message, err.stack);
+            }
         }
 
         function updatePagination() {
