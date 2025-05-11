@@ -23,43 +23,43 @@
             font-family: 'Poppins', sans-serif;
             font-weight: 600;
         }
-        .dark {
+        .sexy {
             background-color: #1a202c;
             color: #e2e8f0;
         }
-        .dark .bg-light {
+        .sexy .bg-light {
             background-color: #2d3748;
         }
-        .dark .text-gray-700 {
+        .sexy .text-gray-700 {
             color: #cbd5e0;
         }
-        .dark .bg-teal-600 {
+        .sexy .bg-teal-600 {
             background-color: #2c7a7b;
         }
-        .dark .hover\:bg-teal-700:hover {
+        .sexy .hover\:bg-teal-700:hover {
             background-color: #285e61;
         }
-        .dark .profit-positive {
+        .sexy .profit-positive {
             color: #68d391;
         }
-        .dark .profit-negative {
+        .sexy .profit-negative {
             color: #f56565;
         }
-        .dark .card {
+        .sexy .card {
             background-color: #2d3748;
             border-color: #4a5568;
         }
-        .dark .card:hover {
+        .sexy .card:hover {
             background-color: #4a5568;
             transform: translateY(-3px);
         }
-        .dark th {
+        .sexy th {
             background-color: #1e2a44;
         }
-        .dark tr:nth-child(even) {
+        .sexy tr:nth-child(even) {
             background-color: #2d3748;
         }
-        .dark tr:hover {
+        .sexy tr:hover {
             background-color: #4a5568;
             border-left: 3px solid #2c7a7b;
         }
@@ -68,7 +68,7 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-        .dark .table-container {
+        .sexy .table-container {
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
         table {
@@ -80,7 +80,7 @@
             padding: 12px;
             border: 1px solid #e2e8f0;
         }
-        .dark th, .dark td {
+        .sexy th, .sexy td {
             border-color: #4a5568;
         }
         th {
@@ -112,7 +112,7 @@
             justify-content: center;
             transition: color 0.2s;
         }
-        .dark .pagination-arrow {
+        .sexy .pagination-arrow {
             color: #81e6d9;
         }
         .pagination-arrow:hover {
@@ -140,10 +140,10 @@
         a:hover::after {
             width: 100%;
         }
-        .dark a {
+        .sexy a {
             color: #81e6d9;
         }
-        .dark a::after {
+        .sexy a::after {
             background-color: #81e6d9;
         }
         .profit-positive {
@@ -171,7 +171,7 @@
             color: #1e2a44;
             margin-right: 8px;
         }
-        .dark .card-label {
+        .sexy .card-label {
             color: #e2e8f0;
         }
         .btn {
@@ -205,9 +205,18 @@
             padding: 24px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
-        .dark .section-card {
+        .sexy .section-card {
             background: linear-gradient(145deg, #2d3748, #1a202c);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        /* Flash animation for Completed Trades table */
+        .flash {
+            animation: flash 0.5s ease-out;
+        }
+        @keyframes flash {
+            0% { background-color: #e6fffa; }
+            50% { background-color: #b2f5ea; }
+            100% { background-color: transparent; }
         }
         @media (max-width: 640px) {
             .container {
@@ -271,8 +280,8 @@
         <div class="section-card">
             <div class="flex justify-between items-center mb-6">
                 <h1 class="text-3xl sm:text-4xl text-navy">Pump.Fun Trading Bot Dashboard</h1>
-                <button id="darkModeToggle" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                    <i class="fas fa-moon mr-2"></i> Dark Mode
+                <button id="sexyModeToggle" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                    <i class="fas fa-moon mr-2"></i> Sexy Mode
                 </button>
             </div>
             <div class="flex flex-col sm:flex-row justify-end mb-6 space-y-2 sm:space-y-0 sm:space-x-3">
@@ -334,7 +343,7 @@
                         <option value="negative">Negative Profit</option>
                     </select>
                 </div>
-                <div class="table-container">
+                <div id="completedTableContainer" class="table-container">
                     <table class="min-w-full">
                         <thead>
                             <tr>
@@ -394,6 +403,7 @@
         let isFetching = false;
         const priceCache = new Map();
         const CACHE_DURATION = 60000; // 60 seconds
+        let lastCompletedTradeIds = new Set(); // Track IDs of completed trades
 
         // APIs
         const DEXSCREENER_API = 'https://api.dexscreener.com';
@@ -419,15 +429,15 @@
                     responsive: true,
                     scales: {
                         x: { 
-                            title: { display: true, text: 'Sell Time', color: document.body.classList.contains('dark') ? '#e2e8f0' : '#2d3748' }
+                            title: { display: true, text: 'Sell Time', color: document.body.classList.contains('sexy') ? '#e2e8f0' : '#2d3748' }
                         },
                         y: { 
-                            title: { display: true, text: 'Profit (USD)', color: document.body.classList.contains('dark') ? '#e2e8f0' : '#2d3748' }
+                            title: { display: true, text: 'Profit (USD)', color: document.body.classList.contains('sexy') ? '#e2e8f0' : '#2d3748' }
                         }
                     },
                     plugins: {
                         legend: {
-                            labels: { color: document.body.classList.contains('dark') ? '#e2e8f0' : '#2d3748' }
+                            labels: { color: document.body.classList.contains('sexy') ? '#e2e8f0' : '#2d3748' }
                         }
                     }
                 }
@@ -447,23 +457,23 @@
             profitChart.update();
         }
 
-        // Dark Mode Toggle
-        document.getElementById('darkModeToggle').addEventListener('click', () => {
-            document.body.classList.toggle('dark');
-            const isDark = document.body.classList.contains('dark');
-            localStorage.setItem('darkMode', isDark);
-            profitChart.options.scales.x.title.color = isDark ? '#e2e8f0' : '#2d3748';
-            profitChart.options.scales.y.title.color = isDark ? '#e2e8f0' : '#2d3748';
-            profitChart.options.plugins.legend.labels.color = isDark ? '#e2e8f0' : '#2d3748';
+        // Sexy Mode Toggle
+        document.getElementById('sexyModeToggle').addEventListener('click', () => {
+            document.body.classList.toggle('sexy');
+            const isSexy = document.body.classList.contains('sexy');
+            localStorage.setItem('sexyMode', isSexy);
+            profitChart.options.scales.x.title.color = isSexy ? '#e2e8f0' : '#2d3748';
+            profitChart.options.scales.y.title.color = isSexy ? '#e2e8f0' : '#2d3748';
+            profitChart.options.plugins.legend.labels.color = isSexy ? '#e2e8f0' : '#2d3748';
             profitChart.update();
-            document.getElementById('darkModeToggle').innerHTML = isDark ? 
+            document.getElementById('sexyModeToggle').innerHTML = isSexy ? 
                 '<i class="fas fa-sun mr-2"></i> Light Mode' : 
-                '<i class="fas fa-moon mr-2"></i> Dark Mode';
+                '<i class="fas fa-moon mr-2"></i> Sexy Mode';
         });
 
-        if (localStorage.getItem('darkMode') === 'true') {
-            document.body.classList.add('dark');
-            document.getElementById('darkModeToggle').innerHTML = '<i class="fas fa-sun mr-2"></i> Light Mode';
+        if (localStorage.getItem('sexyMode') === 'true') {
+            document.body.classList.add('sexy');
+            document.getElementById('sexyModeToggle').innerHTML = '<i class="fas fa-sun mr-2"></i> Light Mode';
         }
 
         // Basic Solana address validation
@@ -588,6 +598,7 @@
             const activeTradesCards = document.getElementById('activeTradesCards');
             const completedTradesBody = document.getElementById('completedTradesBody');
             const completedTradesCards = document.getElementById('completedTradesCards');
+            const completedTableContainer = document.getElementById('completedTableContainer');
 
             activeStatus.textContent = 'Loading active trades...';
             completedStatus.textContent = 'Loading completed trades...';
@@ -634,9 +645,21 @@
                 }
 
                 console.log(`Fetched ${data.length} trades from Supabase`, data);
+
+                // Detect new completed trades
+                const currentCompletedTradeIds = new Set(completedTrades.map(trade => trade.id));
                 activeTrades = data.filter(trade => trade.status === 'open' || !trade.sell_timestamp);
                 completedTrades = data.filter(trade => trade.status === 'closed' && trade.sell_timestamp);
                 filteredCompletedTrades = completedTrades;
+
+                // Check for new completed trades
+                const newCompletedTrades = completedTrades.filter(trade => !lastCompletedTradeIds.has(trade.id));
+                if (newCompletedTrades.length > 0) {
+                    console.log(`Detected ${newCompletedTrades.length} new completed trades`, newCompletedTrades.map(t => t.id));
+                    completedTableContainer.classList.add('flash');
+                    setTimeout(() => completedTableContainer.classList.remove('flash'), 500); // Remove after animation
+                }
+                lastCompletedTradeIds = new Set(completedTrades.map(trade => trade.id));
 
                 if (activeTrades.length === 0) {
                     activeStatus.textContent = 'No active trades found';
@@ -671,6 +694,35 @@
             } finally {
                 isFetching = false;
             }
+        }
+
+        // Supabase real-time subscription for new completed trades
+        function setupRealtimeSubscription() {
+            supabase
+                .channel('trades')
+                .on('postgres_changes', { 
+                    event: 'UPDATE', 
+                    schema: 'public', 
+                    table: 'trades', 
+                    filter: 'status=eq.closed' 
+                }, payload => {
+                    const updatedTrade = payload.new;
+                    if (!lastCompletedTradeIds.has(updatedTrade.id)) {
+                        console.log(`New completed trade detected via subscription: ${updatedTrade.id}`);
+                        lastCompletedTradeIds.add(updatedTrade.id);
+                        const completedTableContainer = document.getElementById('completedTableContainer');
+                        completedTableContainer.classList.add('flash');
+                        setTimeout(() => completedTableContainer.classList.remove('flash'), 500);
+                        initAndFetchTrades(); // Refresh trades to update table
+                    }
+                })
+                .subscribe((status, err) => {
+                    if (status === 'SUBSCRIBED') {
+                        console.log('Subscribed to trades channel for real-time updates');
+                    } else if (err) {
+                        console.error('Subscription error:', err);
+                    }
+                });
         }
 
         async function renderActivePage(page) {
@@ -922,6 +974,7 @@
         // Initial Load
         initProfitChart();
         initAndFetchTrades();
+        setupRealtimeSubscription();
     </script>
 </body>
 </html>
