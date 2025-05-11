@@ -8,9 +8,58 @@
     <meta http-equiv="Expires" content="0">
     <title>Pump.Fun Trading Bot Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .dark {
+            background-color: #1f2937;
+            color: #f3f4f6;
+        }
+        .dark .bg-white {
+            background-color: #374151;
+        }
+        .dark .bg-gray-100 {
+            background-color: #1f2937;
+        }
+        .dark .text-gray-600 {
+            color: #d1d5db;
+        }
+        .dark .text-blue-900 {
+            color: #93c5fd;
+        }
+        .dark .bg-blue-600 {
+            background-color: #2563eb;
+        }
+        .dark .hover\:bg-blue-700:hover {
+            background-color: #1d4ed8;
+        }
+        .dark .profit-positive {
+            color: #34d399;
+        }
+        .dark .profit-negative {
+            color: #f87171;
+        }
+        .dark .card {
+            background-color: #4b5563;
+            border-color: #6b7280;
+        }
+        .dark .card:nth-child(even) {
+            background-color: #374151;
+        }
+        .dark .card:hover {
+            background-color: #6b7280;
+        }
+        .dark th {
+            background-color: #1e3a8a;
+        }
+        .dark tr:nth-child(even) {
+            background-color: #374151;
+        }
+        .dark tr:hover {
+            background-color: #4b5563;
         }
         .table-container {
             overflow-x: auto;
@@ -24,6 +73,9 @@
             padding: 12px;
             border: 1px solid #e5e7eb;
         }
+        .dark th, .dark td {
+            border-color: #6b7280;
+        }
         th {
             background-color: #1e40af;
             color: white;
@@ -35,6 +87,7 @@
         }
         tr:hover {
             background-color: #dbeafe;
+            transition: background-color 0.2s;
         }
         .pagination-arrow {
             cursor: pointer;
@@ -47,6 +100,9 @@
             align-items: center;
             justify-content: center;
         }
+        .dark .pagination-arrow {
+            color: #93c5fd;
+        }
         .pagination-arrow.disabled {
             color: #d1d5db;
             cursor: not-allowed;
@@ -58,6 +114,12 @@
         a:hover {
             color: #3b82f6;
         }
+        .dark a {
+            color: #93c5fd;
+        }
+        .dark a:hover {
+            color: #60a5fa;
+        }
         .profit-positive {
             color: #28a745;
             font-weight: 600;
@@ -66,13 +128,13 @@
             color: #dc3545;
             font-weight: 600;
         }
-        /* Card layout for mobile */
         .card {
             border: 1px solid #e5e7eb;
             border-radius: 8px;
             padding: 12px;
             margin-bottom: 12px;
             background-color: #fff;
+            transition: background-color 0.2s;
         }
         .card:nth-child(even) {
             background-color: #f0fdf4;
@@ -85,7 +147,15 @@
             color: #1e40af;
             margin-right: 8px;
         }
-        /* Responsive styles */
+        .dark .card-label {
+            color: #93c5fd;
+        }
+        .btn {
+            transition: transform 0.2s, background-color 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-1px);
+        }
         @media (max-width: 640px) {
             .container {
                 padding: 1rem;
@@ -93,10 +163,9 @@
             h1 {
                 font-size: 1.5rem;
             }
-            .refresh-btn {
+            .refresh-btn, .export-btn, .filter-btn {
                 padding: 8px 16px;
                 font-size: 0.875rem;
-                min-width: 120px;
                 min-height: 44px;
                 width: 100%;
             }
@@ -111,7 +180,6 @@
                 font-size: 0.875rem;
                 margin-top: 1.5rem;
             }
-            /* Hide table on mobile, show cards */
             .table-container {
                 display: none;
             }
@@ -133,30 +201,46 @@
                 font-size: 0.75rem;
             }
         }
-        /* Tablet adjustments */
         @media (max-width: 1024px) and (min-width: 641px) {
             th, td {
                 padding: 10px;
                 font-size: 0.875rem;
             }
-            .refresh-btn {
+            .refresh-btn, .export-btn, .filter-btn {
                 padding: 8px 20px;
                 font-size: 1rem;
             }
+        }
+        .shadow-glow {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .dark .shadow-glow {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
     <div class="container mx-auto p-6 max-w-7xl">
-        <div class="bg-white shadow-xl rounded-lg p-6 sm:p-8">
-            <h1 class="text-3xl sm:text-3xl font-bold text-blue-900 mb-6">Pump.Fun Trading Bot Dashboard</h1>
-            <div class="flex justify-end mb-4">
-                <button id="topRefreshBtn" class="refresh-btn bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Refresh Trades</button>
+        <div class="bg-white shadow-glow rounded-xl p-6 sm:p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-3xl sm:text-4xl font-bold text-blue-900">Pump.Fun Trading Bot Dashboard</h1>
+                <button id="darkModeToggle" class="btn bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300">Toggle Dark Mode</button>
             </div>
-            
+            <div class="flex flex-col sm:flex-row justify-end mb-6 space-y-2 sm:space-y-0 sm:space-x-2">
+                <button id="topRefreshBtn" class="refresh-btn btn bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Refresh Trades</button>
+                <button id="exportBtn" class="export-btn btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">Export Trades</button>
+            </div>
+
+            <!-- Summary Section -->
+            <div class="mb-6 bg-blue-50 dark:bg-blue-900/50 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold text-blue-900 dark:text-blue-200 mb-2">Summary</h2>
+                <p class="text-gray-600 dark:text-gray-300">Total Completed Profit: <span id="totalProfit" class="font-semibold text-blue-900 dark:text-blue-200">Calculating...</span></p>
+            </div>
+
+            <!-- Active Trades Section -->
             <div class="mb-6">
-                <h2 class="text-xl font-semibold text-blue-900 mb-4">Active Trades</h2>
-                <p id="active-status" class="text-gray-600 text-sm mb-2 status">Loading active trades...</p>
+                <h2 class="text-xl font-semibold text-blue-900 dark:text-blue-200 mb-4">Active Trades</h2>
+                <p id="active-status" class="text-gray-600 dark:text-gray-300 text-sm mb-2 status">Loading active trades...</p>
                 <div class="table-container">
                     <table class="min-w-full">
                         <thead>
@@ -180,15 +264,23 @@
                 <div class="flex justify-between items-center mt-4">
                     <div class="flex items-center space-x-2">
                         <span id="activePrevPage" class="pagination-arrow disabled">◀</span>
-                        <span class="pagination-text text-gray-700">Page <span id="activeCurrentPage">1</span></span>
+                        <span class="pagination-text text-gray-700 dark:text-gray-300">Page <span id="activeCurrentPage">1</span></span>
                         <span id="activeNextPage" class="pagination-arrow disabled">▶</span>
                     </div>
                 </div>
             </div>
 
+            <!-- Completed Trades Section -->
             <div class="mb-6">
-                <h2 class="text-xl font-semibold text-blue-900 mb-4">Completed Trades</h2>
-                <p id="completed-status" class="text-gray-600 text-sm mb-2 status">Loading completed trades...</p>
+                <h2 class="text-xl font-semibold text-blue-900 dark:text-blue-200 mb-4">Completed Trades</h2>
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                    <p id="completed-status" class="text-gray-600 dark:text-gray-300 text-sm mb-2 sm:mb-0 status">Loading completed trades...</p>
+                    <select id="profitFilter" class="filter-btn bg-gray-200 text-gray-800 px-4 py-2 rounded-lg focus:outline-none">
+                        <option value="all">All Trades</option>
+                        <option value="positive">Positive Profit</option>
+                        <option value="negative">Negative Profit</option>
+                    </select>
+                </div>
                 <div class="table-container">
                     <table class="min-w-full">
                         <thead>
@@ -198,6 +290,7 @@
                                 <th>Buy Price (USD)</th>
                                 <th>Sell Price (USD)</th>
                                 <th>Profit (%)</th>
+                                <th>Total Profit (USD)</th>
                                 <th>Buy Time</th>
                                 <th>Sell Time</th>
                             </tr>
@@ -211,14 +304,20 @@
                 <div class="flex justify-between items-center mt-4">
                     <div class="flex items-center space-x-2">
                         <span id="completedPrevPage" class="pagination-arrow disabled">◀</span>
-                        <span class="pagination-text text-gray-700">Page <span id="completedCurrentPage">1</span></span>
+                        <span class="pagination-text text-gray-700 dark:text-gray-300">Page <span id="completedCurrentPage">1</span></span>
                         <span id="completedNextPage" class="pagination-arrow disabled">▶</span>
                     </div>
                 </div>
             </div>
 
+            <!-- Profit Trend Chart -->
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold text-blue-900 dark:text-blue-200 mb-4">Profit Trend</h2>
+                <canvas id="profitChart" class="w-full h-64"></canvas>
+            </div>
+
             <div class="flex justify-end mt-6">
-                <button id="bottomRefreshBtn" class="refresh-btn bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Refresh Trades</button>
+                <button id="bottomRefreshBtn" class="refresh-btn btn bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Refresh Trades</button>
             </div>
         </div>
     </div>
@@ -236,17 +335,71 @@
         const tradesPerPage = 25;
         let activeTrades = [];
         let completedTrades = [];
+        let filteredCompletedTrades = [];
         let isFetching = false;
-        const priceCache = new Map(); // Cache for price responses
-        const overviewCache = new Map(); // Cache for Birdeye token_overview responses
-        const CACHE_DURATION = 60000; // 60s cache
+        const priceCache = new Map();
+        const overviewCache = new Map();
+        const CACHE_DURATION = 60000;
 
         // APIs
         const DEXSCREENER_API = 'https://api.dexscreener.com';
         const BIRDEYE_API = 'https://public-api.birdeye.so';
-        const BIRDEYE_API_KEY = 'a9c9dfcce5fb467b80439fa49a83b448'; // Move to server-side in production
+        const BIRDEYE_API_KEY = 'a9c9dfcce5fb467b80439fa49a83b448';
 
-        // Basic Solana address validation (43-44 characters, base58)
+        // Chart.js configuration
+        let profitChart;
+        function initProfitChart() {
+            const ctx = document.getElementById('profitChart').getContext('2d');
+            profitChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Total Profit (USD)',
+                        data: [],
+                        borderColor: '#1e40af',
+                        backgroundColor: 'rgba(30, 64, 175, 0.2)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: { title: { display: true, text: 'Sell Time' } },
+                        y: { title: { display: true, text: 'Profit (USD)' } }
+                    }
+                }
+            });
+        }
+
+        function updateProfitChart() {
+            const trades = filteredCompletedTrades.length > 0 ? filteredCompletedTrades : completedTrades;
+            const sortedTrades = trades.sort((a, b) => new Date(a.sell_timestamp) - new Date(b.sell_timestamp));
+            const labels = sortedTrades.map(trade => new Date(trade.sell_timestamp).toLocaleDateString());
+            const data = sortedTrades.map(trade => trade.quantity && trade.buy_price_usd && trade.sell_price_usd
+                ? (trade.sell_price_usd - trade.buy_price_usd) * trade.quantity
+                : 0);
+
+            profitChart.data.labels = labels;
+            profitChart.data.datasets[0].data = data;
+            profitChart.update();
+        }
+
+        // Dark Mode Toggle
+        document.getElementById('darkModeToggle').addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+            profitChart.options.scales.x.title.color = document.body.classList.contains('dark') ? '#f3f4f6' : '#1f2937';
+            profitChart.options.scales.y.title.color = document.body.classList.contains('dark') ? '#f3f4f6' : '#1f2937';
+            profitChart.update();
+        });
+
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark');
+        }
+
+        // Basic Solana address validation
         function isValidSolanaAddress(address) {
             return /^[1-9A-HJ-NP-Za-km-z]{43,44}$/.test(address);
         }
@@ -256,22 +409,14 @@
             const validAddresses = tokenAddresses.filter(address => {
                 if (!isValidSolanaAddress(address)) {
                     console.warn(`Invalid Solana address: ${address}`);
-                    results[address] = {
-                        currentPrice: 'Invalid Address',
-                        marketCap: 'Invalid Address',
-                        volume24h: 'Invalid Address'
-                    };
+                    results[address] = { currentPrice: 'Invalid Address', marketCap: 'Invalid Address', volume24h: 'Invalid Address' };
                     return false;
                 }
                 return true;
             });
 
-            if (validAddresses.length === 0) {
-                console.log('No valid addresses to fetch from DexScreener');
-                return results;
-            }
+            if (validAddresses.length === 0) return results;
 
-            // Batch addresses (max 30 per request)
             const batchSize = 30;
             const batches = [];
             for (let i = 0; i < validAddresses.length; i += batchSize) {
@@ -280,21 +425,16 @@
 
             for (const batch of batches) {
                 try {
-                    // Check cache
                     const uncachedAddresses = batch.filter(address => {
                         const cached = priceCache.get(`dexscreener:${address}`);
                         return !cached || Date.now() - cached.timestamp >= CACHE_DURATION;
                     });
 
                     if (uncachedAddresses.length === 0) {
-                        console.log(`All DexScreener addresses in batch cached: ${batch.join(', ')}`);
-                        batch.forEach(address => {
-                            results[address] = priceCache.get(`dexscreener:${address}`).data;
-                        });
+                        batch.forEach(address => results[address] = priceCache.get(`dexscreener:${address}`).data);
                         continue;
                     }
 
-                    console.log(`Fetching DexScreener data for addresses: ${uncachedAddresses.join(', ')}`);
                     const response = await fetch(`${DEXSCREENER_API}/tokens/v1/solana/${uncachedAddresses.join(',')}`, {
                         headers: { 'Accept': 'application/json' }
                     });
@@ -303,14 +443,11 @@
                     if (!response.ok) {
                         if (response.status === 429) {
                             errorMessage = 'Rate Limit Exceeded';
-                            console.warn(`DexScreener rate limit hit, retrying after 2s...`);
                             await new Promise(resolve => setTimeout(resolve, 2000));
                             const retryResponse = await fetch(`${DEXSCREENER_API}/tokens/v1/solana/${uncachedAddresses.join(',')}`, {
                                 headers: { 'Accept': 'application/json' }
                             });
-                            if (!retryResponse.ok) {
-                                throw new Error(`HTTP ${retryResponse.status}: Rate limit retry failed`);
-                            }
+                            if (!retryResponse.ok) throw new Error(`HTTP ${retryResponse.status}: Rate limit retry failed`);
                             response = retryResponse;
                         } else if (response.status === 404) {
                             errorMessage = 'Not Indexed';
@@ -322,24 +459,14 @@
                     }
 
                     const json = await response.json();
-                    console.log(`DexScreener response: ${JSON.stringify(json)}`);
-
                     for (const address of uncachedAddresses) {
                         const tokenData = json.find(item => item.baseToken.address === address) || {};
                         const currentPrice = tokenData.priceUsd ? parseFloat(tokenData.priceUsd).toFixed(6) : 'Not Indexed';
                         const marketCap = tokenData.marketCap ? Math.round(tokenData.marketCap).toLocaleString() : 'Not Indexed';
                         const volume24h = tokenData.volume?.h24 ? Math.round(tokenData.volume.h24).toLocaleString() : 'Not Indexed';
-
-                        const result = {
-                            currentPrice,
-                            marketCap,
-                            volume24h
-                        };
+                        const result = { currentPrice, marketCap, volume24h };
                         results[address] = result;
-                        priceCache.set(`dexscreener:${address}`, {
-                            data: result,
-                            timestamp: Date.now()
-                        });
+                        priceCache.set(`dexscreener:${address}`, { data: result, timestamp: Date.now() });
                     }
                 } catch (err) {
                     console.error(`DexScreener batch fetch error: ${err.message}`);
@@ -354,7 +481,6 @@
                     }
                 }
             }
-
             return results;
         }
 
@@ -363,11 +489,7 @@
             const validAddresses = tokenAddresses.filter(address => {
                 if (!isValidSolanaAddress(address)) {
                     console.warn(`Invalid Solana address: ${address}`);
-                    results[address] = {
-                        currentPrice: 'Invalid Address',
-                        marketCap: 'Invalid Address',
-                        volume24h: 'Invalid Address'
-                    };
+                    results[address] = { currentPrice: 'Invalid Address', marketCap: 'Invalid Address', volume24h: 'Invalid Address' };
                     return false;
                 }
                 return true;
@@ -378,35 +500,24 @@
                 const cached = priceCache.get(cacheKey);
 
                 if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-                    console.log(`Using cached Birdeye price data for ${address}`);
                     results[address] = cached.data;
                     continue;
                 }
 
                 try {
-                    console.log(`Fetching Birdeye price for ${address}`);
                     const response = await fetch(`${BIRDEYE_API}/public/price?address=${address}`, {
-                        headers: {
-                            'accept': 'application/json',
-                            'X-API-KEY': BIRDEYE_API_KEY
-                        }
+                        headers: { 'accept': 'application/json', 'X-API-KEY': BIRDEYE_API_KEY }
                     });
 
                     let errorMessage = '';
                     if (!response.ok) {
                         if (response.status === 429) {
                             errorMessage = 'Rate Limit Exceeded';
-                            console.warn(`Birdeye rate limit hit for ${address}, retrying after 2s...`);
                             await new Promise(resolve => setTimeout(resolve, 2000));
                             const retryResponse = await fetch(`${BIRDEYE_API}/public/price?address=${address}`, {
-                                headers: {
-                                    'accept': 'application/json',
-                                    'X-API-KEY': BIRDEYE_API_KEY
-                                }
+                                headers: { 'accept': 'application/json', 'X-API-KEY': BIRDEYE_API_KEY }
                             });
-                            if (!retryResponse.ok) {
-                                throw new Error(`HTTP ${retryResponse.status}: Rate limit retry failed`);
-                            }
+                            if (!retryResponse.ok) throw new Error(`HTTP ${retryResponse.status}: Rate limit retry failed`);
                             response = retryResponse;
                         } else if (response.status === 401) {
                             errorMessage = 'Invalid API Key';
@@ -421,8 +532,6 @@
                     }
 
                     const json = await response.json();
-                    console.log(`Birdeye price response for ${address}: ${JSON.stringify(json)}`);
-
                     if (!json.success || !json.data) {
                         errorMessage = 'Invalid Response';
                         throw new Error('Invalid response structure: Missing success or data');
@@ -436,36 +545,23 @@
                     if (currentPrice !== 'Not Indexed') {
                         const overviewCached = overviewCache.get(address);
                         if (overviewCached && Date.now() - overviewCached.timestamp < CACHE_DURATION) {
-                            console.log(`Using cached Birdeye token_overview for ${address}`);
                             marketCap = overviewCached.marketCap;
                             volume24h = overviewCached.volume24h;
                         } else {
                             try {
-                                console.log(`Fetching Birdeye token_overview for ${address}`);
                                 const overviewResponse = await fetch(`${BIRDEYE_API}/defi/token_overview?address=${address}&x-chain=solana`, {
-                                    headers: {
-                                        'accept': 'application/json',
-                                        'X-API-KEY': BIRDEYE_API_KEY
-                                    }
+                                    headers: { 'accept': 'application/json', 'X-API-KEY': BIRDEYE_API_KEY }
                                 });
 
-                                if (!overviewResponse.ok) {
-                                    throw new Error(`HTTP ${overviewResponse.status}`);
-                                }
-
+                                if (!overviewResponse.ok) throw new Error(`HTTP ${overviewResponse.status}`);
                                 const overviewJson = await overviewResponse.json();
-                                console.log(`Birdeye token_overview response for ${address}: ${JSON.stringify(overviewJson)}`);
 
                                 if (overviewJson.success && overviewJson.data) {
                                     const overviewData = overviewJson.data;
                                     marketCap = overviewData.mc ? Math.round(overviewData.mc).toLocaleString() :
                                         (tokenData.value ? Math.round(tokenData.value * 1000000000).toLocaleString() : 'Not Indexed');
                                     volume24h = overviewData.v24hUSD ? Math.round(overviewData.v24hUSD).toLocaleString() : 'Not Indexed';
-                                    overviewCache.set(address, {
-                                        marketCap,
-                                        volume24h,
-                                        timestamp: Date.now()
-                                    });
+                                    overviewCache.set(address, { marketCap, volume24h, timestamp: Date.now() });
                                 } else {
                                     marketCap = tokenData.value ? Math.round(tokenData.value * 1000000000).toLocaleString() : 'Not Indexed';
                                     volume24h = 'Not Indexed';
@@ -478,16 +574,9 @@
                         }
                     }
 
-                    const result = {
-                        currentPrice,
-                        marketCap,
-                        volume24h
-                    };
+                    const result = { currentPrice, marketCap, volume24h };
                     results[address] = result;
-                    priceCache.set(cacheKey, {
-                        data: result,
-                        timestamp: Date.now()
-                    });
+                    priceCache.set(cacheKey, { data: result, timestamp: Date.now() });
                 } catch (err) {
                     console.error(`Birdeye price error for ${address}: ${err.message}`);
                     results[address] = {
@@ -497,36 +586,38 @@
                     };
                 }
             }
-
             return results;
         }
 
         async function fetchTokenData(tokenAddresses) {
-            // Try DexScreener first
             let results = await fetchDexScreenerData(tokenAddresses);
-
-            // Fallback to Birdeye for tokens that failed
             const failedAddresses = tokenAddresses.filter(address => {
                 const data = results[address];
                 return data && (data.currentPrice === 'Not Indexed' || data.currentPrice === 'Error' || data.currentPrice === 'Rate Limit');
             });
 
             if (failedAddresses.length > 0) {
-                console.log(`Falling back to Birdeye for addresses: ${failedAddresses.join(', ')}`);
                 const birdeyeResults = await fetchBirdeyeData(failedAddresses);
                 for (const address of failedAddresses) {
                     results[address] = birdeyeResults[address];
                 }
             }
-
             return results;
         }
 
+        function calculateTotalProfit() {
+            const trades = filteredCompletedTrades.length > 0 ? filteredCompletedTrades : completedTrades;
+            const total = trades.reduce((sum, trade) => {
+                if (trade.quantity && trade.buy_price_usd && trade.sell_price_usd) {
+                    return sum + (trade.sell_price_usd - trade.buy_price_usd) * trade.quantity;
+                }
+                return sum;
+            }, 0);
+            document.getElementById('totalProfit').textContent = total.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+        }
+
         async function initAndFetchTrades() {
-            if (isFetching) {
-                console.log('Fetch already in progress, skipping...');
-                return;
-            }
+            if (isFetching) return;
             isFetching = true;
 
             const activeStatus = document.getElementById('active-status');
@@ -544,26 +635,17 @@
             completedStatus.classList.add('text-gray-600');
 
             try {
-                console.log('Initializing Supabase client');
                 if (typeof window.supabase === 'undefined') {
                     throw new Error('Supabase library not loaded. Check CDN or network.');
                 }
                 supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-                console.log('Supabase client initialized');
 
-                console.log('Fetching all trades');
                 const { data, error } = await supabase
                     .from('trades')
                     .select('*')
                     .order('buy_timestamp', { ascending: false });
 
                 if (error) {
-                    console.error('Supabase fetch error:', {
-                        message: error.message,
-                        code: error.code,
-                        details: error.details,
-                        hint: error.hint
-                    });
                     const errorMsg = `Error: ${error.message}${error.details ? ' - ' + error.details : ''} (Code: ${error.code || 'N/A'})`;
                     activeStatus.textContent = errorMsg;
                     completedStatus.textContent = errorMsg;
@@ -572,13 +654,10 @@
                     return;
                 }
 
-                console.log('Trades fetched:', data);
-
-                // Process trades
                 activeTrades = data.filter(trade => trade.status === 'open' || !trade.sell_timestamp);
                 completedTrades = data.filter(trade => trade.status === 'closed' && trade.sell_timestamp);
+                filteredCompletedTrades = completedTrades;
 
-                // Update UI
                 if (activeTrades.length === 0) {
                     activeStatus.textContent = 'No active trades found';
                     activeTradesBody.innerHTML = '';
@@ -599,12 +678,10 @@
                     await renderCompletedPage(completedPage);
                 }
 
+                calculateTotalProfit();
+                updateProfitChart();
                 updatePagination();
             } catch (err) {
-                console.error('Unexpected error:', {
-                    message: err.message,
-                    stack: err.stack
-                });
                 activeStatus.textContent = `Error: ${err.message}`;
                 completedStatus.textContent = `Error: ${err.message}`;
                 activeStatus.classList.add('text-red-600');
@@ -623,7 +700,6 @@
             const end = start + tradesPerPage;
             const pageTrades = activeTrades.slice(start, end);
 
-            // Fetch token data
             const tokenAddresses = pageTrades.map(trade => trade.token_address);
             const tokenData = await fetchTokenData(tokenAddresses);
 
@@ -633,11 +709,10 @@
                     marketCap: 'Not Indexed',
                     volume24h: 'Not Indexed'
                 };
+                const profitPercent = data.currentPrice && !isNaN(parseFloat(data.currentPrice)) && trade.buy_price_usd
+                    ? (((parseFloat(data.currentPrice) - trade.buy_price_usd) / trade.buy_price_usd) * 100).toFixed(2)
+                    : 'N/A';
 
-                const profitPercent = data.currentPrice && !isNaN(parseFloat(data.currentPrice)) && trade.buy_price_usd ? 
-                    (((parseFloat(data.currentPrice) - trade.buy_price_usd) / trade.buy_price_usd) * 100).toFixed(2) : 'N/A';
-
-                // Table row for larger screens
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td class="py-2 px-4"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6)}...${trade.token_address.slice(-4)}</a></td>
@@ -651,7 +726,6 @@
                 `;
                 activeTradesBody.appendChild(row);
 
-                // Card for mobile
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.innerHTML = `
@@ -699,10 +773,13 @@
             completedTradesCards.innerHTML = '';
             const start = (page - 1) * tradesPerPage;
             const end = start + tradesPerPage;
-            const pageTrades = completedTrades.slice(start, end);
+            const pageTrades = filteredCompletedTrades.slice(start, end);
 
             for (const trade of pageTrades) {
-                // Table row for larger screens
+                const totalProfit = trade.quantity && trade.buy_price_usd && trade.sell_price_usd
+                    ? ((trade.sell_price_usd - trade.buy_price_usd) * trade.quantity).toFixed(2)
+                    : 'N/A';
+
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td class="py-2 px-4"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6)}...${trade.token_address.slice(-4)}</a></td>
@@ -710,12 +787,12 @@
                     <td class="py-2 px-4">${trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-'}</td>
                     <td class="py-2 px-4">${trade.sell_price_usd ? trade.sell_price_usd.toFixed(6) : '-'}</td>
                     <td class="py-2 px-4 ${trade.profit_percentage >= 0 ? 'profit-positive' : 'profit-negative'}">${trade.profit_percentage ? trade.profit_percentage.toFixed(2) : '-'}%</td>
+                    <td class="py-2 px-4 ${totalProfit !== 'N/A' && totalProfit >= 0 ? 'profit-positive' : 'profit-negative'}">${totalProfit !== 'N/A' ? totalProfit : '-'}</td>
                     <td class="py-2 px-4">${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</td>
                     <td class="py-2 px-4">${trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-'}</td>
                 `;
                 completedTradesBody.appendChild(row);
 
-                // Card for mobile
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.innerHTML = `
@@ -736,10 +813,12 @@
                         <span class="card-value">${trade.sell_price_usd ? trade.sell_price_usd.toFixed(6) : '-'} USD</span>
                     </div>
                     <div class="flex mb-2">
-                    </div>
-                    <div class="flex mb-2">
                         <span class="card-label">Profit (%):</span>
                         <span class="card-value ${trade.profit_percentage >= 0 ? 'profit-positive' : 'profit-negative'}">${trade.profit_percentage ? trade.profit_percentage.toFixed(2) : '-'}%</span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">Total Profit:</span>
+                        <span class="card-value ${totalProfit !== 'N/A' && totalProfit >= 0 ? 'profit-positive' : 'profit-negative'}">${totalProfit !== 'N/A' ? totalProfit + ' USD' : '-'}</span>
                     </div>
                     <div class="flex mb-2">
                         <span class="card-label">Buy Time:</span>
@@ -763,7 +842,7 @@
             const completedCurrentPageSpan = document.getElementById('completedCurrentPage');
 
             const activeTotalPages = Math.ceil(activeTrades.length / tradesPerPage);
-            const completedTotalPages = Math.ceil(completedTrades.length / tradesPerPage);
+            const completedTotalPages = Math.ceil(filteredCompletedTrades.length / tradesPerPage);
 
             activeCurrentPageSpan.textContent = activePage;
             activePrevPage.classList.toggle('disabled', activePage === 1);
@@ -794,16 +873,60 @@
             } : null;
         }
 
+        // Export Trades as CSV
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            const trades = filteredCompletedTrades.length > 0 ? filteredCompletedTrades : completedTrades;
+            const headers = ['Token', 'Symbol', 'Buy Price (USD)', 'Sell Price (USD)', 'Profit (%)', 'Total Profit (USD)', 'Buy Time', 'Sell Time'];
+            const rows = trades.map(trade => {
+                const totalProfit = trade.quantity && trade.buy_price_usd && trade.sell_price_usd
+                    ? ((trade.sell_price_usd - trade.buy_price_usd) * trade.quantity).toFixed(2)
+                    : 'N/A';
+                return [
+                    trade.token_address,
+                    trade.token_symbol || '-',
+                    trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-',
+                    trade.sell_price_usd ? trade.sell_price_usd.toFixed(6) : '-',
+                    trade.profit_percentage ? trade.profit_percentage.toFixed(2) : '-',
+                    totalProfit,
+                    trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-',
+                    trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-'
+                ].map(field => `"${field}"`).join(',');
+            });
+            const csv = [headers.join(','), ...rows].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'completed_trades.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // Filter Trades
+        document.getElementById('profitFilter').addEventListener('change', (e) => {
+            const filter = e.target.value;
+            completedPage = 1;
+            if (filter === 'positive') {
+                filteredCompletedTrades = completedTrades.filter(trade => trade.profit_percentage >= 0);
+            } else if (filter === 'negative') {
+                filteredCompletedTrades = completedTrades.filter(trade => trade.profit_percentage < 0);
+            } else {
+                filteredCompletedTrades = completedTrades;
+            }
+            renderCompletedPage(completedPage);
+            calculateTotalProfit();
+            updateProfitChart();
+            updatePagination();
+        });
+
         // Refresh Button Handlers
         document.getElementById('topRefreshBtn').addEventListener('click', () => {
-            console.log('Top refresh button clicked');
             priceCache.clear();
             overviewCache.clear();
             initAndFetchTrades();
         });
 
         document.getElementById('bottomRefreshBtn').addEventListener('click', () => {
-            console.log('Bottom refresh button clicked');
             priceCache.clear();
             overviewCache.clear();
             initAndFetchTrades();
@@ -811,11 +934,11 @@
 
         // Auto-refresh every 30 seconds
         setInterval(() => {
-            console.log('Auto-refresh triggered');
             initAndFetchTrades();
         }, 30000);
 
         // Initial Load
+        initProfitChart();
         initAndFetchTrades();
     </script>
 </body>
