@@ -441,7 +441,7 @@
 
         // Supabase configuration
         const supabaseUrl = 'https://bprfbjsxbkitrbqszqpz.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcmZianN4YmtpdHJicXN6cXB6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4OTQzMzksImV4cCI6MjA2MTQ3MDMzOX0.Uc2iM_H3vEd4dnTLi_B2EncReqlYHXWyZ9zGHsXh4mM';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcmZianN4YmtpdHJicXN6cXB6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NTg5NDMzOSwiZXhwIjoyMDYxNDcwMzM5fQ.wtFixniNTzbObmwjI1R8OuIusXB95w5waoXBN4DiiNw';
         let supabase;
         let activePage = 1;
         let completedPage = 1;
@@ -450,12 +450,7 @@
         let completedTrades = [];
         let filteredCompletedTrades = [];
         let isFetching = false;
-        const priceCache = new Map();
-        const CACHE_DURATION = 60000; // 60 seconds
         let lastCompletedTradeIds = new Set();
-
-        // APIs
-        const DEXSCREENER_API = 'https://api.dexscreener.com';
 
         // Chart.js configuration
         let profitChart;
@@ -531,113 +526,6 @@
             return /^[1-9A-HJ-NP-Za-km-z]{43,44}$/.test(address);
         }
 
-        async function fetchDexScreenerData(tokenAddresses) {
-            const results = {};
-            const validAddresses = tokenAddresses.filter(address => {
-                if (!isValidSolanaAddress(address)) {
-                    console.warn(`Invalid or missing Solana address: ${address}`);
-                    results[address] = { currentPrice: 'Invalid Address', marketCap: 'Invalid Address', volume24h: 'Invalid Address' };
-                    return false;
-                }
-                return true;
-            });
-
-            if (validAddresses.length === 0) {
-                console.log('No valid addresses to fetch from DEXScreener');
-                return results;
-            }
-
-            const batchSize = 30;
-            const batches = [];
-            for (let i = 0; i < validAddresses.length; i += batchSize) {
-                batches.push(validAddresses.slice(i, i + batchSize));
-            }
-
-            for (const batch of batches) {
-                try {
-                    const uncachedAddresses = batch.filter(address => {
-                        const cached = priceCache.get(`dexscreener:${address}`);
-                        if (!cached) {
-                            console.log(`No cache entry for address: ${address}`);
-                            return true;
-                        }
-                        if (Date.now() - cached.timestamp >= CACHE_DURATION) {
-                            console.log(`Cache expired for address: ${address}`);
-                            return true;
-                        }
-                        return false;
-                    });
-
-                    if (uncachedAddresses.length === 0) {
-                        batch.forEach(address => {
-                            const cached = priceCache.get(`dexscreener:${address}`);
-                            if (cached && cached.data) {
-                                results[address] = cached.data;
-                                console.log(`Using cached data for address: ${address}`, cached.data);
-                            } else {
-                                console.warn(`Cache miss or invalid cache for address: ${address}`);
-                                results[address] = { currentPrice: 'Not Cached', marketCap: 'Not Cached', volume24h: 'Not Cached' };
-                            }
-                        });
-                        continue;
-                    }
-
-                    console.log(`Fetching DEXScreener data for addresses: ${uncachedAddresses.join(', ')}`);
-                    const response = await fetch(`${DEXSCREENER_API}/tokens/v1/solana/${uncachedAddresses.join(',')}`, {
-                        headers: { 'Accept': 'application/json' }
-                    });
-
-                    if (!response.ok) {
-                        let errorMessage = `HTTP ${response.status}`;
-                        if (response.status === 429) {
-                            errorMessage = 'Rate Limit Exceeded';
-                            console.warn('Rate limit hit, retrying after delay...');
-                            await new Promise(resolve => setTimeout(resolve, 2000));
-                            const retryResponse = await fetch(`${DEXSCREENER_API}/tokens/v1/solana/${uncachedAddresses.join(',')}`, {
-                                headers: { 'Accept': 'application/json' }
-                            });
-                            if (!retryResponse.ok) throw new Error(`HTTP ${retryResponse.status}: Rate limit retry failed`);
-                            response = retryResponse;
-                        } else if (response.status === 404) {
-                            errorMessage = 'Not Indexed';
-                            throw new Error(`HTTP 404: Tokens not found`);
-                        } else {
-                            throw new Error(errorMessage);
-                        }
-                    }
-
-                    const json = await response.json();
-                    console.log(`DEXScreener response for batch:`, json);
-                    for (const address of uncachedAddresses) {
-                        const tokenData = json.find(item => item?.baseToken?.address === address) || {};
-                        const currentPrice = tokenData.priceUsd ? parseFloat(tokenData.priceUsd).toFixed(6) : 'Not Indexed';
-                        const marketCap = tokenData.marketCap ? Math.round(tokenData.marketCap).toLocaleString() : 'Not Indexed';
-                        const volume24h = tokenData.volume?.h24 ? Math.round(tokenData.volume.h24).toLocaleString() : 'Not Indexed';
-                        const result = { currentPrice, marketCap, volume24h };
-                        results[address] = result;
-                        priceCache.set(`dexscreener:${address}`, { data: result, timestamp: Date.now() });
-                        console.log(`Cached data for address: ${address}`, result);
-                    }
-                } catch (err) {
-                    console.error(`DexScreener batch fetch error: ${err.message}`);
-                    for (const address of batch) {
-                        if (!results[address]) {
-                            results[address] = {
-                                currentPrice: err.message.includes('Not Indexed') ? 'Not Indexed' : 'Error',
-                                marketCap: 'Error',
-                                volume24h: 'Error'
-                            };
-                        }
-                    }
-                }
-            }
-            return results;
-        }
-
-        async function fetchTokenData(tokenAddresses) {
-            return await fetchDexScreenerData(tokenAddresses);
-        }
-
         function calculateTotalProfit() {
             const trades = filteredCompletedTrades.length > 0 ? filteredCompletedTrades : completedTrades;
             let validTrades = 0;
@@ -654,6 +542,152 @@
                 : total.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
             console.log(`Calculated total profit: ${result}, valid trades: ${validTrades}`);
             document.getElementById('totalProfit').textContent = result;
+        }
+
+        async function renderActivePage(page) {
+            const activeTradesBody = document.getElementById('activeTradesBody');
+            const activeTradesCards = document.getElementById('activeTradesCards');
+            activeTradesBody.innerHTML = '';
+            activeTradesCards.innerHTML = '';
+            const start = (page - 1) * tradesPerPage;
+            const end = start + tradesPerPage;
+            const pageTrades = activeTrades.slice(start, end);
+
+            for (const trade of pageTrades) {
+                if (!isValidSolanaAddress(trade.token_address)) {
+                    console.warn(`Skipping rendering for trade with invalid token_address: ${trade.id || 'unknown'}`);
+                    continue;
+                }
+                const currentPrice = trade.current_price_usd ? parseFloat(trade.current_price_usd).toFixed(6) : 'N/A';
+                const marketCap = trade.market_cap ? Math.round(trade.market_cap).toLocaleString() : 'N/A';
+                const volume24h = trade.volume_24h ? Math.round(trade.volume_24h).toLocaleString() : 'N/A';
+                const isStale = trade.last_price_check && (Date.now() - new Date(trade.last_price_check).getTime()) > 60 * 1000;
+                const profitPercent = trade.profit_percentage != null 
+                    ? `${trade.profit_percentage.toFixed(2)}${isStale ? ' (stale)' : ''}%`
+                    : 'N/A';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="py-2 px-4"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6) + '...' + trade.token_address.slice(-4)}</a></td>
+                    <td class="py-2 px-4">${trade.token_symbol || '-'}</td>
+                    <td class="py-2 px-4">${trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-'}</td>
+                    <td class="py-2 px-4">${currentPrice}</td>
+                    <td class="py-2 px-4">${marketCap}</td>
+                    <td class="py-2 px-4">${volume24h}</td>
+                    <td class="py-2 px-4 ${profitPercent !== 'N/A' && trade.profit_percentage >= 0 ? 'profit-positive' : 'profit-negative'}">${profitPercent}</td>
+                    <td class="py-2 px-4">${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</td>
+                `;
+                activeTradesBody.appendChild(row);
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="flex mb-2">
+                        <span class="card-label">Token:</span>
+                        <span class="card-value"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6) + '...' + trade.token_address.slice(-4)}</a></span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">Symbol:</span>
+                        <span class="card-value">${trade.token_symbol || '-'}</span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">Buy Price:</span>
+                        <span class="card-value">${trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-'} USD</span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">Current Price:</span>
+                        <span class="card-value">${currentPrice} USD</span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">Market Cap:</span>
+                        <span class="card-value">${marketCap} USD</span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">24h Volume:</span>
+                        <span class="card-value">${volume24h} USD</span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">Profit:</span>
+                        <span class="card-value ${profitPercent !== 'N/A' && trade.profit_percentage >= 0 ? 'profit-positive' : 'profit-negative'}">${profitPercent}</span>
+                    </div>
+                    <div class="flex">
+                        <span class="card-label">Buy Time:</span>
+                        <span class="card-value">${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</span>
+                    </div>
+                `;
+                activeTradesCards.appendChild(card);
+            }
+        }
+
+        async function renderCompletedPage(page) {
+            const completedTradesBody = document.getElementById('completedTradesBody');
+            const completedTradesCards = document.getElementById('completedTradesCards');
+            completedTradesBody.innerHTML = '';
+            completedTradesCards.innerHTML = '';
+            const start = (page - 1) * tradesPerPage;
+            const end = start + tradesPerPage;
+            const pageTrades = filteredCompletedTrades.slice(start, end);
+
+            for (const trade of pageTrades) {
+                if (!isValidSolanaAddress(trade.token_address)) {
+                    console.warn(`Skipping rendering for trade with invalid token_address: ${trade.id || 'unknown'}`);
+                    continue;
+                }
+                const totalProfit = trade.quantity != null && trade.buy_price_usd != null && trade.sell_price_usd != null
+                    ? ((trade.sell_price_usd - trade.buy_price_usd) * trade.quantity).toFixed(2)
+                    : 'N/A';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="py-2 px-4"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6) + '...' + trade.token_address.slice(-4)}</a></td>
+                    <td class="py-2 px-4">${trade.token_symbol || '-'}</td>
+                    <td class="py-2 px-4">${trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-'}</td>
+                    <td class="py-2 px-4">${trade.sell_price_usd ? trade.sell_price_usd.toFixed(6) : '-'}</td>
+                    <td class="py-2 px-4 ${trade.profit_percentage != null && trade.profit_percentage >= 0 ? 'profit-positive' : 'profit-negative'}">${trade.profit_percentage != null ? trade.profit_percentage.toFixed(2) : 'N/A'}%</td>
+                    <td class="py-2 px-4 ${totalProfit !== 'N/A' && parseFloat(totalProfit) >= 0 ? 'profit-positive' : 'profit-negative'}">${totalProfit !== 'N/A' ? totalProfit : 'N/A'}</td>
+                    <td class="py-2 px-4">${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</td>
+                    <td class="py-2 px-4">${trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-'}</td>
+                `;
+                completedTradesBody.appendChild(row);
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="flex mb-2">
+                        <span class="card-label">Token:</span>
+                        <span class="card-value"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6) + '...' + trade.token_address.slice(-4)}</a></span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">Symbol:</span>
+                        <span class="card-value">${trade.token_symbol || '-'}</span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">Buy Price:</span>
+                        <span class="card-value">${trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-'} USD</span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">Sell Price:</span>
+                        <span class="card-value">${trade.sell_price_usd ? trade.sell_price_usd.toFixed(6) : '-'} USD</span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">Profit (%):</span>
+                        <span class="card-value ${trade.profit_percentage != null && trade.profit_percentage >= 0 ? 'profit-positive' : 'profit-negative'}">${trade.profit_percentage != null ? trade.profit_percentage.toFixed(2) : 'N/A'}%</span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">Total Profit:</span>
+                        <span class="card-value ${totalProfit !== 'N/A' && parseFloat(totalProfit) >= 0 ? 'profit-positive' : 'profit-negative'}">${totalProfit !== 'N/A' ? totalProfit + ' USD' : 'N/A'}</span>
+                    </div>
+                    <div class="flex mb-2">
+                        <span class="card-label">Buy Time:</span>
+                        <span class="card-value">${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</span>
+                    </div>
+                    <div class="flex">
+                        <span class="card-label">Sell Time:</span>
+                        <span class="card-value">${trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-'}</span>
+                    </div>
+                `;
+                completedTradesCards.appendChild(card);
+            }
         }
 
         async function initAndFetchTrades() {
@@ -713,16 +747,16 @@
                     return;
                 }
 
-                console.log(`Raw Supabase response: ${data.length} trades`, data);
-                activeTrades = data.filter(trade => !trade.sell_timestamp || trade.status !== 'closed');
-                completedTrades = data.filter(trade => trade.sell_timestamp && trade.status === 'closed');
+                console.log(`Fetched ${data.length} trades from Supabase`);
+                activeTrades = data.filter(trade => trade.status === 'open' && !trade.sell_timestamp);
+                completedTrades = data.filter(trade => trade.status === 'closed' && trade.sell_timestamp);
                 filteredCompletedTrades = completedTrades;
 
-                console.log(`Filtered: ${activeTrades.length} active trades, ${completedTrades.length} completed trades`);
+                console.log(`Active trades: ${activeTrades.length}, Completed trades: ${completedTrades.length}`);
 
                 const newCompletedTrades = completedTrades.filter(trade => !lastCompletedTradeIds.has(trade.id));
                 if (newCompletedTrades.length > 0) {
-                    console.log(`Detected ${newCompletedTrades.length} new completed trades`, newCompletedTrades.map(t => t.id));
+                    console.log(`New completed trades: ${newCompletedTrades.map(t => t.id).join(', ')}`);
                     completedTableContainer.classList.add('flash');
                     setTimeout(() => completedTableContainer.classList.remove('flash'), 500);
                 }
@@ -789,171 +823,6 @@
                         console.error('Subscription error:', err);
                     }
                 });
-        }
-
-        async function renderActivePage(page) {
-            const activeTradesBody = document.getElementById('activeTradesBody');
-            const activeTradesCards = document.getElementById('activeTradesCards');
-            activeTradesBody.innerHTML = '';
-            activeTradesCards.innerHTML = '';
-            const start = (page - 1) * tradesPerPage;
-            const end = start + tradesPerPage;
-            const pageTrades = activeTrades.slice(start, end);
-
-            const tokenAddresses = pageTrades
-                .map(trade => trade.token_address)
-                .filter(addr => isValidSolanaAddress(addr));
-            console.log(`Fetching token data for active trades: ${tokenAddresses.join(', ')}`);
-            const tokenData = await fetchTokenData(tokenAddresses);
-
-            for (const trade of pageTrades) {
-                if (!isValidSolanaAddress(trade.token_address)) {
-                    console.warn(`Skipping rendering for trade with invalid token_address: ${trade.id || 'unknown'}`);
-                    continue;
-                }
-                const data = tokenData[trade.token_address] || {
-                    currentPrice: 'Not Indexed',
-                    marketCap: 'Not Indexed',
-                    volume24h: 'Not Indexed'
-                };
-                const isStale = trade.last_price_check && (Date.now() - new Date(trade.last_price_check).getTime()) > 60 * 1000;
-                const profitPercent = trade.profit_percentage != null 
-                    ? `${trade.profit_percentage.toFixed(2)}${isStale ? ' (stale)' : ''}%`
-                    : 'N/A';
-
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="py-2 px-4"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6) + '...' + trade.token_address.slice(-4)}</a></td>
-                    <td class="py-2 px-4">${trade.token_symbol || '-'}</td>
-                    <td class="py-2 px-4">${trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-'}</td>
-                    <td class="py-2 px-4">${data.currentPrice}</td>
-                    <td class="py-2 px-4">${data.marketCap}</td>
-                    <td class="py-2 px-4">${data.volume24h}</td>
-                    <td class="py-2 px-4 ${profitPercent !== 'N/A' && trade.profit_percentage >= 0 ? 'profit-positive' : 'profit-negative'}">${profitPercent}</td>
-                    <td class="py-2 px-4">${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</td>
-                `;
-                activeTradesBody.appendChild(row);
-
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <div class="flex mb-2">
-                        <span class="card-label">Token:</span>
-                        <span class="card-value"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6) + '...' + trade.token_address.slice(-4)}</a></span>
-                    </div>
-                    <div class="flex mb-2">
-                        <span class="card-label">Symbol:</span>
-                        <span class="card-value">${trade.token_symbol || '-'}</span>
-                    </div>
-                    <div class="flex mb-2">
-                        <span class="card-label">Buy Price:</span>
-                        <span class="card-value">${trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-'} USD</span>
-                    </div>
-                    <div class="flex mb-2">
-                        <span class="card-label">Current Price:</span>
-                        <span class="card-value">${data.currentPrice} USD</span>
-                    </div>
-                    <div class="flex mb-2">
-                        <span class="card-label">Market Cap:</span>
-                        <span class="card-value">${data.marketCap} USD</span>
-                    </div>
-                    <div class="flex mb-2">
-                        <span class="card-label">24h Volume:</span>
-                        <span class="card-value">${data.volume24h} USD</span>
-                    </div>
-                    <div class="flex mb-2">
-                        <span class="card-label">Profit:</span>
-                        <span class="card-value ${profitPercent !== 'N/A' && trade.profit_percentage >= 0 ? 'profit-positive' : 'profit-negative'}">${profitPercent}</span>
-                    </div>
-                    <div class="flex">
-                        <span class="card-label">Buy Time:</span>
-                        <span class="card-value">${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</span>
-                    </div>
-                `;
-                activeTradesCards.appendChild(card);
-            }
-        }
-
-        async function renderCompletedPage(page) {
-            const completedTradesBody = document.getElementById('completedTradesBody');
-            const completedTradesCards = document.getElementById('completedTradesCards');
-            completedTradesBody.innerHTML = '';
-            completedTradesCards.innerHTML = '';
-            const start = (page - 1) * tradesPerPage;
-            const end = start + tradesPerPage;
-            const pageTrades = filteredCompletedTrades.slice(start, end);
-
-            const tokenAddresses = pageTrades
-                .map(trade => trade.token_address)
-                .filter(addr => isValidSolanaAddress(addr));
-            console.log(`Fetching token data for completed trades: ${tokenAddresses.join(', ')}`);
-            const tokenData = await fetchTokenData(tokenAddresses);
-
-            for (const trade of pageTrades) {
-                if (!isValidSolanaAddress(trade.token_address)) {
-                    console.warn(`Skipping rendering for trade with invalid token_address: ${trade.id || 'unknown'}`);
-                    continue;
-                }
-                const data = tokenData[trade.token_address] || {
-                    currentPrice: 'Not Indexed',
-                    marketCap: 'Not Indexed',
-                    volume24h: 'Not Indexed'
-                };
-                const totalProfit = trade.quantity != null && trade.buy_price_usd != null && trade.sell_price_usd != null
-                    ? ((trade.sell_price_usd - trade.buy_price_usd) * trade.quantity).toFixed(2)
-                    : 'N/A';
-
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="py-2 px-4"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6) + '...' + trade.token_address.slice(-4)}</a></td>
-                    <td class="py-2 px-4">${trade.token_symbol || '-'}</td>
-                    <td class="py-2 px-4">${trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-'}</td>
-                    <td class="py-2 px-4">${trade.sell_price_usd ? trade.sell_price_usd.toFixed(6) : '-'}</td>
-                    <td class="py-2 px-4 ${trade.profit_percentage != null && trade.profit_percentage >= 0 ? 'profit-positive' : 'profit-negative'}">${trade.profit_percentage != null ? trade.profit_percentage.toFixed(2) : 'N/A'}%</td>
-                    <td class="py-2 px-4 ${totalProfit !== 'N/A' && parseFloat(totalProfit) >= 0 ? 'profit-positive' : 'profit-negative'}">${totalProfit !== 'N/A' ? totalProfit : 'N/A'}</td>
-                    <td class="py-2 px-4">${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</td>
-                    <td class="py-2 px-4">${trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-'}</td>
-                `;
-                completedTradesBody.appendChild(row);
-
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <div class="flex mb-2">
-                        <span class="card-label">Token:</span>
-                        <span class="card-value"><a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener noreferrer">${trade.token_address.slice(0, 6) + '...' + trade.token_address.slice(-4)}</a></span>
-                    </div>
-                    <div class="flex mb-2">
-                        <span class="card-label">Symbol:</span>
-                        <span class="card-value">${trade.token_symbol || '-'}</span>
-                    </div>
-                    <div class="flex mb-2">
-                        <span class="card-label">Buy Price:</span>
-                        <span class="card-value">${trade.buy_price_usd ? trade.buy_price_usd.toFixed(6) : '-'} USD</span>
-                    </div>
-                    <div class="flex mb-2">
-                        <span class="card-label">Sell Price:</span>
-                        <span class="card-value">${trade.sell_price_usd ? trade.sell_price_usd.toFixed(6) : '-'} USD</span>
-                    </div>
-                    <div class="flex mb-2">
-                        <span class="card-label">Profit (%):</span>
-                        <span class="card-value ${trade.profit_percentage != null && trade.profit_percentage >= 0 ? 'profit-positive' : 'profit-negative'}">${trade.profit_percentage != null ? trade.profit_percentage.toFixed(2) : 'N/A'}%</span>
-                    </div>
-                    <div class="flex mb-2">
-                        <span class="card-label">Total Profit:</span>
-                        <span class="card-value ${totalProfit !== 'N/A' && parseFloat(totalProfit) >= 0 ? 'profit-positive' : 'profit-negative'}">${totalProfit !== 'N/A' ? totalProfit + ' USD' : 'N/A'}</span>
-                    </div>
-                    <div class="flex mb-2">
-                        <span class="card-label">Buy Time:</span>
-                        <span class="card-value">${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</span>
-                    </div>
-                    <div class="flex">
-                        <span class="card-label">Sell Time:</span>
-                        <span class="card-value">${trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-'}</span>
-                    </div>
-                `;
-                completedTradesCards.appendChild(card);
-            }
         }
 
         function updatePagination() {
@@ -1041,12 +910,10 @@
         });
 
         document.getElementById('topRefreshBtn').addEventListener('click', () => {
-            priceCache.clear();
             initAndFetchTrades();
         });
 
         document.getElementById('bottomRefreshBtn').addEventListener('click', () => {
-            priceCache.clear();
             initAndFetchTrades();
         });
 
