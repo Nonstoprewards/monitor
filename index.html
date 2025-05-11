@@ -461,6 +461,7 @@
             // Mock data for testing
             const mockActiveTrades = [
                 {
+                    token_name: 'Ducky',
                     token_address: '5J1To2BQ89ajMNVTsoRSwwrvbFiXZPLR9gzHWzyJUyCmw3nDdde7',
                     token_symbol: 'DUCKY',
                     buy_price_usd: 0.0000001,
@@ -473,6 +474,7 @@
             ];
             const mockCompletedTrades = [
                 {
+                    token_name: 'Ducky',
                     token_address: '5J1To2BQ89ajMNVTsoRSwwrvbFiXZPLR9gzHWzyJUyCmw3nDdde7',
                     token_symbol: 'DUCKY',
                     buy_price_usd: 0.0000001,
@@ -564,9 +566,11 @@
                         const csv = [
                             'Token,Symbol,Buy Price (USD),Sell Price (USD),Profit (%),Total Profit (USD),Buy Time,Sell Time',
                             ...trades.map(t => `
-                                ${t.token_address || '-'},${t.token_symbol},${t.buy_price_usd},${t.sell_price_usd},
-                                ${((t.sell_price_usd - t.buy_price_usd) / t.buy_price_usd * 100).toFixed(2)},
-                                ${t.total_profit_usd},${t.buy_timestamp},${t.sell_timestamp}
+                                ${t.token_name || '-'},${t.token_symbol || '-'},
+                                ${t.buy_price_usd || 0},${t.sell_price_usd || 0},
+                                ${(((t.sell_price_usd || 0) - (t.buy_price_usd || 0)) / (t.buy_price_usd || 1) * 100).toFixed(2)},
+                                ${t.total_profit_usd || 0},
+                                ${t.buy_timestamp || '-'},${t.sell_timestamp || '-'}
                             `)
                         ].join('\n');
 
@@ -596,57 +600,66 @@
                 console.error('profitFilter not found');
             }
 
-            // Helper function to shorten wallet address
-            function shortenAddress(address) {
-                if (!address || address.length < 10) return address || '-';
-                return `${address.slice(0, 6)}...${address.slice(-4)}`;
-            }
-
             async function refreshTrades() {
-                console.log('Refreshing trades');
+                console.log('Starting refreshTrades');
                 try {
+                    // Check DOM elements
                     const activeStatus = document.getElementById('active-status');
                     const completedStatus = document.getElementById('completed-status');
-                    if (!activeStatus || !completedStatus) throw new Error('Status elements not found');
+                    const activeTradesBody = document.getElementById('activeTradesBody');
+                    const activeTradesCards = document.getElementById('activeTradesCards');
+                    const completedTradesBody = document.getElementById('completedTradesBody');
+                    const completedTradesCards = document.getElementById('completedTradesCards');
+                    const totalProfitElement = document.getElementById('totalProfit');
+
+                    if (!activeStatus || !completedStatus || !activeTradesBody || !activeTradesCards || !completedTradesBody || !completedTradesCards || !totalProfitElement) {
+                        throw new Error('One or more DOM elements not found');
+                    }
 
                     activeStatus.textContent = 'Loading active trades...';
                     completedStatus.textContent = 'Loading completed trades...';
+                    console.log('Cleared status messages');
 
                     // Fetch active trades
+                    console.log('Fetching active trades from Supabase');
                     let { data: activeTrades, error: activeError } = await supabase
                         .from('trades')
                         .select('*')
                         .eq('status', 'open');
                     
                     if (activeError) {
-                        console.error('Active trades error:', activeError);
+                        console.error('Active trades fetch error:', activeError);
                         activeTrades = mockActiveTrades;
+                    } else {
+                        console.log('Active trades fetched:', activeTrades);
                     }
                     activeTrades = activeTrades || mockActiveTrades;
+                    console.log('Active trades after fallback:', activeTrades);
 
-                    const activeTradesBody = document.getElementById('activeTradesBody');
-                    const activeTradesCards = document.getElementById('activeTradesCards');
-                    if (!activeTradesBody || !activeTradesCards) throw new Error('Active trades elements not found');
                     activeTradesBody.innerHTML = '';
                     activeTradesCards.innerHTML = '';
+                    console.log('Cleared active trades UI elements');
 
-                    activeTrades.forEach(trade => {
-                        const profitPercent = ((trade.current_price_usd - trade.buy_price_usd) / trade.buy_price_usd * 100).toFixed(2);
-                        const profitClass = profitPercent >= 0 ? 'profit-positive' : 'profit-negative';
+                    activeTrades.forEach((trade, index) => {
+                        console.log(`Processing active trade ${index}:`, trade);
+                        const buyPrice = trade.buy_price_usd || 0;
+                        const currentPrice = trade.current_price_usd || 0;
+                        const profitPercent = buyPrice !== 0 ? (((currentPrice - buyPrice) / buyPrice) * 100).toFixed(2) : 'N/A';
+                        const profitClass = profitPercent !== 'N/A' && profitPercent >= 0 ? 'profit-positive' : 'profit-negative';
                         const tokenAddress = trade.token_address || '-';
-                        const displayAddress = shortenAddress(tokenAddress);
+                        const tokenName = trade.token_name || '-';
 
                         // Table row
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${displayAddress}</a></td>
+                            <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
                             <td>${trade.token_symbol || '-'}</td>
-                            <td>$${trade.buy_price_usd.toFixed(8)}</td>
-                            <td>$${trade.current_price_usd.toFixed(8)}</td>
-                            <td>$${trade.market_cap.toLocaleString()}</td>
-                            <td>$${trade.volume_24h.toLocaleString()}</td>
+                            <td>$${buyPrice.toFixed(8)}</td>
+                            <td>$${currentPrice.toFixed(8)}</td>
+                            <td>$${trade.market_cap ? trade.market_cap.toLocaleString() : '-'}</td>
+                            <td>$${trade.volume_24h ? trade.volume_24h.toLocaleString() : '-'}</td>
                             <td class="${profitClass}">${profitPercent}%</td>
-                            <td>${new Date(trade.buy_timestamp).toLocaleString()}</td>
+                            <td>${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</td>
                         `;
                         activeTradesBody.appendChild(row);
 
@@ -654,63 +667,73 @@
                         const card = document.createElement('div');
                         card.className = 'card';
                         card.innerHTML = `
-                            <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${displayAddress}</a></p>
+                            <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></p>
                             <p><span class="card-label">Symbol:</span> ${trade.token_symbol || '-'}</p>
-                            <p><span class="card-label">Buy Price:</span> $${trade.buy_price_usd.toFixed(8)}</p>
-                            <p><span class="card-label">Current Price:</span> $${trade.current_price_usd.toFixed(8)}</p>
-                            <p><span class="card-label">Market Cap:</span> $${trade.market_cap.toLocaleString()}</p>
-                            <p><span class="card-label">24h Volume:</span> $${trade.volume_24h.toLocaleString()}</p>
+                            <p><span class="card-label">Buy Price:</span> $${buyPrice.toFixed(8)}</p>
+                            <p><span class="card-label">Current Price:</span> $${currentPrice.toFixed(8)}</p>
+                            <p><span class="card-label">Market Cap:</span> $${trade.market_cap ? trade.market_cap.toLocaleString() : '-'}</p>
+                            <p><span class="card-label">24h Volume:</span> $${trade.volume_24h ? trade.volume_24h.toLocaleString() : '-'}</p>
                             <p><span class="card-label">Profit:</span> <span class="${profitClass}">${profitPercent}%</span></p>
-                            <p><span class="card-label">Buy Time:</span> ${new Date(trade.buy_timestamp).toLocaleString()}</p>
+                            <p><span class="card-label">Buy Time:</span> ${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</p>
                         `;
                         activeTradesCards.appendChild(card);
                     });
 
                     activeStatus.textContent = `Active trades loaded (${activeTrades.length})`;
+                    console.log('Active trades rendered');
 
                     // Fetch completed trades
+                    console.log('Fetching completed trades from Supabase');
                     let { data: completedTrades, error: completedError } = await supabase
                         .from('trades')
                         .select('*')
                         .eq('status', 'closed');
                     
                     if (completedError) {
-                        console.error('Completed trades error:', completedError);
+                        console.error('Completed trades fetch error:', completedError);
                         completedTrades = mockCompletedTrades;
+                    } else {
+                        console.log('Completed trades fetched:', completedTrades);
                     }
                     completedTrades = completedTrades || mockCompletedTrades;
+                    console.log('Completed trades after fallback:', completedTrades);
 
-                    const completedTradesBody = document.getElementById('completedTradesBody');
-                    const completedTradesCards = document.getElementById('completedTradesCards');
-                    if (!completedTradesBody || !completedTradesCards) throw new Error('Completed trades elements not found');
                     completedTradesBody.innerHTML = '';
                     completedTradesCards.innerHTML = '';
+                    console.log('Cleared completed trades UI elements');
 
                     const filter = document.getElementById('profitFilter')?.value || 'all';
+                    console.log('Applying profit filter:', filter);
                     const filteredTrades = completedTrades.filter(trade => {
-                        const profitPercent = ((trade.sell_price_usd - trade.buy_price_usd) / trade.buy_price_usd * 100).toFixed(2);
+                        const buyPrice = trade.buy_price_usd || 0;
+                        const sellPrice = trade.sell_price_usd || 0;
+                        const profitPercent = buyPrice !== 0 ? ((sellPrice - buyPrice) / buyPrice * 100).toFixed(2) : 0;
                         if (filter === 'positive') return profitPercent >= 0;
                         if (filter === 'negative') return profitPercent < 0;
                         return true;
                     });
+                    console.log('Filtered completed trades:', filteredTrades);
 
-                    filteredTrades.forEach(trade => {
-                        const profitPercent = ((trade.sell_price_usd - trade.buy_price_usd) / trade.buy_price_usd * 100).toFixed(2);
-                        const profitClass = profitPercent >= 0 ? 'profit-positive' : 'profit-negative';
+                    filteredTrades.forEach((trade, index) => {
+                        console.log(`Processing completed trade ${index}:`, trade);
+                        const buyPrice = trade.buy_price_usd || 0;
+                        const sellPrice = trade.sell_price_usd || 0;
+                        const profitPercent = buyPrice !== 0 ? ((sellPrice - buyPrice) / buyPrice * 100).toFixed(2) : 'N/A';
+                        const profitClass = profitPercent !== 'N/A' && profitPercent >= 0 ? 'profit-positive' : 'profit-negative';
                         const tokenAddress = trade.token_address || '-';
-                        const displayAddress = shortenAddress(tokenAddress);
+                        const tokenName = trade.token_name || '-';
 
                         // Table row
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${displayAddress}</a></td>
+                            <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
                             <td>${trade.token_symbol || '-'}</td>
-                            <td>$${trade.buy_price_usd.toFixed(8)}</td>
-                            <td>$${trade.sell_price_usd.toFixed(8)}</td>
+                            <td>$${buyPrice.toFixed(8)}</td>
+                            <td>$${sellPrice.toFixed(8)}</td>
                             <td class="${profitClass}">${profitPercent}%</td>
-                            <td class="${profitClass}">$${trade.total_profit_usd.toFixed(2)}</td>
-                            <td>${new Date(trade.buy_timestamp).toLocaleString()}</td>
-                            <td>${new Date(trade.sell_timestamp).toLocaleString()}</td>
+                            <td class="${profitClass}">$${trade.total_profit_usd ? trade.total_profit_usd.toFixed(2) : '-'}</td>
+                            <td>${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</td>
+                            <td>${trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-'}</td>
                         `;
                         completedTradesBody.appendChild(row);
 
@@ -718,41 +741,61 @@
                         const card = document.createElement('div');
                         card.className = 'card';
                         card.innerHTML = `
-                            <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${displayAddress}</a></p>
+                            <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></p>
                             <p><span class="card-label">Symbol:</span> ${trade.token_symbol || '-'}</p>
-                            <p><span class="card-label">Buy Price:</span> $${trade.buy_price_usd.toFixed(8)}</p>
-                            <p><span class="card-label">Sell Price:</span> $${trade.sell_price_usd.toFixed(8)}</p>
+                            <p><span class="card-label">Buy Price:</span> $${buyPrice.toFixed(8)}</p>
+                            <p><span class="card-label">Sell Price:</span> $${sellPrice.toFixed(8)}</p>
                             <p><span class="card-label">Profit:</span> <span class="${profitClass}">${profitPercent}%</span></p>
-                            <p><span class="card-label">Total Profit:</span> <span class="${profitClass}">$${trade.total_profit_usd.toFixed(2)}</span></p>
-                            <p><span class="card-label">Buy Time:</span> ${new Date(trade.buy_timestamp).toLocaleString()}</p>
-                            <p><span class="card-label">Sell Time:</span> ${new Date(trade.sell_timestamp).toLocaleString()}</p>
+                            <p><span class="card-label">Total Profit:</span> <span class="${profitClass}">$${trade.total_profit_usd ? trade.total_profit_usd.toFixed(2) : '-'}</span></p>
+                            <p><span class="card-label">Buy Time:</span> ${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</p>
+                            <p><span class="card-label">Sell Time:</span> ${trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-'}</p>
                         `;
                         completedTradesCards.appendChild(card);
                     });
 
                     completedStatus.textContent = `Completed trades loaded (${filteredTrades.length})`;
+                    console.log('Completed trades rendered');
 
                     // Update total profit
-                    const totalProfitElement = document.getElementById('totalProfit');
-                    if (!totalProfitElement) throw new Error('totalProfit element not found');
-                    const totalProfit = filteredTrades.reduce((sum, trade) => sum + trade.total_profit_usd, 0);
+                    console.log('Calculating total profit');
+                    const totalProfit = filteredTrades.reduce((sum, trade) => {
+                        const profit = trade.total_profit_usd || 0;
+                        return sum + profit;
+                    }, 0);
                     totalProfitElement.textContent = `$${totalProfit.toFixed(2)}`;
+                    console.log('Total profit updated:', totalProfit);
 
                     // Update chart
+                    console.log('Updating chart');
                     if (profitChart) {
-                        profitChart.data.labels = filteredTrades.map(t => new Date(t.sell_timestamp).toLocaleDateString());
-                        profitChart.data.datasets[0].data = filteredTrades.map(t => t.total_profit_usd);
+                        const labels = filteredTrades
+                            .map(t => t.sell_timestamp ? new Date(t.sell_timestamp).toLocaleDateString() : null)
+                            .filter(label => label !== null);
+                        const data = filteredTrades
+                            .map(t => t.total_profit_usd || 0)
+                            .filter((_, index) => filteredTrades[index].sell_timestamp !== null);
+
+                        profitChart.data.labels = labels.length > 0 ? labels : ['No Data'];
+                        profitChart.data.datasets[0].data = data.length > 0 ? data : [0];
                         profitChart.update();
+                        console.log('Chart updated successfully');
+                    } else {
+                        console.warn('Profit chart not initialized, skipping update');
                     }
+
+                    console.log('refreshTrades completed successfully');
                 } catch (error) {
                     console.error('Error refreshing trades:', error);
-                    document.getElementById('active-status').textContent = 'Error loading active trades';
-                    document.getElementById('completed-status').textContent = 'Error loading completed trades';
+                    const activeStatus = document.getElementById('active-status');
+                    const completedStatus = document.getElementById('completed-status');
+                    if (activeStatus) activeStatus.textContent = 'Error loading active trades';
+                    if (completedStatus) completedStatus.textContent = 'Error loading completed trades';
                     alert('Failed to refresh trades. Check console for details.');
                 }
             }
 
             // Initial load
+            console.log('Initial load');
             refreshTrades();
         });
     </script>
