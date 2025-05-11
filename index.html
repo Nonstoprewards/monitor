@@ -393,13 +393,10 @@
         let filteredCompletedTrades = [];
         let isFetching = false;
         const priceCache = new Map();
-        const overviewCache = new Map();
-        const CACHE_DURATION = 60000;
+        const CACHE_DURATION = 60000; // 60 seconds
 
         // APIs
         const DEXSCREENER_API = 'https://api.dexscreener.com';
-        const BIRDEYE_API = 'https://public-api.birdeye.so';
-        const BIRDEYE_API_KEY = 'a9c9dfcce5fb467b80439fa49a83b448';
 
         // Chart.js configuration
         let profitChart;
@@ -554,125 +551,8 @@
             return results;
         }
 
-        async function fetchBirdeyeData(tokenAddresses) {
-            const results = {};
-            const validAddresses = tokenAddresses.filter(address => {
-                if (!isValidSolanaAddress(address)) {
-                    console.warn(`Invalid Solana address: ${address}`);
-                    results[address] = { currentPrice: 'Invalid Address', marketCap: 'Invalid Address', volume24h: 'Invalid Address' };
-                    return false;
-                }
-                return true;
-            });
-
-            for (const address of validAddresses) {
-                const cacheKey = `birdeye:${address}`;
-                const cached = priceCache.get(cacheKey);
-
-                if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-                    results[address] = cached.data;
-                    continue;
-                }
-
-                try {
-                    const response = await fetch(`${BIRDEYE_API}/public/price?address=${address}`, {
-                        headers: { 'accept': 'application/json', 'X-API-KEY': BIRDEYE_API_KEY }
-                    });
-
-                    let errorMessage = '';
-                    if (!response.ok) {
-                        if (response.status === 429) {
-                            errorMessage = 'Rate Limit Exceeded';
-                            await new Promise(resolve => setTimeout(resolve, 2000));
-                            const retryResponse = await fetch(`${BIRDEYE_API}/public/price?address=${address}`, {
-                                headers: { 'accept': 'application/json', 'X-API-KEY': BIRDEYE_API_KEY }
-                            });
-                            if (!retryResponse.ok) throw new Error(`HTTP ${retryResponse.status}: Rate limit retry failed`);
-                            response = retryResponse;
-                        } else if (response.status === 401) {
-                            errorMessage = 'Invalid API Key';
-                            throw new Error(`HTTP 401: Invalid API key`);
-                        } else if (response.status === 404) {
-                            errorMessage = 'Not Indexed';
-                            throw new Error(`HTTP 404: Token not found`);
-                        } else {
-                            errorMessage = `HTTP ${response.status}`;
-                            throw new Error(`HTTP ${response.status}: Unknown error`);
-                        }
-                    }
-
-                    const json = await response.json();
-                    if (!json.success || !json.data) {
-                        errorMessage = 'Invalid Response';
-                        throw new Error('Invalid response structure: Missing success or data');
-                    }
-
-                    const tokenData = json.data;
-                    let currentPrice = tokenData.value ? parseFloat(tokenData.value).toFixed(6) : 'Not Indexed';
-                    let marketCap = 'Not Indexed';
-                    let volume24h = 'Not Indexed';
-
-                    if (currentPrice !== 'Not Indexed') {
-                        const overviewCached = overviewCache.get(address);
-                        if (overviewCached && Date.now() - overviewCached.timestamp < CACHE_DURATION) {
-                            marketCap = overviewCached.marketCap;
-                            volume24h = overviewCached.volume24h;
-                        } else {
-                            try {
-                                const overviewResponse = await fetch(`${BIRDEYE_API}/defi/token_overview?address=${address}&x-chain=solana`, {
-                                    headers: { 'accept': 'application/json', 'X-API-KEY': BIRDEYE_API_KEY }
-                                });
-
-                                if (!overviewResponse.ok) throw new Error(`HTTP ${overviewResponse.status}`);
-                                const overviewJson = await overviewResponse.json();
-
-                                if (overviewJson.success && overviewJson.data) {
-                                    const overviewData = overviewJson.data;
-                                    marketCap = overviewData.mc ? Math.round(overviewData.mc).toLocaleString() :
-                                        (tokenData.value ? Math.round(tokenData.value * 1000000000).toLocaleString() : 'Not Indexed');
-                                    volume24h = overviewData.v24hUSD ? Math.round(overviewData.v24hUSD).toLocaleString() : 'Not Indexed';
-                                    overviewCache.set(address, { marketCap, volume24h, timestamp: Date.now() });
-                                } else {
-                                    marketCap = tokenData.value ? Math.round(tokenData.value * 1000000000).toLocaleString() : 'Not Indexed';
-                                    volume24h = 'Not Indexed';
-                                }
-                            } catch (err) {
-                                console.error(`Birdeye token_overview error for ${address}: ${err.message}`);
-                                marketCap = tokenData.value ? Math.round(tokenData.value * 1000000000).toLocaleString() : 'Not Indexed';
-                                volume24h = 'Not Indexed';
-                            }
-                        }
-                    }
-
-                    const result = { currentPrice, marketCap, volume24h };
-                    results[address] = result;
-                    priceCache.set(cacheKey, { data: result, timestamp: Date.now() });
-                } catch (err) {
-                    console.error(`Birdeye price error for ${address}: ${err.message}`);
-                    results[address] = {
-                        currentPrice: err.message.includes('Not Indexed') ? 'Not Indexed' : err.message.includes('Rate limit') ? 'Rate Limit' : err.message.includes('Invalid API key') ? 'Invalid Key' : 'Error',
-                        marketCap: 'Error',
-                        volume24h: 'Error'
-                    };
-                }
-            }
-            return results;
-        }
-
         async function fetchTokenData(tokenAddresses) {
-            let results = await fetchDexScreenerData(tokenAddresses);
-            const failedAddresses = tokenAddresses.filter(address => {
-                const data = results[address];
-                return data && (data.currentPrice === 'Not Indexed' || data.currentPrice === 'Error' || data.currentPrice === 'Rate Limit');
-            });
-
-            if (failedAddresses.length > 0) {
-                const birdeyeResults = await fetchBirdeyeData(failedAddresses);
-                for (const address of failedAddresses) {
-                    results[address] = birdeyeResults[address];
-                }
-            }
-            return results;
+            return await fetchDexScreenerData(tokenAddresses);
         }
 
         function calculateTotalProfit() {
@@ -712,7 +592,7 @@
 
                 const { data, error } = await supabase
                     .from('trades')
-                    .select('*')
+                    .select('*, profit_percentage, last_price_check')
                     .order('buy_timestamp', { ascending: false });
 
                 if (error) {
@@ -779,8 +659,10 @@
                     marketCap: 'Not Indexed',
                     volume24h: 'Not Indexed'
                 };
-                const profitPercent = data.currentPrice && !isNaN(parseFloat(data.currentPrice)) && trade.buy_price_usd
-                    ? (((parseFloat(data.currentPrice) - trade.buy_price_usd) / trade.buy_price_usd) * 100).toFixed(2)
+                // Use profit_percentage from Supabase, check for staleness
+                const isStale = trade.last_price_check && (Date.now() - new Date(trade.last_price_check).getTime()) > 60 * 1000;
+                const profitPercent = trade.profit_percentage != null 
+                    ? `${trade.profit_percentage.toFixed(2)}${isStale ? ' (stale)' : ''}%`
                     : 'N/A';
 
                 const row = document.createElement('tr');
@@ -791,7 +673,7 @@
                     <td class="py-2 px-4">${data.currentPrice}</td>
                     <td class="py-2 px-4">${data.marketCap}</td>
                     <td class="py-2 px-4">${data.volume24h}</td>
-                    <td class="py-2 px-4 ${profitPercent !== 'N/A' && profitPercent >= 0 ? 'profit-positive' : 'profit-negative'}">${profitPercent}%</td>
+                    <td class="py-2 px-4 ${profitPercent !== 'N/A' && trade.profit_percentage >= 0 ? 'profit-positive' : 'profit-negative'}">${profitPercent}</td>
                     <td class="py-2 px-4">${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</td>
                 `;
                 activeTradesBody.appendChild(row);
@@ -825,7 +707,7 @@
                     </div>
                     <div class="flex mb-2">
                         <span class="card-label">Profit:</span>
-                        <span class="card-value ${profitPercent !== 'N/A' && profitPercent >= 0 ? 'profit-positive' : 'profit-negative'}">${profitPercent}%</span>
+                        <span class="card-value ${profitPercent !== 'N/A' && trade.profit_percentage >= 0 ? 'profit-positive' : 'profit-negative'}">${profitPercent}</span>
                     </div>
                     <div class="flex">
                         <span class="card-label">Buy Time:</span>
@@ -992,13 +874,11 @@
         // Refresh Button Handlers
         document.getElementById('topRefreshBtn').addEventListener('click', () => {
             priceCache.clear();
-            overviewCache.clear();
             initAndFetchTrades();
         });
 
         document.getElementById('bottomRefreshBtn').addEventListener('click', () => {
             priceCache.clear();
-            overviewCache.clear();
             initAndFetchTrades();
         });
 
