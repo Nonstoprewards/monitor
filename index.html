@@ -461,7 +461,7 @@
             // Mock data for testing
             const mockActiveTrades = [
                 {
-                    token_name: 'Ducky',
+                    token_address: '5J1To2BQ89ajMNVTsoRSwwrvbFiXZPLR9gzHWzyJUyCmw3nDdde7',
                     token_symbol: 'DUCKY',
                     buy_price_usd: 0.0000001,
                     current_price_usd: 0.00000012,
@@ -473,7 +473,7 @@
             ];
             const mockCompletedTrades = [
                 {
-                    token_name: 'Ducky',
+                    token_address: '5J1To2BQ89ajMNVTsoRSwwrvbFiXZPLR9gzHWzyJUyCmw3nDdde7',
                     token_symbol: 'DUCKY',
                     buy_price_usd: 0.0000001,
                     sell_price_usd: 0.00000015,
@@ -564,7 +564,7 @@
                         const csv = [
                             'Token,Symbol,Buy Price (USD),Sell Price (USD),Profit (%),Total Profit (USD),Buy Time,Sell Time',
                             ...trades.map(t => `
-                                ${t.token_name},${t.token_symbol},${t.buy_price_usd},${t.sell_price_usd},
+                                ${t.token_address || '-'},${t.token_symbol},${t.buy_price_usd},${t.sell_price_usd},
                                 ${((t.sell_price_usd - t.buy_price_usd) / t.buy_price_usd * 100).toFixed(2)},
                                 ${t.total_profit_usd},${t.buy_timestamp},${t.sell_timestamp}
                             `)
@@ -594,6 +594,12 @@
                 });
             } else {
                 console.error('profitFilter not found');
+            }
+
+            // Helper function to shorten wallet address
+            function shortenAddress(address) {
+                if (!address || address.length < 10) return address || '-';
+                return `${address.slice(0, 6)}...${address.slice(-4)}`;
             }
 
             async function refreshTrades() {
@@ -627,12 +633,14 @@
                     activeTrades.forEach(trade => {
                         const profitPercent = ((trade.current_price_usd - trade.buy_price_usd) / trade.buy_price_usd * 100).toFixed(2);
                         const profitClass = profitPercent >= 0 ? 'profit-positive' : 'profit-negative';
+                        const tokenAddress = trade.token_address || '-';
+                        const displayAddress = shortenAddress(tokenAddress);
 
                         // Table row
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td>${trade.token_name}</td>
-                            <td>${trade.token_symbol}</td>
+                            <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${displayAddress}</a></td>
+                            <td>${trade.token_symbol || '-'}</td>
                             <td>$${trade.buy_price_usd.toFixed(8)}</td>
                             <td>$${trade.current_price_usd.toFixed(8)}</td>
                             <td>$${trade.market_cap.toLocaleString()}</td>
@@ -646,8 +654,8 @@
                         const card = document.createElement('div');
                         card.className = 'card';
                         card.innerHTML = `
-                            <p><span class="card-label">Token:</span> ${trade.token_name}</p>
-                            <p><span class="card-label">Symbol:</span> ${trade.token_symbol}</p>
+                            <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${displayAddress}</a></p>
+                            <p><span class="card-label">Symbol:</span> ${trade.token_symbol || '-'}</p>
                             <p><span class="card-label">Buy Price:</span> $${trade.buy_price_usd.toFixed(8)}</p>
                             <p><span class="card-label">Current Price:</span> $${trade.current_price_usd.toFixed(8)}</p>
                             <p><span class="card-label">Market Cap:</span> $${trade.market_cap.toLocaleString()}</p>
@@ -689,12 +697,14 @@
                     filteredTrades.forEach(trade => {
                         const profitPercent = ((trade.sell_price_usd - trade.buy_price_usd) / trade.buy_price_usd * 100).toFixed(2);
                         const profitClass = profitPercent >= 0 ? 'profit-positive' : 'profit-negative';
+                        const tokenAddress = trade.token_address || '-';
+                        const displayAddress = shortenAddress(tokenAddress);
 
                         // Table row
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td>${trade.token_name}</td>
-                            <td>${trade.token_symbol}</td>
+                            <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${displayAddress}</a></td>
+                            <td>${trade.token_symbol || '-'}</td>
                             <td>$${trade.buy_price_usd.toFixed(8)}</td>
                             <td>$${trade.sell_price_usd.toFixed(8)}</td>
                             <td class="${profitClass}">${profitPercent}%</td>
@@ -708,8 +718,8 @@
                         const card = document.createElement('div');
                         card.className = 'card';
                         card.innerHTML = `
-                            <p><span class="card-label">Token:</span> ${trade.token_name}</p>
-                            <p><span class="card-label">Symbol:</span> ${trade.token_symbol}</p>
+                            <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${displayAddress}</a></p>
+                            <p><span class="card-label">Symbol:</span> ${trade.token_symbol || '-'}</p>
                             <p><span class="card-label">Buy Price:</span> $${trade.buy_price_usd.toFixed(8)}</p>
                             <p><span class="card-label">Sell Price:</span> $${trade.sell_price_usd.toFixed(8)}</p>
                             <p><span class="card-label">Profit:</span> <span class="${profitClass}">${profitPercent}%</span></p>
