@@ -92,7 +92,6 @@
             position: sticky;
             top: 0;
             z-index: 10;
-            position: relative;
         }
         .sexy th:hover::after {
             content: '♥';
@@ -268,6 +267,33 @@
             50% { background-color: #c71585; }
             100% { background-color: transparent; }
         }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            border-bottom: 2px solid transparent;
+            transition: border-color 0.3s, color 0.3s;
+        }
+        .tab.active {
+            border-bottom: 2px solid #2c7a7b;
+            color: #2c7a7b;
+        }
+        .sexy .tab.active {
+            border-bottom: 2px solid #ff69b4;
+            color: #ff69b4;
+        }
+        .tab:hover {
+            color: #2c7a7b;
+        }
+        .sexy .tab:hover {
+            color: #ff69b4;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
         @media (max-width: 640px) {
             .container {
                 padding: 1rem;
@@ -297,6 +323,10 @@
             }
             .card-container {
                 display: block;
+            }
+            .tab {
+                padding: 8px 12px;
+                font-size: 0.875rem;
             }
         }
         @media (min-width: 641px) {
@@ -334,104 +364,205 @@
                     <i class="fas fa-moon mr-2"></i> Sexy Mode
                 </button>
             </div>
-            <div class="flex flex-col sm:flex-row justify-end mb-6 space-y-2 sm:space-y-0 sm:space-x-3">
-                <button id="topRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                    <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                </button>
-                <button id="exportBtn" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
-                    <i class="fas fa-file-export mr-2"></i> Export Trades
-                </button>
+            <!-- Tabs Navigation -->
+            <div class="flex border-b border-gray-200 mb-6">
+                <div id="tab-bread" class="tab active">Bread and Butter Bot</div>
+                <div id="tab-moon" class="tab">Moon Bot</div>
             </div>
-
-            <!-- Summary Section -->
-            <div class="mb-6 section-card">
-                <h2 class="text-xl text-navy mb-2">Summary</h2>
-                <p class="text-gray-700">Total Completed Profit: <span id="totalProfit" class="font-semibold text-navy">Calculating...</span></p>
-            </div>
-
-            <!-- Active Trades Section -->
-            <div class="mb-6 section-card">
-                <h2 class="text-xl text-navy mb-4">Active Trades</h2>
-                <p id="active-status" class="text-gray-700 text-sm mb-2 status">Loading active trades...</p>
-                <div class="table-container">
-                    <table class="min-w-full">
-                        <thead>
-                            <tr>
-                                <th>Token</th>
-                                <th>Symbol</th>
-                                <th>Buy Price (USD)</th>
-                                <th>Current Price (USD)</th>
-                                <th>Market Cap (USD)</th>
-                                <th>24h Volume (USD)</th>
-                                <th>Profit (%)</th>
-                                <th>Buy Time</th>
-                            </tr>
-                        </thead>
-                        <tbody id="activeTradesBody"></tbody>
-                    </table>
+            <!-- Tab Content -->
+            <!-- Bread and Butter Bot (Bot1) -->
+            <div id="content-bread" class="tab-content active">
+                <div class="flex flex-col sm:flex-row justify-end mb-6 space-y-2 sm:space-y-0 sm:space-x-3">
+                    <button id="bread-topRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                        <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
+                    </button>
+                    <button id="bread-exportBtn" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
+                        <i class="fas fa-file-export mr-2"></i> Export Trades
+                    </button>
                 </div>
-                <div class="card-container">
-                    <div id="activeTradesCards"></div>
+                <!-- Summary Section -->
+                <div class="mb-6 section-card">
+                    <h2 class="text-xl text-navy mb-2">Summary</h2>
+                    <p class="text-gray-700">Total Completed Profit: <span id="bread-totalProfit" class="font-semibold text-navy">Calculating...</span></p>
                 </div>
-                <div class="flex justify-between items-center mt-4">
-                    <div class="flex items-center space-x-2">
-                        <span id="activePrevPage" class="pagination-arrow disabled">◀</span>
-                        <span class="pagination-text text-gray-700">Page <span id="activeCurrentPage">1</span></span>
-                        <span id="activeNextPage" class="pagination-arrow disabled">▶</span>
+                <!-- Active Trades Section -->
+                <div class="mb-6 section-card">
+                    <h2 class="text-xl text-navy mb-4">Active Trades</h2>
+                    <p id="bread-active-status" class="text-gray-700 text-sm mb-2 status">Loading active trades...</p>
+                    <div class="table-container">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr>
+                                    <th>Token</th>
+                                    <th>Symbol</th>
+                                    <th>Buy Price (USD)</th>
+                                    <th>Current Price (USD)</th>
+                                    <th>Market Cap (USD)</th>
+                                    <th>24h Volume (USD)</th>
+                                    <th>Profit (%)</th>
+                                    <th>Buy Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bread-activeTradesBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="card-container">
+                        <div id="bread-activeTradesCards"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-4">
+                        <div class="flex items-center space-x-2">
+                            <span id="bread-activePrevPage" class="pagination-arrow disabled">◀</span>
+                            <span class="pagination-text text-gray-700">Page <span id="bread-activeCurrentPage">1</span></span>
+                            <span id="bread-activeNextPage" class="pagination-arrow disabled">▶</span>
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Completed Trades Section -->
-            <div class="mb-6 section-card">
-                <h2 class="text-xl text-navy mb-4">Completed Trades</h2>
-                <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                    <p id="completed-status" class="text-gray-700 text-sm mb-2 sm:mb-0 status">Loading completed trades...</p>
-                    <select id="profitFilter" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                        <option value="all">All Trades</option>
-                        <option value="positive">Positive Profit</option>
-                        <option value="negative">Negative Profit</option>
-                    </select>
-                </div>
-                <div id="completedTableContainer" class="table-container">
-                    <table class="min-w-full">
-                        <thead>
-                            <tr>
-                                <th>Token</th>
-                                <th>Symbol</th>
-                                <th>Buy Price (USD)</th>
-                                <th>Sell Price (USD)</th>
-                                <th>Profit (%)</th>
-                                <th>Total Profit (USD)</th>
-                                <th>Buy Time</th>
-                                <th>Sell Time</th>
-                            </tr>
-                        </thead>
-                        <tbody id="completedTradesBody"></tbody>
-                    </table>
-                </div>
-                <div class="card-container">
-                    <div id="completedTradesCards"></div>
-                </div>
-                <div class="flex justify-between items-center mt-4">
-                    <div class="flex items-center space-x-2">
-                        <span id="completedPrevPage" class="pagination-arrow disabled">◀</span>
-                        <span class="pagination-text text-gray-700">Page <span id="completedCurrentPage">1</span></span>
-                        <span id="completedNextPage" class="pagination-arrow disabled">▶</span>
+                <!-- Completed Trades Section -->
+                <div class="mb-6 section-card">
+                    <h2 class="text-xl text-navy mb-4">Completed Trades</h2>
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                        <p id="bread-completed-status" class="text-gray-700 text-sm mb-2 sm:mb-0 status">Loading completed trades...</p>
+                        <select id="bread-profitFilter" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                            <option value="all">All Trades</option>
+                            <option value="positive">Positive Profit</option>
+                            <option value="negative">Negative Profit</option>
+                        </select>
+                    </div>
+                    <div id="bread-completedTableContainer" class="table-container">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr>
+                                    <th>Token</th>
+                                    <th>Symbol</th>
+                                    <th>Buy Price (USD)</th>
+                                    <th>Sell Price (USD)</th>
+                                    <th>Profit (%)</th>
+                                    <th>Total Profit (USD)</th>
+                                    <th>Buy Time</th>
+                                    <th>Sell Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bread-completedTradesBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="card-container">
+                        <div id="bread-completedTradesCards"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-4">
+                        <div class="flex items-center space-x-2">
+                            <span id="bread-completedPrevPage" class="pagination-arrow disabled">◀</span>
+                            <span class="pagination-text text-gray-700">Page <span id="bread-completedCurrentPage">1</span></span>
+                            <span id="bread-completedNextPage" class="pagination-arrow disabled">▶</span>
+                        </div>
                     </div>
                 </div>
+                <!-- Profit Trend Chart -->
+                <div class="mb-6 section-card">
+                    <h2 class="text-xl text-navy mb-4">Profit Trend</h2>
+                    <canvas id="bread-profitChart" class="w-full h-64"></canvas>
+                </div>
+                <div class="flex justify-end mt-6">
+                    <button id="bread-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                        <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
+                    </button>
+                </div>
             </div>
-
-            <!-- Profit Trend Chart -->
-            <div class="mb-6 section-card">
-                <h2 class="text-xl text-navy mb-4">Profit Trend</h2>
-                <canvas id="profitChart" class="w-full h-64"></canvas>
-            </div>
-
-            <div class="flex justify-end mt-6">
-                <button id="bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                    <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                </button>
+            <!-- Moon Bot (Bot2) -->
+            <div id="content-moon" class="tab-content">
+                <div class="flex flex-col sm:flex-row justify-end mb-6 space-y-2 sm:space-y-0 sm:space-x-3">
+                    <button id="moon-topRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                        <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
+                    </button>
+                    <button id="moon-exportBtn" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
+                        <i class="fas fa-file-export mr-2"></i> Export Trades
+                    </button>
+                </div>
+                <!-- Summary Section -->
+                <div class="mb-6 section-card">
+                    <h2 class="text-xl text-navy mb-2">Summary</h2>
+                    <p class="text-gray-700">Total Completed Profit: <span id="moon-totalProfit" class="font-semibold text-navy">Calculating...</span></p>
+                </div>
+                <!-- Active Trades Section -->
+                <div class="mb-6 section-card">
+                    <h2 class="text-xl text-navy mb-4">Active Trades</h2>
+                    <p id="moon-active-status" class="text-gray-700 text-sm mb-2 status">Loading active trades...</p>
+                    <div class="table-container">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr>
+                                    <th>Token</th>
+                                    <th>Symbol</th>
+                                    <th>Buy Price (USD)</th>
+                                    <th>Current Price (USD)</th>
+                                    <th>Market Cap (USD)</th>
+                                    <th>24h Volume (USD)</th>
+                                    <th>Profit (%)</th>
+                                    <th>Buy Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="moon-activeTradesBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="card-container">
+                        <div id="moon-activeTradesCards"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-4">
+                        <div class="flex items-center space-x-2">
+                            <span id="moon-activePrevPage" class="pagination-arrow disabled">◀</span>
+                            <span class="pagination-text text-gray-700">Page <span id="moon-activeCurrentPage">1</span></span>
+                            <span id="moon-activeNextPage" class="pagination-arrow disabled">▶</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Completed Trades Section -->
+                <div class="mb-6 section-card">
+                    <h2 class="text-xl text-navy mb-4">Completed Trades</h2>
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                        <p id="moon-completed-status" class="text-gray-700 text-sm mb-2 sm:mb-0 status">Loading completed trades...</p>
+                        <select id="moon-profitFilter" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                            <option value="all">All Trades</option>
+                            <option value="positive">Positive Profit</option>
+                            <option value="negative">Negative Profit</option>
+                        </select>
+                    </div>
+                    <div id="moon-completedTableContainer" class="table-container">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr>
+                                    <th>Token</th>
+                                    <th>Symbol</th>
+                                    <th>Buy Price (USD)</th>
+                                    <th>Sell Price (USD)</th>
+                                    <th>Profit (%)</th>
+                                    <th>Total Profit (USD)</th>
+                                    <th>Buy Time</th>
+                                    <th>Sell Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="moon-completedTradesBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="card-container">
+                        <div id="moon-completedTradesCards"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-4">
+                        <div class="flex items-center space-x-2">
+                            <span id="moon-completedPrevPage" class="pagination-arrow disabled">◀</span>
+                            <span class="pagination-text text-gray-700">Page <span id="moon-completedCurrentPage">1</span></span>
+                            <span id="moon-completedNextPage" class="pagination-arrow disabled">▶</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Profit Trend Chart -->
+                <div class="mb-6 section-card">
+                    <h2 class="text-xl text-navy mb-4">Profit Trend</h2>
+                    <canvas id="moon-profitChart" class="w-full h-64"></canvas>
+                </div>
+                <div class="flex justify-end mt-6">
+                    <button id="moon-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                        <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -444,7 +575,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             console.log('DOM loaded');
 
-            // Initialize Supabase client with anon key
+            // Initialize Supabase client
             let supabase;
             try {
                 supabase = window.supabase.createClient(
@@ -469,7 +600,8 @@
                     market_cap: 100000,
                     volume_24h: 5000,
                     buy_timestamp: '2025-05-10T10:00:00Z',
-                    quantity: 200000000
+                    quantity: 200000000,
+                    status: 'open'
                 }
             ];
             const mockCompletedTrades = [
@@ -482,18 +614,20 @@
                     total_profit_usd: 10,
                     buy_timestamp: '2025-05-10T10:00:00Z',
                     sell_timestamp: '2025-05-10T12:00:00Z',
-                    quantity: 200000000
+                    quantity: 200000000,
+                    status: 'closed'
                 }
             ];
 
-            // Initialize Chart.js
-            let profitChart;
+            // Initialize Chart.js for both bots
+            let breadProfitChart, moonProfitChart;
             try {
-                const ctx = document.getElementById('profitChart')?.getContext('2d');
-                if (!ctx) {
-                    console.error('Profit chart canvas not found');
+                const breadCtx = document.getElementById('bread-profitChart')?.getContext('2d');
+                const moonCtx = document.getElementById('moon-profitChart')?.getContext('2d');
+                if (!breadCtx || !moonCtx) {
+                    console.error('One or more chart canvases not found');
                 } else {
-                    profitChart = new Chart(ctx, {
+                    breadProfitChart = new Chart(breadCtx, {
                         type: 'line',
                         data: {
                             labels: ['2025-05-01', '2025-05-02', '2025-05-03'],
@@ -506,13 +640,40 @@
                         },
                         options: { scales: { y: { beginAtZero: true } } }
                     });
-                    console.log('Chart.js initialized');
+                    moonProfitChart = new Chart(moonCtx, {
+                        type: 'line',
+                        data: {
+                            labels: ['2025-05-01', '2025-05-02', '2025-05-03'],
+                            datasets: [{
+                                label: 'Profit (USD)',
+                                data: [0, 5, 10],
+                                borderColor: '#2c7a7b',
+                                fill: false
+                            }]
+                        },
+                        options: { scales: { y: { beginAtZero: true } } }
+                    });
+                    console.log('Chart.js initialized for both bots');
                 }
             } catch (error) {
                 console.error('Error initializing Chart.js:', error);
             }
 
-            // Button Event Listeners
+            // Tab switching logic
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    tab.classList.add('active');
+                    document.getElementById(`content-${tab.id.split('-')[1]}`).classList.add('active');
+                    console.log(`Switched to tab: ${tab.textContent}`);
+                    refreshTrades(tab.id.split('-')[1]);
+                });
+            });
+
+            // Sexy Mode Toggle
             const sexyModeToggle = document.getElementById('sexyModeToggle');
             if (sexyModeToggle) {
                 sexyModeToggle.addEventListener('click', () => {
@@ -527,132 +688,116 @@
                 console.error('sexyModeToggle button not found');
             }
 
-            const topRefreshBtn = document.getElementById('topRefreshBtn');
-            if (topRefreshBtn) {
-                topRefreshBtn.addEventListener('click', () => {
-                    console.log('Top Refresh clicked');
-                    refreshTrades();
+            // Button Event Listeners for Bread and Butter Bot
+            const breadTopRefreshBtn = document.getElementById('bread-topRefreshBtn');
+            if (breadTopRefreshBtn) {
+                breadTopRefreshBtn.addEventListener('click', () => {
+                    console.log('Bread Top Refresh clicked');
+                    refreshTrades('bread');
                 });
-            } else {
-                console.error('topRefreshBtn not found');
+            }
+            const breadBottomRefreshBtn = document.getElementById('bread-bottomRefreshBtn');
+            if (breadBottomRefreshBtn) {
+                breadBottomRefreshBtn.addEventListener('click', () => {
+                    console.log('Bread Bottom Refresh clicked');
+                    refreshTrades('bread');
+                });
+            }
+            const breadExportBtn = document.getElementById('bread-exportBtn');
+            if (breadExportBtn) {
+                breadExportBtn.addEventListener('click', () => exportTrades('bread'));
+            }
+            const breadProfitFilter = document.getElementById('bread-profitFilter');
+            if (breadProfitFilter) {
+                breadProfitFilter.addEventListener('change', () => {
+                    console.log('Bread Profit filter changed');
+                    refreshTrades('bread');
+                });
             }
 
-            const bottomRefreshBtn = document.getElementById('bottomRefreshBtn');
-            if (bottomRefreshBtn) {
-                bottomRefreshBtn.addEventListener('click', () => {
-                    console.log('Bottom Refresh clicked');
-                    refreshTrades();
+            // Button Event Listeners for Moon Bot
+            const moonTopRefreshBtn = document.getElementById('moon-topRefreshBtn');
+            if (moonTopRefreshBtn) {
+                moonTopRefreshBtn.addEventListener('click', () => {
+                    console.log('Moon Top Refresh clicked');
+                    refreshTrades('moon');
                 });
-            } else {
-                console.error('bottomRefreshBtn not found');
+            }
+            const moonBottomRefreshBtn = document.getElementById('moon-bottomRefreshBtn');
+            if (moonBottomRefreshBtn) {
+                moonBottomRefreshBtn.addEventListener('click', () => {
+                    console.log('Moon Bottom Refresh clicked');
+                    refreshTrades('moon');
+                });
+            }
+            const moonExportBtn = document.getElementById('moon-exportBtn');
+            if (moonExportBtn) {
+                moonExportBtn.addEventListener('click', () => exportTrades('moon'));
+            }
+            const moonProfitFilter = document.getElementById('moon-profitFilter');
+            if (moonProfitFilter) {
+                moonProfitFilter.addEventListener('change', () => {
+                    console.log('Moon Profit filter changed');
+                    refreshTrades('moon');
+                });
             }
 
-            const exportBtn = document.getElementById('exportBtn');
-            if (exportBtn) {
-                exportBtn.addEventListener('click', async () => {
-                    console.log('Export clicked');
-                    try {
-                        let { data: completedTrades, error } = await supabase
-                            .from('trades')
-                            .select('*')
-                            .eq('status', 'closed');
-                        
-                        if (error) {
-                            console.error('Export error:', error.message);
-                            completedTrades = mockCompletedTrades;
-                        }
-                        const trades = completedTrades || mockCompletedTrades;
+            async function refreshTrades(bot) {
+                console.log(`Starting refreshTrades for ${bot}`);
+                const prefix = bot === 'bread' ? 'bread' : 'moon';
+                const tableName = bot === 'bread' ? 'trades' : 'trades_bot2';
+                const activeStatus = document.getElementById(`${prefix}-active-status`);
+                const completedStatus = document.getElementById(`${prefix}-completed-status`);
+                const activeTradesBody = document.getElementById(`${prefix}-activeTradesBody`);
+                const activeTradesCards = document.getElementById(`${prefix}-activeTradesCards`);
+                const completedTradesBody = document.getElementById(`${prefix}-completedTradesBody`);
+                const completedTradesCards = document.getElementById(`${prefix}-completedTradesCards`);
+                const totalProfitElement = document.getElementById(`${prefix}-totalProfit`);
+                const profitChart = bot === 'bread' ? breadProfitChart : moonProfitChart;
 
-                        const csv = [
-                            'Token,Symbol,Buy Price (USD),Sell Price (USD),Profit (%),Total Profit (USD),Buy Time,Sell Time',
-                            ...trades.map(t => `
-                                ${t.token_name || '-'},${t.token_symbol || '-'},
-                                ${t.buy_price_usd || 0},${t.sell_price_usd || 0},
-                                ${(((t.sell_price_usd || 0) - (t.buy_price_usd || 0)) / (t.buy_price_usd || 1) * 100).toFixed(2)},
-                                ${t.total_profit_usd || 0},
-                                ${t.buy_timestamp || '-'},${t.sell_timestamp || '-'}
-                            `)
-                        ].join('\n');
+                if (!activeStatus || !completedStatus || !activeTradesBody || !activeTradesCards || !completedTradesBody || !completedTradesCards || !totalProfitElement) {
+                    console.error(`Missing DOM elements for ${bot}`);
+                    alert(`Failed to load ${bot} dashboard. Check console for details.`);
+                    return;
+                }
 
-                        const blob = new Blob([csv], { type: 'text/csv' });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = 'completed_trades.csv';
-                        a.click();
-                        URL.revokeObjectURL(url);
-                    } catch (error) {
-                        console.error('Error exporting trades:', error);
-                        alert('Failed to export trades. Check console for details.');
-                    }
-                });
-            } else {
-                console.error('exportBtn not found');
-            }
+                activeStatus.textContent = 'Loading active trades...';
+                completedStatus.textContent = 'Loading completed trades...';
+                console.log(`Cleared status messages for ${bot}`);
 
-            const profitFilter = document.getElementById('profitFilter');
-            if (profitFilter) {
-                profitFilter.addEventListener('change', () => {
-                    console.log('Profit filter changed');
-                    refreshTrades();
-                });
-            } else {
-                console.error('profitFilter not found');
-            }
-
-            async function refreshTrades() {
-                console.log('Starting refreshTrades');
                 try {
-                    // Check DOM elements
-                    const activeStatus = document.getElementById('active-status');
-                    const completedStatus = document.getElementById('completed-status');
-                    const activeTradesBody = document.getElementById('activeTradesBody');
-                    const activeTradesCards = document.getElementById('activeTradesCards');
-                    const completedTradesBody = document.getElementById('completedTradesBody');
-                    const completedTradesCards = document.getElementById('completedTradesCards');
-                    const totalProfitElement = document.getElementById('totalProfit');
-
-                    if (!activeStatus || !completedStatus || !activeTradesBody || !activeTradesCards || !completedTradesBody || !completedTradesCards || !totalProfitElement) {
-                        throw new Error('One or more DOM elements not found');
-                    }
-
-                    activeStatus.textContent = 'Loading active trades...';
-                    completedStatus.textContent = 'Loading completed trades...';
-                    console.log('Cleared status messages');
-
                     // Fetch active trades
-                    console.log('Fetching active trades from Supabase');
+                    console.log(`Fetching active trades from ${tableName}`);
                     let { data: activeTrades, error: activeError } = await supabase
-                        .from('trades')
+                        .from(tableName)
                         .select('*')
-                        .eq('status', 'open');
+                        .in('status', ['open', 'partial_sold']); // Include partial_sold for Moon Bot
                     
                     if (activeError) {
-                        console.error('Active trades fetch error:', activeError);
+                        console.error(`Active trades fetch error for ${bot}:`, activeError);
                         activeTrades = mockActiveTrades;
                     } else {
-                        console.log('Active trades fetched:', activeTrades);
+                        console.log(`Active trades fetched for ${bot}:`, activeTrades);
                     }
                     activeTrades = activeTrades || mockActiveTrades;
-                    console.log('Active trades after fallback:', activeTrades);
 
                     activeTradesBody.innerHTML = '';
                     activeTradesCards.innerHTML = '';
-                    console.log('Cleared active trades UI elements');
+                    console.log(`Cleared active trades UI elements for ${bot}`);
 
                     activeTrades.forEach((trade, index) => {
-                        console.log(`Processing active trade ${index}:`, trade);
+                        console.log(`Processing active trade ${index} for ${bot}:`, trade);
                         const buyPrice = trade.buy_price_usd || 0;
                         const currentPrice = trade.current_price_usd || 0;
                         const profitPercent = buyPrice !== 0 ? (((currentPrice - buyPrice) / buyPrice) * 100).toFixed(2) : 'N/A';
                         const profitClass = profitPercent !== 'N/A' && profitPercent >= 0 ? 'profit-positive' : 'profit-negative';
                         const tokenAddress = trade.token_address || '-';
                         const tokenName = trade.token_name || '-';
+                        const status = trade.status || 'open';
 
-                        // Table row
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
+                            <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName} (${status})</a></td>
                             <td>${trade.token_symbol || '-'}</td>
                             <td>$${buyPrice.toFixed(8)}</td>
                             <td>$${currentPrice.toFixed(8)}</td>
@@ -663,11 +808,10 @@
                         `;
                         activeTradesBody.appendChild(row);
 
-                        // Card for mobile
                         const card = document.createElement('div');
                         card.className = 'card';
                         card.innerHTML = `
-                            <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></p>
+                            <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName} (${status})</a></p>
                             <p><span class="card-label">Symbol:</span> ${trade.token_symbol || '-'}</p>
                             <p><span class="card-label">Buy Price:</span> $${buyPrice.toFixed(8)}</p>
                             <p><span class="card-label">Current Price:</span> $${currentPrice.toFixed(8)}</p>
@@ -680,30 +824,29 @@
                     });
 
                     activeStatus.textContent = `Active trades loaded (${activeTrades.length})`;
-                    console.log('Active trades rendered');
+                    console.log(`Active trades rendered for ${bot}`);
 
                     // Fetch completed trades
-                    console.log('Fetching completed trades from Supabase');
+                    console.log(`Fetching completed trades from ${tableName}`);
                     let { data: completedTrades, error: completedError } = await supabase
-                        .from('trades')
+                        .from(tableName)
                         .select('*')
                         .eq('status', 'closed');
                     
                     if (completedError) {
-                        console.error('Completed trades fetch error:', completedError);
+                        console.error(`Completed trades fetch error for ${bot}:`, completedError);
                         completedTrades = mockCompletedTrades;
                     } else {
-                        console.log('Completed trades fetched:', completedTrades);
+                        console.log(`Completed trades fetched for ${bot}:`, completedTrades);
                     }
                     completedTrades = completedTrades || mockCompletedTrades;
-                    console.log('Completed trades after fallback:', completedTrades);
 
                     completedTradesBody.innerHTML = '';
                     completedTradesCards.innerHTML = '';
-                    console.log('Cleared completed trades UI elements');
+                    console.log(`Cleared completed trades UI elements for ${bot}`);
 
-                    const filter = document.getElementById('profitFilter')?.value || 'all';
-                    console.log('Applying profit filter:', filter);
+                    const filter = document.getElementById(`${prefix}-profitFilter`)?.value || 'all';
+                    console.log(`Applying profit filter for ${bot}:`, filter);
                     const filteredTrades = completedTrades.filter(trade => {
                         const buyPrice = trade.buy_price_usd || 0;
                         const sellPrice = trade.sell_price_usd || 0;
@@ -712,10 +855,9 @@
                         if (filter === 'negative') return profitPercent < 0;
                         return true;
                     });
-                    console.log('Filtered completed trades:', filteredTrades);
 
                     filteredTrades.forEach((trade, index) => {
-                        console.log(`Processing completed trade ${index}:`, trade);
+                        console.log(`Processing completed trade ${index} for ${bot}:`, trade);
                         const buyPrice = trade.buy_price_usd || 0;
                         const sellPrice = trade.sell_price_usd || 0;
                         const profitPercent = buyPrice !== 0 ? ((sellPrice - buyPrice) / buyPrice * 100).toFixed(2) : 'N/A';
@@ -723,7 +865,6 @@
                         const tokenAddress = trade.token_address || '-';
                         const tokenName = trade.token_name || '-';
 
-                        // Table row
                         const row = document.createElement('tr');
                         row.innerHTML = `
                             <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
@@ -737,7 +878,6 @@
                         `;
                         completedTradesBody.appendChild(row);
 
-                        // Card for mobile
                         const card = document.createElement('div');
                         card.className = 'card';
                         card.innerHTML = `
@@ -754,19 +894,19 @@
                     });
 
                     completedStatus.textContent = `Completed trades loaded (${filteredTrades.length})`;
-                    console.log('Completed trades rendered');
+                    console.log(`Completed trades rendered for ${bot}`);
 
                     // Update total profit
-                    console.log('Calculating total profit');
+                    console.log(`Calculating total profit for ${bot}`);
                     const totalProfit = filteredTrades.reduce((sum, trade) => {
                         const profit = trade.total_profit_usd || 0;
                         return sum + profit;
                     }, 0);
                     totalProfitElement.textContent = `$${totalProfit.toFixed(2)}`;
-                    console.log('Total profit updated:', totalProfit);
+                    console.log(`Total profit updated for ${bot}:`, totalProfit);
 
                     // Update chart
-                    console.log('Updating chart');
+                    console.log(`Updating chart for ${bot}`);
                     if (profitChart) {
                         const labels = filteredTrades
                             .map(t => t.sell_timestamp ? new Date(t.sell_timestamp).toLocaleDateString() : null)
@@ -778,25 +918,62 @@
                         profitChart.data.labels = labels.length > 0 ? labels : ['No Data'];
                         profitChart.data.datasets[0].data = data.length > 0 ? data : [0];
                         profitChart.update();
-                        console.log('Chart updated successfully');
+                        console.log(`Chart updated successfully for ${bot}`);
                     } else {
-                        console.warn('Profit chart not initialized, skipping update');
+                        console.warn(`Profit chart not initialized for ${bot}, skipping update`);
                     }
 
-                    console.log('refreshTrades completed successfully');
+                    console.log(`refreshTrades completed successfully for ${bot}`);
                 } catch (error) {
-                    console.error('Error refreshing trades:', error);
-                    const activeStatus = document.getElementById('active-status');
-                    const completedStatus = document.getElementById('completed-status');
-                    if (activeStatus) activeStatus.textContent = 'Error loading active trades';
-                    if (completedStatus) completedStatus.textContent = 'Error loading completed trades';
-                    alert('Failed to refresh trades. Check console for details.');
+                    console.error(`Error refreshing trades for ${bot}:`, error);
+                    activeStatus.textContent = 'Error loading active trades';
+                    completedStatus.textContent = 'Error loading completed trades';
+                    alert(`Failed to refresh trades for ${bot}. Check console for details.`);
+                }
+            }
+
+            async function exportTrades(bot) {
+                console.log(`Export clicked for ${bot}`);
+                const tableName = bot === 'bread' ? 'trades' : 'trades_bot2';
+                try {
+                    let { data: completedTrades, error } = await supabase
+                        .from(tableName)
+                        .select('*')
+                        .eq('status', 'closed');
+                    
+                    if (error) {
+                        console.error(`Export error for ${bot}:`, error.message);
+                        completedTrades = mockCompletedTrades;
+                    }
+                    const trades = completedTrades || mockCompletedTrades;
+
+                    const csv = [
+                        'Token,Symbol,Buy Price (USD),Sell Price (USD),Profit (%),Total Profit (USD),Buy Time,Sell Time',
+                        ...trades.map(t => `
+                            ${t.token_name || '-'},${t.token_symbol || '-'},
+                            ${t.buy_price_usd || 0},${t.sell_price_usd || 0},
+                            ${(((t.sell_price_usd || 0) - (t.buy_price_usd || 0)) / (t.buy_price_usd || 1) * 100).toFixed(2)},
+                            ${t.total_profit_usd || 0},
+                            ${t.buy_timestamp || '-'},${t.sell_timestamp || '-'}
+                        `)
+                    ].join('\n');
+
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${bot}_completed_trades.csv`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                } catch (error) {
+                    console.error(`Error exporting trades for ${bot}:`, error);
+                    alert(`Failed to export trades for ${bot}. Check console for details.`);
                 }
             }
 
             // Initial load
             console.log('Initial load');
-            refreshTrades();
+            refreshTrades('bread');
         });
     </script>
 </body>
