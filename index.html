@@ -409,14 +409,6 @@
             <!-- Tab Content -->
             <!-- Bread and Butter Bot (Bot1) -->
             <div id="content-bread" class="tab-content active">
-                <div class="flex flex-col sm:flex-row justify-end mb-6 space-y-2 sm:space-y-0 sm:space-x-3">
-                    <button id="bread-topRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                        <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                    </button>
-                    <button id="bread-exportBtn" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
-                        <i class="fas fa-file-export mr-2"></i> Export Trades
-                    </button>
-                </div>
                 <!-- Summary Section -->
                 <div class="mb-6 section-card">
                     <h2 class="text-xl text-navy mb-2">Summary</h2>
@@ -424,7 +416,17 @@
                 </div>
                 <!-- Active Trades Section -->
                 <div class="mb-6 section-card">
-                    <h2 class="text-xl text-navy mb-4">Active Trades</h2>
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                        <h2 class="text-xl text-navy">Active Trades</h2>
+                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                            <button id="bread-topRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                                <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
+                            </button>
+                            <button id="bread-exportBtn" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
+                                <i class="fas fa-file-export mr-2"></i> Export Trades
+                            </button>
+                        </div>
+                    </div>
                     <p id="bread-active-status" class="text-gray-700 text-sm mb-2 status">Loading active trades...</p>
                     <input type="text" id="bread-activeFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
                     <div class="table-container">
@@ -495,29 +497,14 @@
                             <span class="pagination-text text-gray-700">Page <span id="bread-completedCurrentPage">1</span></span>
                             <span id="bread-completedNextPage" class="pagination-arrow disabled">▶</span>
                         </div>
+                        <button id="bread-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                            <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
+                        </button>
                     </div>
-                </div>
-                <!-- Profit Trend Chart -->
-                <div class="mb-6 section-card">
-                    <h2 class="text-xl text-navy mb-4">Profit Trend</h2>
-                    <canvas id="bread-profitChart" class="w-full h-64"></canvas>
-                </div>
-                <div class="flex justify-end mt-6">
-                    <button id="bread-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                        <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                    </button>
                 </div>
             </div>
             <!-- Moon Bot (Bot2) -->
             <div id="content-moon" class="tab-content">
-                <div class="flex flex-col sm:flex-row justify-end mb-6 space-y-2 sm:space-y-0 sm:space-x-3">
-                    <button id="moon-topRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                        <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                    </button>
-                    <button id="moon-exportBtn" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
-                        <i class="fas fa-file-export mr-2"></i> Export Trades
-                    </button>
-                </div>
                 <!-- Summary Section -->
                 <div class="mb-6 section-card">
                     <h2 class="text-xl text-navy mb-2">Summary</h2>
@@ -525,7 +512,17 @@
                 </div>
                 <!-- Active Trades Section -->
                 <div class="mb-6 section-card">
-                    <h2 class="text-xl text-navy mb-4">Active Trades</h2>
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                        <h2 class="text-xl text-navy">Active Trades</h2>
+                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                            <button id="moon-topRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                                <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
+                            </button>
+                            <button id="moon-exportBtn" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
+                                <i class="fas fa-file-export mr-2"></i> Export Trades
+                            </button>
+                        </div>
+                    </div>
                     <p id="moon-active-status" class="text-gray-700 text-sm mb-2 status">Loading active trades...</p>
                     <input type="text" id="moon-activeFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
                     <div class="table-container">
@@ -596,17 +593,10 @@
                             <span class="pagination-text text-gray-700">Page <span id="moon-completedCurrentPage">1</span></span>
                             <span id="moon-completedNextPage" class="pagination-arrow disabled">▶</span>
                         </div>
+                        <button id="moon-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                            <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
+                        </button>
                     </div>
-                </div>
-                <!-- Profit Trend Chart -->
-                <div class="mb-6 section-card">
-                    <h2 class="text-xl text-navy mb-4">Profit Trend</h2>
-                    <canvas id="moon-profitChart" class="w-full h-64"></canvas>
-                </div>
-                <div class="flex justify-end mt-6">
-                    <button id="moon-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                        <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                    </button>
                 </div>
             </div>
         </div>
@@ -884,7 +874,7 @@
                             const symbol = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase();
                             const isVisible = token.includes(filterValue) || symbol.includes(filterValue);
                             row.style.display = isVisible ? '' : 'none';
-                            if (cards[index]) cards[index].style.display = isVisible ? '' : 'none';
+                            if (cards[index]) cards[index].style.display = isVisible ? '' : 'none;
                         });
                     });
                 }
@@ -904,7 +894,6 @@
                 const completedTradesBody = document.getElementById(`${prefix}-completedTradesBody`);
                 const completedTradesCards = document.getElementById(`${prefix}-completedTradesCards`);
                 const totalProfitElement = document.getElementById(`${prefix}-totalProfit`);
-                const profitChart = bot === 'bread' ? breadProfitChart : moonProfitChart;
 
                 if (!activeStatus || !completedStatus || !activeTradesBody || !activeTradesCards || !completedTradesBody || !completedTradesCards || !totalProfitElement) {
                     console.error(`Missing DOM elements for ${bot}`);
@@ -1053,24 +1042,6 @@
                     }, 0);
                     totalProfitElement.textContent = `$${totalProfit.toFixed(2)}`;
                     console.log(`Total profit updated for ${bot}:`, totalProfit);
-
-                    // Update chart
-                    console.log(`Updating chart for ${bot}`);
-                    if (profitChart) {
-                        const labels = filteredTrades
-                            .map(t => t.sell_timestamp ? new Date(t.sell_timestamp).toLocaleDateString() : null)
-                            .filter(label => label !== null);
-                        const data = filteredTrades
-                            .map(t => t.total_profit_usd || 0)
-                            .filter((_, index) => filteredTrades[index].sell_timestamp !== null);
-
-                        profitChart.data.labels = labels.length > 0 ? labels : ['No Data'];
-                        profitChart.data.datasets[0].data = data.length > 0 ? data : [0];
-                        profitChart.update();
-                        console.log(`Chart updated successfully for ${bot}`);
-                    } else {
-                        console.warn(`Profit chart not initialized for ${bot}, skipping update`);
-                    }
 
                     // Re-apply filters
                     const activeFilterInput = document.getElementById(`${prefix}-activeFilter`);
