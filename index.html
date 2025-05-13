@@ -787,8 +787,10 @@
                 const completedTradesBody = document.getElementById(`${prefix}-completedTradesBody`);
                 const completedTradesCards = document.getElementById(`${prefix}-completedTradesCards`);
                 const totalProfitElement = document.getElementById(`${prefix}-totalProfit`);
+                const activeTable = activeTradesBody?.closest('table');
+                const completedTable = completedTradesBody?.closest('table');
 
-                if (!activeStatus || !completedStatus || !activeTradesBody || !activeTradesCards || !completedTradesBody || !completedTradesCards || !totalProfitElement) {
+                if (!activeStatus || !completedStatus || !activeTradesBody || !activeTradesCards || !completedTradesBody || !completedTradesCards || !totalProfitElement || !activeTable || !completedTable) {
                     console.error(`Missing DOM elements for ${bot}:`, {
                         activeStatus: !!activeStatus,
                         completedStatus: !!completedStatus,
@@ -796,15 +798,21 @@
                         activeTradesCards: !!activeTradesCards,
                         completedTradesBody: !!completedTradesBody,
                         completedTradesCards: !!completedTradesCards,
-                        totalProfitElement: !!totalProfitElement
+                        totalProfitElement: !!totalProfitElement,
+                        activeTable: !!activeTable,
+                        completedTable: !!completedTable
                     });
                     alert(`Failed to load ${bot} dashboard. Check console for details.`);
                     return;
                 }
 
-                activeStatus.textContent = 'Loading active trades...';
-                completedStatus.textContent = 'Loading completed trades...';
-                console.log(`Cleared status messages for ${bot}`);
+                // Store current sort states and filter values
+                const activeSort = { ...sortStates[bot].active };
+                const completedSort = { ...sortStates[bot].completed };
+                const activeFilterValue = document.getElementById(`${prefix}-activeFilter`)?.value || '';
+                const completedFilterValue = document.getElementById(`${prefix}-completedFilter`)?.value || '';
+                const profitFilterValue = document.getElementById(`${prefix}-profitFilter`)?.value || 'all';
+                console.log(`Preserved sort states for ${bot}:`, { activeSort, completedSort });
 
                 try {
                     // Fetch active trades
@@ -821,10 +829,9 @@
                     console.log(`Active trades fetched for ${bot}:`, activeTrades);
                     // activeTrades = activeTrades || mockActiveTrades; // Commented out for debugging
 
+                    // Clear and render active trades
                     activeTradesBody.innerHTML = '';
                     activeTradesCards.innerHTML = '';
-                    console.log(`Cleared active trades UI elements for ${bot}`);
-
                     (activeTrades || []).forEach((trade, index) => {
                         console.log(`Processing active trade ${index} for ${bot}:`, trade);
                         const buyPrice = trade.buy_price_usd || 0;
@@ -862,7 +869,40 @@
                     });
 
                     activeStatus.textContent = `Active trades loaded (${(activeTrades || []).length})`;
-                    console.log(`Active trades rendered for ${bot}`);
+
+                    // Reapply active table sort
+                    if (activeSort && Object.keys(activeSort).length > 0) {
+                        const column = Object.keys(activeSort)[0];
+                        const direction = activeSort[column];
+                        const header = activeTable.querySelector(`th[data-sort="${column}"]`);
+                        if (header) {
+                            header.classList.add(`sort-${direction}`);
+                            header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
+                            const rows = Array.from(activeTradesBody.querySelectorAll('tr'));
+                            rows.sort((a, b) => {
+                                let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
+                                let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
+
+                                if (column === 'profit') {
+                                    aValue = parseFloat(aValue.replace('%', '')) || 0;
+                                    bValue = parseFloat(bValue.replace('%', '')) || 0;
+                                } else if (['buy_price_usd', 'current_price_usd', 'market_cap'].includes(column)) {
+                                    aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
+                                    bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
+                                } else if (['buy_timestamp'].includes(column)) {
+                                    aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
+                                    bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
+                                } else {
+                                    aValue = aValue.toLowerCase();
+                                    bValue = bValue.toLowerCase();
+                                }
+
+                                return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
+                            });
+                            activeTradesBody.innerHTML = '';
+                            rows.forEach(row => activeTradesBody.appendChild(row));
+                        }
+                    }
 
                     // Fetch completed trades
                     console.log(`Fetching completed trades from ${tableName}`);
@@ -878,18 +918,15 @@
                     console.log(`Completed trades fetched for ${bot}:`, completedTrades);
                     // completedTrades = completedTrades || mockCompletedTrades; // Commented out for debugging
 
+                    // Clear and render completed trades
                     completedTradesBody.innerHTML = '';
                     completedTradesCards.innerHTML = '';
-                    console.log(`Cleared completed trades UI elements for ${bot}`);
-
-                    const filter = document.getElementById(`${prefix}-profitFilter`)?.value || 'all';
-                    console.log(`Applying profit filter for ${bot}:`, filter);
                     const filteredTrades = (completedTrades || []).filter(trade => {
                         const buyPrice = trade.buy_price_usd || 0;
                         const sellPrice = trade.sell_price_usd || 0;
                         const profitPercent = buyPrice !== 0 ? ((sellPrice - buyPrice) / buyPrice * 100).toFixed(2) : 0;
-                        if (filter === 'positive') return profitPercent >= 0;
-                        if (filter === 'negative') return profitPercent < 0;
+                        if (profitFilterValue === 'positive') return profitPercent >= 0;
+                        if (profitFilterValue === 'negative') return profitPercent < 0;
                         return true;
                     });
 
@@ -931,10 +968,42 @@
                     });
 
                     completedStatus.textContent = `Completed trades loaded (${filteredTrades.length})`;
-                    console.log(`Completed trades rendered for ${bot}`);
+
+                    // Reapply completed table sort
+                    if (completedSort && Object.keys(completedSort).length > 0) {
+                        const column = Object.keys(completedSort)[0];
+                        const direction = completedSort[column];
+                        const header = completedTable.querySelector(`th[data-sort="${column}"]`);
+                        if (header) {
+                            header.classList.add(`sort-${direction}`);
+                            header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
+                            const rows = Array.from(completedTradesBody.querySelectorAll('tr'));
+                            rows.sort((a, b) => {
+                                let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
+                                let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
+
+                                if (column === 'profit') {
+                                    aValue = parseFloat(aValue.replace('%', '')) || 0;
+                                    bValue = parseFloat(bValue.replace('%', '')) || 0;
+                                } else if (['buy_price_usd', 'sell_price_usd', 'total_profit_usd'].includes(column)) {
+                                    aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
+                                    bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
+                                } else if (['buy_timestamp', 'sell_timestamp'].includes(column)) {
+                                    aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
+                                    bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
+                                } else {
+                                    aValue = aValue.toLowerCase();
+                                    bValue = bValue.toLowerCase();
+                                }
+
+                                return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
+                            });
+                            completedTradesBody.innerHTML = '';
+                            rows.forEach(row => completedTradesBody.appendChild(row));
+                        }
+                    }
 
                     // Update total profit
-                    console.log(`Calculating total profit for ${bot}`);
                     const totalProfit = filteredTrades.reduce((sum, trade) => {
                         const profit = trade.total_profit_usd || 0;
                         return sum + profit;
@@ -942,11 +1011,17 @@
                     totalProfitElement.textContent = `$${totalProfit.toFixed(2)}`;
                     console.log(`Total profit updated for ${bot}:`, totalProfit);
 
-                    // Re-apply filters
+                    // Reapply filters
                     const activeFilterInput = document.getElementById(`${prefix}-activeFilter`);
                     const completedFilterInput = document.getElementById(`${prefix}-completedFilter`);
-                    if (activeFilterInput && activeFilterInput.value) activeFilterInput.dispatchEvent(new Event('input'));
-                    if (completedFilterInput && completedFilterInput.value) completedFilterInput.dispatchEvent(new Event('input'));
+                    if (activeFilterInput && activeFilterValue) {
+                        activeFilterInput.value = activeFilterValue;
+                        activeFilterInput.dispatchEvent(new Event('input'));
+                    }
+                    if (completedFilterInput && completedFilterValue) {
+                        completedFilterInput.value = completedFilterValue;
+                        completedFilterInput.dispatchEvent(new Event('input'));
+                    }
 
                     console.log(`refreshTrades completed successfully for ${bot}`);
                 } catch (error) {
