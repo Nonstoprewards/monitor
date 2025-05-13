@@ -733,8 +733,8 @@
                                     aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
                                     bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
                                 } else if (['buy_timestamp', 'sell_timestamp'].includes(column)) {
-                                    aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
-                                    bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
+                                    aValue = aValue === '-' ? 0 : new Date(aValue.includes(':') && !aValue.includes('/') ? `1970-01-01T${aValue}:00Z` : aValue).getTime();
+                                    bValue = bValue === '-' ? 0 : new Date(bValue.includes(':') && !bValue.includes('/') ? `1970-01-01T${bValue}:00Z` : bValue).getTime();
                                 } else {
                                     aValue = aValue.toLowerCase();
                                     bValue = bValue.toLowerCase();
@@ -841,6 +841,7 @@
                         const tokenAddress = trade.token_address || '-';
                         const tokenName = trade.token_name || '-';
                         const status = trade.status || 'open';
+                        const buyTime = trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-';
 
                         const row = document.createElement('tr');
                         row.innerHTML = `
@@ -850,7 +851,7 @@
                             <td>$${currentPrice.toFixed(8)}</td>
                             <td>$${trade.market_cap ? trade.market_cap.toLocaleString() : '-'}</td>
                             <td class="${profitClass}">${profitPercent}%</td>
-                            <td>${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</td>
+                            <td>${buyTime}</td>
                         `;
                         activeTradesBody.appendChild(row);
 
@@ -890,8 +891,8 @@
                                     aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
                                     bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
                                 } else if (['buy_timestamp'].includes(column)) {
-                                    aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
-                                    bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
+                                    aValue = aValue === '-' ? 0 : new Date(aValue.includes(':') && !aValue.includes('/') ? `1970-01-01T${aValue}:00Z` : aValue).getTime();
+                                    bValue = bValue === '-' ? 0 : new Date(bValue.includes(':') && !bValue.includes('/') ? `1970-01-01T${bValue}:00Z` : bValue).getTime();
                                 } else {
                                     aValue = aValue.toLowerCase();
                                     bValue = bValue.toLowerCase();
