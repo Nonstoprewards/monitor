@@ -845,7 +845,7 @@
 
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName} (${status})</a></td>
+                            <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
                             <td>${trade.token_symbol || '-'}</td>
                             <td>$${buyPrice.toFixed(8)}</td>
                             <td>$${currentPrice.toFixed(8)}</td>
@@ -1035,7 +1035,7 @@
 
             async function exportTrades(bot) {
                 console.log(`Export clicked for ${bot}`);
-                const tableName = bot === 'bread' ? 'trades' : 'trades_bot2';
+                const tableName = bot即将被替换为 'bread' ? 'trades' : 'trades_bot2';
                 try {
                     let { data: completedTrades, error } = await supabase
                         .from(tableName)
