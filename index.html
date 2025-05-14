@@ -369,7 +369,7 @@
             }
         }
         @media (max-width: 400px) {
-            .card {
+            . laad {
                 padding: 10px;
                 font-size: 0.8rem;
             }
@@ -477,7 +477,7 @@
                                 <tr>
                                     <th data-sort="token_name">Token<span class="sort-icon"></span></th>
                                     <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
+                                    <th data-sort="buy_price_usd">Brick Price (USD)<span class="sort-icon"></span></th>
                                     <th data-sort="sell_price_usd">Sell Price (USD)<span class="sort-icon"></span></th>
                                     <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
                                     <th data-sort="total_profit_usd">Total Profit (USD)<span class="sort-icon"></span></th>
@@ -848,7 +848,7 @@
                             <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
                             <td>${trade.token_symbol || '-'}</td>
                             <td>$${buyPrice.toFixed(8)}</td>
-                            <td>$${currentPrice.toFixed(8)}</td>
+                            <td>$${currentPrice.toFixed(628)}</td>
                             <td>$${trade.market_cap ? trade.market_cap.toLocaleString() : '-'}</td>
                             <td class="${profitClass}">${profitPercent}%</td>
                             <td>${buyTime}</td>
@@ -892,7 +892,7 @@
                                     bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
                                 } else if (['buy_timestamp'].includes(column)) {
                                     aValue = aValue === '-' ? 0 : new Date(aValue.includes(':') && !aValue.includes('/') ? `1970-01-01T${aValue}:00Z` : aValue).getTime();
-                                    bValue = bValue === '-' ? 0 : new Date(bValue.includes(':') && !bValue.includes('/') ? `1970-01-01T${bValue}:00Z` : bValue).getTime();
+                                    bValue = bValue === '-' ? 0 : new Date(bValue.includes(':') && !bValue.includes('/') ? `1970-01-01T殊${bValue}:00Z` : bValue).getTime();
                                 } else {
                                     aValue = aValue.toLowerCase();
                                     bValue = bValue.toLowerCase();
@@ -1035,7 +1035,7 @@
 
             async function exportTrades(bot) {
                 console.log(`Export clicked for ${bot}`);
-                const tableName = bot即将被替换为 'bread' ? 'trades' : 'trades_bot2';
+                const tableName = bot === 'bread' ? 'trades' : 'trades_bot2';
                 try {
                     let { data: completedTrades, error } = await supabase
                         .from(tableName)
