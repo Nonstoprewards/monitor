@@ -12,7 +12,6 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Open+Sans:wght@400;600&display=swap');
-
         body {
             font-family: 'Open Sans', sans-serif;
             background-color: #f4f7fa;
@@ -369,7 +368,7 @@
             }
         }
         @media (max-width: 400px) {
-            . laad {
+            .card {
                 padding: 10px;
                 font-size: 0.8rem;
             }
@@ -453,9 +452,9 @@
                             <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
                         </button>
                         <div class="flex items-center space-x-2">
-                            <span id="bread-activePrevPage" class="pagination-arrow disabled">◀</span>
+                            <span id="bread-activePrevPage" class="pagination-arrow disabled"></span>
                             <span class="pagination-text text-gray-700">Page <span id="bread-activeCurrentPage">1</span></span>
-                            <span id="bread-activeNextPage" class="pagination-arrow disabled">▶</span>
+                            <span id="bread-activeNextPage" class="pagination-arrow disabled"></span>
                         </div>
                     </div>
                 </div>
@@ -477,7 +476,7 @@
                                 <tr>
                                     <th data-sort="token_name">Token<span class="sort-icon"></span></th>
                                     <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_price_usd">Brick Price (USD)<span class="sort-icon"></span></th>
+                                    <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
                                     <th data-sort="sell_price_usd">Sell Price (USD)<span class="sort-icon"></span></th>
                                     <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
                                     <th data-sort="total_profit_usd">Total Profit (USD)<span class="sort-icon"></span></th>
@@ -493,9 +492,9 @@
                     </div>
                     <div class="flex justify-between items-center mt-4">
                         <div class="flex items-center space-x-2">
-                            <span id="bread-completedPrevPage" class="pagination-arrow disabled">◀</span>
+                            <span id="bread-completedPrevPage" class="pagination-arrow disabled"></span>
                             <span class="pagination-text text-gray-700">Page <span id="bread-completedCurrentPage">1</span></span>
-                            <span id="bread-completedNextPage" class="pagination-arrow disabled">▶</span>
+                            <span id="bread-completedNextPage" class="pagination-arrow disabled"></span>
                         </div>
                         <button id="bread-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
                             <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
@@ -549,9 +548,9 @@
                             <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
                         </button>
                         <div class="flex items-center space-x-2">
-                            <span id="moon-activePrevPage" class="pagination-arrow disabled">◀</span>
+                            <span id="moon-activePrevPage" class="pagination-arrow disabled"></span>
                             <span class="pagination-text text-gray-700">Page <span id="moon-activeCurrentPage">1</span></span>
-                            <span id="moon-activeNextPage" class="pagination-arrow disabled">▶</span>
+                            <span id="moon-activeNextPage" class="pagination-arrow disabled"></span>
                         </div>
                     </div>
                 </div>
@@ -589,9 +588,9 @@
                     </div>
                     <div class="flex justify-between items-center mt-4">
                         <div class="flex items-center space-x-2">
-                            <span id="moon-completedPrevPage" class="pagination-arrow disabled">◀</span>
+                            <span id="moon-completedPrevPage" class="pagination-arrow disabled"></span>
                             <span class="pagination-text text-gray-700">Page <span id="moon-completedCurrentPage">1</span></span>
-                            <span id="moon-completedNextPage" class="pagination-arrow disabled">▶</span>
+                            <span id="moon-completedNextPage" class="pagination-arrow disabled"></span>
                         </div>
                         <button id="moon-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
                             <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
@@ -601,7 +600,6 @@
             </div>
         </div>
     </div>
-
     <!-- Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
@@ -848,7 +846,7 @@
                             <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
                             <td>${trade.token_symbol || '-'}</td>
                             <td>$${buyPrice.toFixed(8)}</td>
-                            <td>$${currentPrice.toFixed(628)}</td>
+                            <td>$${currentPrice.toFixed(8)}</td>
                             <td>$${trade.market_cap ? trade.market_cap.toLocaleString() : '-'}</td>
                             <td class="${profitClass}">${profitPercent}%</td>
                             <td>${buyTime}</td>
@@ -892,7 +890,7 @@
                                     bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
                                 } else if (['buy_timestamp'].includes(column)) {
                                     aValue = aValue === '-' ? 0 : new Date(aValue.includes(':') && !aValue.includes('/') ? `1970-01-01T${aValue}:00Z` : aValue).getTime();
-                                    bValue = bValue === '-' ? 0 : new Date(bValue.includes(':') && !bValue.includes('/') ? `1970-01-01T殊${bValue}:00Z` : bValue).getTime();
+                                    bValue = bValue === '-' ? 0 : new Date(bValue.includes(':') && !bValue.includes('/') ? `1970-01-01T${bValue}:00Z` : bValue).getTime();
                                 } else {
                                     aValue = aValue.toLowerCase();
                                     bValue = bValue.toLowerCase();
