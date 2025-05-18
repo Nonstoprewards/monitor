@@ -404,9 +404,10 @@
             <div class="flex border-b border-gray-200 mb-6">
                 <div id="tab-bread" class="tab active">Bread and Butter Bot</div>
                 <div id="tab-moon" class="tab">Moon Bot</div>
+                <div id="tab-wax" class="tab">Wax Bot</div>
             </div>
             <!-- Tab Content -->
-            <!-- Bread and Butter Bot (Bot1) -->
+            <!-- Bread and Butter Bot -->
             <div id="content-bread" class="tab-content active">
                 <!-- Summary Section -->
                 <div class="mb-6 section-card">
@@ -502,7 +503,7 @@
                     </div>
                 </div>
             </div>
-            <!-- Moon Bot (Bot2) -->
+            <!-- Moon Bot -->
             <div id="content-moon" class="tab-content">
                 <!-- Summary Section -->
                 <div class="mb-6 section-card">
@@ -598,6 +599,51 @@
                     </div>
                 </div>
             </div>
+            <!-- Wax Bot -->
+            <div id="content-wax" class="tab-content">
+                <!-- Trade Setups Section -->
+                <div class="mb-6 section-card">
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                        <h2 class="text-xl text-navy">Trade Setups</h2>
+                        <button id="wax-refreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                            <i class="fas fa-sync-alt mr-2"></i> Refresh Setups
+                        </button>
+                    </div>
+                    <p id="wax-status" class="text-gray-700 text-sm mb-2 status">Loading trade setups...</p>
+                    <input type="text" id="wax-filter" class="filter-input" placeholder="Filter by Symbol...">
+                    <div class="table-container">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr>
+                                    <th data-sort="symbol">Symbol<span class="sort-icon"></span></th>
+                                    <th data-sort="action">Action<span class="sort-icon"></span></th>
+                                    <th data-sort="pop_candle_time">Pop Candle Time<span class="sort-icon"></span></th>
+                                    <th data-sort="pop_candle_high">Pop Candle High (USD)<span class="sort-icon"></span></th>
+                                    <th data-sort="pullback_count">Pullback Count<span class="sort-icon"></span></th>
+                                    <th data-sort="entry_price">Entry Price (USD)<span class="sort-icon"></span></th>
+                                    <th data-sort="stop_loss">Stop Loss (USD)<span class="sort-icon"></span></th>
+                                    <th data-sort="profit_percent">Profit (%)<span class="sort-icon"></span></th>
+                                    <th data-sort="timestamp">Timestamp<span class="sort-icon"></span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="wax-setupsBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="card-container">
+                        <div id="wax-setupsCards"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-4">
+                        <div class="flex items-center space-x-2">
+                            <span id="wax-prevPage" class="pagination-arrow disabled"></span>
+                            <span class="pagination-text text-gray-700">Page <span id="wax-currentPage">1</span></span>
+                            <span id="wax-nextPage" class="pagination-arrow disabled"></span>
+                        </div>
+                        <button id="wax-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                            <i class="fas fa-sync-alt mr-2"></i> Refresh Setups
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <!-- Supabase Client -->
@@ -622,35 +668,6 @@
                 return;
             }
 
-            // Mock data for testing (commented out for debugging)
-            const mockActiveTrades = [
-                {
-                    token_name: 'Ducky',
-                    token_address: '5J1To2BQ89ajMNVTsoRSwwrvbFiXZPLR9gzHWzyJUyCmw3nDdde7',
-                    token_symbol: 'DUCKY',
-                    buy_price_usd: 0.0000001,
-                    current_price_usd: 0.00000012,
-                    market_cap: 100000,
-                    buy_timestamp: '2025-05-10T10:00:00Z',
-                    quantity: 200000000,
-                    status: 'open'
-                }
-            ];
-            const mockCompletedTrades = [
-                {
-                    token_name: 'Ducky',
-                    token_address: '5J1To2BQ89ajMNVTsoRSwwrvbFiXZPLR9gzHWzyJUyCmw3nDdde7',
-                    token_symbol: 'DUCKY',
-                    buy_price_usd: 0.0000001,
-                    sell_price_usd: 0.00000015,
-                    total_profit_usd: 10,
-                    buy_timestamp: '2025-05-10T10:00:00Z',
-                    sell_timestamp: '2025-05-10T12:00:00Z',
-                    quantity: 200000000,
-                    status: 'closed'
-                }
-            ];
-
             // Tab switching logic
             let activeTab = 'bread';
             const tabs = document.querySelectorAll('.tab');
@@ -663,14 +680,16 @@
                     document.getElementById(`content-${tab.id.split('-')[1]}`).classList.add('active');
                     activeTab = tab.id.split('-')[1];
                     console.log(`Switched to tab: ${tab.textContent}, activeTab: ${activeTab}`);
-                    refreshTrades(activeTab);
+                    refreshTab(activeTab);
                 });
             });
 
-            // Auto-refresh every 3 seconds
+            // Auto-refresh every 3 seconds for Bread and Moon, manual for Wax
             setInterval(() => {
-                console.log(`Auto-refreshing for ${activeTab}`);
-                refreshTrades(activeTab);
+                if (activeTab === 'bread' || activeTab === 'moon') {
+                    console.log(`Auto-refreshing for ${activeTab}`);
+                    refreshTab(activeTab);
+                }
             }, 3000);
 
             // Sexy Mode Toggle
@@ -691,15 +710,18 @@
             // Sorting and Filtering States
             const sortStates = {
                 bread: { active: {}, completed: {} },
-                moon: { active: {}, completed: {} }
+                moon: { active: {}, completed: {} },
+                wax: { setups: {} }
             };
 
             function setupTableSortingAndFiltering(bot) {
-                const prefix = bot === 'bread' ? 'bread' : 'moon';
+                const prefix = bot === 'bread' ? 'bread' : bot === 'moon' ? 'moon' : 'wax';
                 const activeTable = document.getElementById(`${prefix}-activeTradesBody`)?.closest('table');
                 const completedTable = document.getElementById(`${prefix}-completedTradesBody`)?.closest('table');
+                const setupsTable = document.getElementById(`${prefix}-setupsBody`)?.closest('table');
                 const activeFilterInput = document.getElementById(`${prefix}-activeFilter`);
                 const completedFilterInput = document.getElementById(`${prefix}-completedFilter`);
+                const setupsFilterInput = document.getElementById(`${prefix}-filter`);
 
                 function setupSorting(table, tableType) {
                     if (!table) return;
@@ -724,15 +746,18 @@
                                 let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
                                 let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
 
-                                if (column === 'profit') {
+                                if (['profit', 'profit_percent'].includes(column)) {
                                     aValue = parseFloat(aValue.replace('%', '')) || 0;
                                     bValue = parseFloat(bValue.replace('%', '')) || 0;
-                                } else if (['buy_price_usd', 'current_price_usd', 'sell_price_usd', 'total_profit_usd', 'market_cap'].includes(column)) {
+                                } else if (['buy_price_usd', 'current_price_usd', 'sell_price_usd', 'total_profit_usd', 'market_cap', 'pop_candle_high', 'entry_price', 'stop_loss'].includes(column)) {
                                     aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
                                     bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
-                                } else if (['buy_timestamp', 'sell_timestamp'].includes(column)) {
-                                    aValue = aValue === '-' ? 0 : new Date(aValue.includes(':') && !aValue.includes('/') ? `1970-01-01T${aValue}:00Z` : aValue).getTime();
-                                    bValue = bValue === '-' ? 0 : new Date(bValue.includes(':') && !bValue.includes('/') ? `1970-01-01T${bValue}:00Z` : bValue).getTime();
+                                } else if (['buy_timestamp', 'sell_timestamp', 'pop_candle_time', 'timestamp'].includes(column)) {
+                                    aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
+                                    bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
+                                } else if (column === 'pullback_count') {
+                                    aValue = parseInt(aValue) || 0;
+                                    bValue = parseInt(bValue) || 0;
                                 } else {
                                     aValue = aValue.toLowerCase();
                                     bValue = bValue.toLowerCase();
@@ -753,6 +778,7 @@
 
                 if (activeTable) setupSorting(activeTable, 'active');
                 if (completedTable) setupSorting(completedTable, 'completed');
+                if (setupsTable) setupSorting(setupsTable, 'setups');
 
                 function applyFilter(table, input, cardsContainer) {
                     if (!input || !table || !cardsContainer) return;
@@ -761,9 +787,8 @@
                         const rows = table.querySelectorAll('tbody tr');
                         const cards = cardsContainer.querySelectorAll('.card');
                         rows.forEach((row, index) => {
-                            const token = row.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
-                            const symbol = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
-                            const isVisible = token.includes(filterValue) || symbol.includes(filterValue);
+                            const symbol = row.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
+                            const isVisible = symbol.includes(filterValue);
                             row.style.display = isVisible ? '' : 'none';
                             if (cards[index]) cards[index].style.display = isVisible ? '' : 'none';
                         });
@@ -772,9 +797,18 @@
 
                 applyFilter(activeTable, activeFilterInput, document.getElementById(`${prefix}-activeTradesCards`));
                 applyFilter(completedTable, completedFilterInput, document.getElementById(`${prefix}-completedTradesCards`));
+                applyFilter(setupsTable, setupsFilterInput, document.getElementById(`${prefix}-setupsCards`));
             }
 
-            async function refreshTrades(bot) {
+            async function refreshTab(bot) {
+                if (bot === 'wax') {
+                    await refreshWaxTrades();
+                } else {
+                    await refreshTrades(bot);
+                }
+            }
+
+                                              async function refreshTrades(bot) {
                 console.log(`Starting refreshTrades for ${bot}`);
                 const prefix = bot === 'bread' ? 'bread' : 'moon';
                 const tableName = bot === 'bread' ? 'trades' : 'trades_bot2';
@@ -825,7 +859,6 @@
                         throw new Error(`Failed to fetch active trades: ${activeError.message}`);
                     }
                     console.log(`Active trades fetched for ${bot}:`, activeTrades);
-                    // activeTrades = activeTrades || mockActiveTrades; // Commented out for debugging
 
                     // Clear and render active trades
                     activeTradesBody.innerHTML = '';
@@ -915,7 +948,6 @@
                         throw new Error(`Failed to fetch completed trades: ${completedError.message}`);
                     }
                     console.log(`Completed trades fetched for ${bot}:`, completedTrades);
-                    // completedTrades = completedTrades || mockCompletedTrades; // Commented out for debugging
 
                     // Clear and render completed trades
                     completedTradesBody.innerHTML = '';
@@ -1031,6 +1063,139 @@
                 }
             }
 
+            async function refreshWaxTrades() {
+                console.log('Starting refreshWaxTrades');
+                const setupsStatus = document.getElementById('wax-status');
+                const setupsBody = document.getElementById('wax-setupsBody');
+                const setupsCards = document.getElementById('wax-setupsCards');
+                const setupsTable = setupsBody?.closest('table');
+
+                if (!setupsStatus || !setupsBody || !setupsCards || !setupsTable) {
+                    console.error('Missing DOM elements for Wax:', {
+                        setupsStatus: !!setupsStatus,
+                        setupsBody: !!setupsBody,
+                        setupsCards: !!setupsCards,
+                        setupsTable: !!setupsTable
+                    });
+                    alert('Failed to load Wax dashboard. Check console for details.');
+                    return;
+                }
+
+                // Store current sort state and filter value
+                const setupsSort = { ...sortStates.wax.setups };
+                const filterValue = document.getElementById('wax-filter')?.value || '';
+                console.log('Preserved sort state for Wax:', setupsSort);
+
+                try {
+                    // Fetch trade setups
+                    console.log('Fetching trade setups from trade_setups');
+                    let { data: setups, error } = await supabase
+                        .from('trade_setups')
+                        .select('*')
+                        .order('timestamp', { ascending: false });
+                    
+                    if (error) {
+                        console.error('Trade setups fetch error:', error.message, error.details, error.hint);
+                        throw new Error(`Failed to fetch trade setups: ${error.message}`);
+                    }
+                    console.log('Trade setups fetched:', setups);
+
+                    // Clear and render trade setups
+                    setupsBody.innerHTML = '';
+                    setupsCards.innerHTML = '';
+                    (setups || []).forEach((setup, index) => {
+                        console.log(`Processing trade setup ${index}:`, setup);
+                        const profitPercent = setup.profit_percent ? parseFloat(setup.profit_percent).toFixed(2) : '-';
+                        const profitClass = profitPercent !== '-' && profitPercent >= 0 ? 'profit-positive' : 'profit-negative';
+                        const tokenAddress = setup.token_address || '-';
+                        const symbol = setup.symbol || '-';
+                        const popCandleTime = setup.pop_candle_time ? new Date(setup.pop_candle_time).toLocaleString() : '-';
+                        const timestamp = setup.timestamp ? new Date(setup.timestamp).toLocaleString() : '-';
+
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${symbol}</a></td>
+                            <td>${setup.action || '-'}</td>
+                            <td>${popCandleTime}</td>
+                            <td>$${setup.pop_candle_high ? setup.pop_candle_high.toFixed(8) : '-'}</td>
+                            <td>${setup.pullback_count || '-'}</td>
+                            <td>$${setup.entry_price ? setup.entry_price.toFixed(8) : '-'}</td>
+                            <td>$${setup.stop_loss ? setup.stop_loss.toFixed(8) : '-'}</td>
+                            <td class="${profitClass}">${profitPercent !== '-' ? profitPercent + '%' : '-'}</td>
+                            <td>${timestamp}</td>
+                        `;
+                        setupsBody.appendChild(row);
+
+                        const card = document.createElement('div');
+                        card.className = 'card';
+                        card.innerHTML = `
+                            <p><span class="card-label">Symbol:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${symbol}</a></p>
+                            <p><span class="card-label">Action:</span> ${setup.action || '-'}</p>
+                            <p><span class="card-label">Pop Candle Time:</span> ${popCandleTime}</p>
+                            <p><span class="card-label">Pop Candle High:</span> $${setup.pop_candle_high ? setup.pop_candle_high.toFixed(8) : '-'}</p>
+                            <p><span class="card-label">Pullback Count:</span> ${setup.pullback_count || '-'}</p>
+                            <p><span class="card-label">Entry Price:</span> $${setup.entry_price ? setup.entry_price.toFixed(8) : '-'}</p>
+                            <p><span class="card-label">Stop Loss:</span> $${setup.stop_loss ? setup.stop_loss.toFixed(8) : '-'}</p>
+                            <p><span class="card-label">Profit:</span> <span class="${profitClass}">${profitPercent !== '-' ? profitPercent + '%' : '-'}</span></p>
+                            <p><span class="card-label">Timestamp:</span> ${timestamp}</p>
+                        `;
+                        setupsCards.appendChild(card);
+                    });
+
+                    setupsStatus.textContent = `Trade setups loaded (${(setups || []).length})`;
+
+                    // Reapply setups table sort
+                    if (setupsSort && Object.keys(setupsSort).length > 0) {
+                        const column = Object.keys(setupsSort)[0];
+                        const direction = setupsSort[column];
+                        const header = setupsTable.querySelector(`th[data-sort="${column}"]`);
+                        if (header) {
+                            header.classList.add(`sort-${direction}`);
+                            header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
+                            const rows = Array.from(setupsBody.querySelectorAll('tr'));
+                            rows.sort((a, b) => {
+                                let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
+                                let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
+
+                                if (column === 'profit_percent') {
+                                    aValue = parseFloat(aValue.replace('%', '')) || 0;
+                                    bValue = parseFloat(bValue.replace('%', '')) || 0;
+                                } else if (['pop_candle_high', 'entry_price', 'stop_loss'].includes(column)) {
+                                    aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
+                                    bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
+                                } else if (['pop_candle_time', 'timestamp'].includes(column)) {
+                                    aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
+                                    bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
+                                } else if (column === 'pullback_count') {
+                                    aValue = parseInt(aValue) || 0;
+                                    bValue = parseInt(bValue) || 0;
+                                } else {
+                                    aValue = aValue.toLowerCase();
+                                    bValue = bValue.toLowerCase();
+                                }
+
+                                return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
+                            });
+                            setupsBody.innerHTML = '';
+                            rows.forEach(row => setupsBody.appendChild(row));
+                        }
+                    }
+
+                    // Reapply filter
+                    const filterInput = document.getElementById('wax-filter');
+                    if (filterInput && filterValue) {
+                        filterInput.value = filterValue;
+                        filterInput.dispatchEvent(new Event('input'));
+                    }
+
+                    console.log('refreshWaxTrades completed successfully');
+                } catch (error) {
+                    console.error('Error refreshing Wax trades:', error);
+                    setupsStatus.textContent = 'Error loading trade setups';
+                    alert('Failed to refresh Wax trades. Check console for details.');
+                }
+            }
+
             async function exportTrades(bot) {
                 console.log(`Export clicked for ${bot}`);
                 const tableName = bot === 'bread' ? 'trades' : 'trades_bot2';
@@ -1073,6 +1238,7 @@
             // Setup sorting and filtering
             setupTableSortingAndFiltering('bread');
             setupTableSortingAndFiltering('moon');
+            setupTableSortingAndFiltering('wax');
 
             // Button Event Listeners for Bread and Butter Bot
             const breadTopRefreshBtn = document.getElementById('bread-topRefreshBtn');
@@ -1166,6 +1332,26 @@
                 });
             } else {
                 console.error('moon-profitFilter not found');
+            }
+
+            // Button Event Listeners for Wax Bot
+            const waxRefreshBtn = document.getElementById('wax-refreshBtn');
+            if (waxRefreshBtn) {
+                waxRefreshBtn.addEventListener('click', () => {
+                    console.log('Wax Refresh clicked');
+                    refreshWaxTrades();
+                });
+            } else {
+                console.error('wax-refreshBtn not found');
+            }
+            const waxBottomRefreshBtn = document.getElementById('wax-bottomRefreshBtn');
+            if (waxBottomRefreshBtn) {
+                waxBottomRefreshBtn.addEventListener('click', () => {
+                    console.log('Wax Bottom Refresh clicked');
+                    refreshWaxTrades();
+                });
+            } else {
+                console.error('wax-bottomRefreshBtn not found');
             }
 
             // Initial load
