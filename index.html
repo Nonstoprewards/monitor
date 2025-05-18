@@ -571,7 +571,7 @@
                         <table class="min-w-full">
                             <thead>
                                 <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
+                                    <th data-sort="token_name">Symbol<span class="sort-icon"></span></th>
                                     <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
                                     <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
                                     <th data-sort="sell_price_usd">Sell Price (USD)<span class="sort-icon"></span></th>
@@ -617,12 +617,14 @@
                                 <tr>
                                     <th data-sort="symbol">Symbol<span class="sort-icon"></span></th>
                                     <th data-sort="action">Action<span class="sort-icon"></span></th>
-                                    <th data-sort="pop_candle_time">Pop Candle Time<span class="sort-icon"></span></th>
-                                    <th data-sort="pop_candle_high">Pop Candle High (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="pullback_count">Pullback Count<span class="sort-icon"></span></th>
-                                    <th data-sort="entry_price">Entry Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="stop_loss">Stop Loss (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="profit_percent">Profit (%)<span class="sort-icon"></span></th>
+                                    <th data-sort="popcandletime">Pop Candle Time<span class="sort-icon"></span></th>
+                                    <th data-sort="popcandlehigh">Pop Candle High (USD)<span class="sort-icon"></span></th>
+                                    <th data-sort="pullbackcount">Pullback Count<span class="sort-icon"></span></th>
+                                    <th data-sort="entryprice">Entry Price (USD)<span class="sort-icon"></span></th>
+                                    <th data-sort="stoploss">Stop Loss (USD)<span class="sort-icon"></span></th>
+                                    <th data-sort="profitpercent">Profit (%)<span class="sort-icon"></span></th>
+                                    <th data-sort="solprofit">Sol Profit<span class="sort-icon"></span></th>
+                                    <th data-sort="exit_reason">Exit Reason<span class="sort-icon"></span></th>
                                     <th data-sort="timestamp">Timestamp<span class="sort-icon"></span></th>
                                 </tr>
                             </thead>
@@ -646,7 +648,7 @@
             </div>
         </div>
     </div>
-    <!-- Supabase Client -->
+        <!-- Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         console.log('Script loaded');
@@ -746,16 +748,16 @@
                                 let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
                                 let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
 
-                                if (['profit', 'profit_percent'].includes(column)) {
+                                if (['profit', 'profitpercent'].includes(column)) {
                                     aValue = parseFloat(aValue.replace('%', '')) || 0;
                                     bValue = parseFloat(bValue.replace('%', '')) || 0;
-                                } else if (['buy_price_usd', 'current_price_usd', 'sell_price_usd', 'total_profit_usd', 'market_cap', 'pop_candle_high', 'entry_price', 'stop_loss'].includes(column)) {
+                                } else if (['buy_price_usd', 'current_price_usd', 'sell_price_usd', 'total_profit_usd', 'market_cap', 'popcandlehigh', 'entryprice', 'stoploss', 'solprofit'].includes(column)) {
                                     aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
                                     bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
-                                } else if (['buy_timestamp', 'sell_timestamp', 'pop_candle_time', 'timestamp'].includes(column)) {
+                                } else if (['buy_timestamp', 'sell_timestamp', 'popcandletime', 'timestamp'].includes(column)) {
                                     aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
                                     bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
-                                } else if (column === 'pullback_count') {
+                                } else if (column === 'pullbackcount') {
                                     aValue = parseInt(aValue) || 0;
                                     bValue = parseInt(bValue) || 0;
                                 } else {
@@ -808,7 +810,7 @@
                 }
             }
 
-                                              async function refreshTrades(bot) {
+            async function refreshTrades(bot) {
                 console.log(`Starting refreshTrades for ${bot}`);
                 const prefix = bot === 'bread' ? 'bread' : 'moon';
                 const tableName = bot === 'bread' ? 'trades' : 'trades_bot2';
@@ -1091,7 +1093,7 @@
                     console.log('Fetching trade setups from trade_setups');
                     let { data: setups, error } = await supabase
                         .from('trade_setups')
-                        .select('*')
+                        .select('symbol, tokenaddress, action, popcandletime, popcandlehigh, popcandlelow, pullbackcount, lastpullbackhigh, entryprice, stoploss, profitpercent, solprofit, exit_reason, timestamp')
                         .order('timestamp', { ascending: false });
                     
                     if (error) {
@@ -1105,23 +1107,27 @@
                     setupsCards.innerHTML = '';
                     (setups || []).forEach((setup, index) => {
                         console.log(`Processing trade setup ${index}:`, setup);
-                        const profitPercent = setup.profit_percent ? parseFloat(setup.profit_percent).toFixed(2) : '-';
+                        const profitPercent = setup.profitpercent != null ? parseFloat(setup.profitpercent).toFixed(2) : '-';
                         const profitClass = profitPercent !== '-' && profitPercent >= 0 ? 'profit-positive' : 'profit-negative';
-                        const tokenAddress = setup.token_address || '-';
+                        const tokenAddress = setup.tokenaddress || '-';
                         const symbol = setup.symbol || '-';
-                        const popCandleTime = setup.pop_candle_time ? new Date(setup.pop_candle_time).toLocaleString() : '-';
+                        const popCandleTime = setup.popcandletime ? new Date(setup.popcandletime).toLocaleString() : '-';
                         const timestamp = setup.timestamp ? new Date(setup.timestamp).toLocaleString() : '-';
+                        const solProfit = setup.solprofit != null ? parseFloat(setup.solprofit).toFixed(6) : '-';
+                        const exitReason = setup.exit_reason || '-';
 
                         const row = document.createElement('tr');
                         row.innerHTML = `
                             <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${symbol}</a></td>
                             <td>${setup.action || '-'}</td>
                             <td>${popCandleTime}</td>
-                            <td>$${setup.pop_candle_high ? setup.pop_candle_high.toFixed(8) : '-'}</td>
-                            <td>${setup.pullback_count || '-'}</td>
-                            <td>$${setup.entry_price ? setup.entry_price.toFixed(8) : '-'}</td>
-                            <td>$${setup.stop_loss ? setup.stop_loss.toFixed(8) : '-'}</td>
+                            <td>$${setup.popcandlehigh != null ? setup.popcandlehigh.toFixed(8) : '-'}</td>
+                            <td>${setup.pullbackcount != null ? setup.pullbackcount : '-'}</td>
+                            <td>$${setup.entryprice != null ? setup.entryprice.toFixed(8) : '-'}</td>
+                            <td>$${setup.stoploss != null ? setup.stoploss.toFixed(8) : '-'}</td>
                             <td class="${profitClass}">${profitPercent !== '-' ? profitPercent + '%' : '-'}</td>
+                            <td>$${solProfit !== '-' ? solProfit : '-'}</td>
+                            <td>${exitReason}</td>
                             <td>${timestamp}</td>
                         `;
                         setupsBody.appendChild(row);
@@ -1132,11 +1138,13 @@
                             <p><span class="card-label">Symbol:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${symbol}</a></p>
                             <p><span class="card-label">Action:</span> ${setup.action || '-'}</p>
                             <p><span class="card-label">Pop Candle Time:</span> ${popCandleTime}</p>
-                            <p><span class="card-label">Pop Candle High:</span> $${setup.pop_candle_high ? setup.pop_candle_high.toFixed(8) : '-'}</p>
-                            <p><span class="card-label">Pullback Count:</span> ${setup.pullback_count || '-'}</p>
-                            <p><span class="card-label">Entry Price:</span> $${setup.entry_price ? setup.entry_price.toFixed(8) : '-'}</p>
-                            <p><span class="card-label">Stop Loss:</span> $${setup.stop_loss ? setup.stop_loss.toFixed(8) : '-'}</p>
+                            <p><span class="card-label">Pop Candle High:</span> $${setup.popcandlehigh != null ? setup.popcandlehigh.toFixed(8) : '-'}</p>
+                            <p><span class="card-label">Pullback Count:</span> ${setup.pullbackcount != null ? setup.pullbackcount : '-'}</p>
+                            <p><span class="card-label">Entry Price:</span> $${setup.entryprice != null ? setup.entryprice.toFixed(8) : '-'}</p>
+                            <p><span class="card-label">Stop Loss:</span> $${setup.stoploss != null ? setup.stoploss.toFixed(8) : '-'}</p>
                             <p><span class="card-label">Profit:</span> <span class="${profitClass}">${profitPercent !== '-' ? profitPercent + '%' : '-'}</span></p>
+                            <p><span class="card-label">Sol Profit:</span> $${solProfit !== '-' ? solProfit : '-'}</p>
+                            <p><span class="card-label">Exit Reason:</span> ${exitReason}</p>
                             <p><span class="card-label">Timestamp:</span> ${timestamp}</p>
                         `;
                         setupsCards.appendChild(card);
@@ -1157,16 +1165,16 @@
                                 let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
                                 let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
 
-                                if (column === 'profit_percent') {
+                                if (column === 'profitpercent') {
                                     aValue = parseFloat(aValue.replace('%', '')) || 0;
                                     bValue = parseFloat(bValue.replace('%', '')) || 0;
-                                } else if (['pop_candle_high', 'entry_price', 'stop_loss'].includes(column)) {
+                                } else if (['popcandlehigh', 'entryprice', 'stoploss', 'solprofit'].includes(column)) {
                                     aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
                                     bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
-                                } else if (['pop_candle_time', 'timestamp'].includes(column)) {
+                                } else if (['popcandletime', 'timestamp'].includes(column)) {
                                     aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
                                     bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
-                                } else if (column === 'pullback_count') {
+                                } else if (column === 'pullbackcount') {
                                     aValue = parseInt(aValue) || 0;
                                     bValue = parseInt(bValue) || 0;
                                 } else {
