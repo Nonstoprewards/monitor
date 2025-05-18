@@ -571,7 +571,7 @@
                         <table class="min-w-full">
                             <thead>
                                 <tr>
-                                    <th data-sort="token_name">Symbol<span class="sort-icon"></span></th>
+                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
                                     <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
                                     <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
                                     <th data-sort="sell_price_usd">Sell Price (USD)<span class="sort-icon"></span></th>
@@ -1093,7 +1093,7 @@
                     console.log('Fetching trade setups from trade_setups');
                     let { data: setups, error } = await supabase
                         .from('trade_setups')
-                        .select('symbol, tokenaddress, action, popcandletime, popcandlehigh, popcandlelow, pullbackcount, lastpullbackhigh, entryprice, stoploss, profitpercent, solprofit, exit_reason, timestamp')
+                        .select('symbol, tokenaddress, action, popcandletime, popcandlehigh, popcandlelow, pullbackcount, lastpullbackhigh, entryprice, stoploss, profitpercent, solprofit, exit_reason, timestamp, signal_type')
                         .order('timestamp', { ascending: false });
                     
                     if (error) {
@@ -1115,18 +1115,22 @@
                         const timestamp = setup.timestamp ? new Date(setup.timestamp).toLocaleString() : '-';
                         const solProfit = setup.solprofit != null ? parseFloat(setup.solprofit).toFixed(6) : '-';
                         const exitReason = setup.exit_reason || '-';
+                        const popCandleHigh = setup.popcandlehigh != null ? parseFloat(setup.popcandlehigh).toFixed(8) : '-';
+                        const pullbackCount = setup.pullbackcount != null ? setup.pullbackcount : '-';
+                        const entryPrice = setup.entryprice != null ? parseFloat(setup.entryprice).toFixed(8) : '-';
+                        const stopLoss = setup.stoploss != null ? parseFloat(setup.stoploss).toFixed(8) : '-';
 
                         const row = document.createElement('tr');
                         row.innerHTML = `
                             <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${symbol}</a></td>
                             <td>${setup.action || '-'}</td>
                             <td>${popCandleTime}</td>
-                            <td>$${setup.popcandlehigh != null ? setup.popcandlehigh.toFixed(8) : '-'}</td>
-                            <td>${setup.pullbackcount != null ? setup.pullbackcount : '-'}</td>
-                            <td>$${setup.entryprice != null ? setup.entryprice.toFixed(8) : '-'}</td>
-                            <td>$${setup.stoploss != null ? setup.stoploss.toFixed(8) : '-'}</td>
-                            <td class="${profitClass}">${profitPercent !== '-' ? profitPercent + '%' : '-'}</td>
-                            <td>$${solProfit !== '-' ? solProfit : '-'}</td>
+                            <td>$${popCandleHigh}</td>
+                            <td>${pullbackCount}</td>
+                            <td>$${entryPrice}</td>
+                            <td>$${stopLoss}</td>
+                            <td class="${profitClass}">${profitPercent}%</td>
+                            <td>${solProfit}</td>
                             <td>${exitReason}</td>
                             <td>${timestamp}</td>
                         `;
@@ -1138,12 +1142,12 @@
                             <p><span class="card-label">Symbol:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${symbol}</a></p>
                             <p><span class="card-label">Action:</span> ${setup.action || '-'}</p>
                             <p><span class="card-label">Pop Candle Time:</span> ${popCandleTime}</p>
-                            <p><span class="card-label">Pop Candle High:</span> $${setup.popcandlehigh != null ? setup.popcandlehigh.toFixed(8) : '-'}</p>
-                            <p><span class="card-label">Pullback Count:</span> ${setup.pullbackcount != null ? setup.pullbackcount : '-'}</p>
-                            <p><span class="card-label">Entry Price:</span> $${setup.entryprice != null ? setup.entryprice.toFixed(8) : '-'}</p>
-                            <p><span class="card-label">Stop Loss:</span> $${setup.stoploss != null ? setup.stoploss.toFixed(8) : '-'}</p>
-                            <p><span class="card-label">Profit:</span> <span class="${profitClass}">${profitPercent !== '-' ? profitPercent + '%' : '-'}</span></p>
-                            <p><span class="card-label">Sol Profit:</span> $${solProfit !== '-' ? solProfit : '-'}</p>
+                            <p><span class="card-label">Pop Candle High:</span> $${popCandleHigh}</p>
+                            <p><span class="card-label">Pullback Count:</span> ${pullbackCount}</p>
+                            <p><span class="card-label">Entry Price:</span> $${entryPrice}</p>
+                            <p><span class="card-label">Stop Loss:</span> $${stopLoss}</p>
+                            <p><span class="card-label">Profit:</span> <span class="${profitClass}">${profitPercent}%</span></p>
+                            <p><span class="card-label">Sol Profit:</span> ${solProfit}</p>
                             <p><span class="card-label">Exit Reason:</span> ${exitReason}</p>
                             <p><span class="card-label">Timestamp:</span> ${timestamp}</p>
                         `;
@@ -1152,7 +1156,7 @@
 
                     setupsStatus.textContent = `Trade setups loaded (${(setups || []).length})`;
 
-                    // Reapply setups table sort
+                    // Reapply table sort
                     if (setupsSort && Object.keys(setupsSort).length > 0) {
                         const column = Object.keys(setupsSort)[0];
                         const direction = setupsSort[column];
@@ -1204,167 +1208,27 @@
                 }
             }
 
-            async function exportTrades(bot) {
-                console.log(`Export clicked for ${bot}`);
-                const tableName = bot === 'bread' ? 'trades' : 'trades_bot2';
-                try {
-                    let { data: completedTrades, error } = await supabase
-                        .from(tableName)
-                        .select('*')
-                        .eq('status', 'closed');
-                    
-                    if (error) {
-                        console.error(`Export error for ${bot}:`, error.message, error.details, error.hint);
-                        throw new Error(`Failed to export trades: ${error.message}`);
-                    }
-                    const trades = completedTrades || [];
-
-                    const csv = [
-                        'Token,Symbol,Buy Price (USD),Sell Price (USD),Profit (%),Total Profit (USD),Buy Time,Sell Time',
-                        ...trades.map(t => `
-                            ${t.token_name || '-'},${t.token_symbol || '-'},
-                            ${t.buy_price_usd || 0},${t.sell_price_usd || 0},
-                            ${(((t.sell_price_usd || 0) - (t.buy_price_usd || 0)) / (t.buy_price_usd || 1) * 100).toFixed(2)},
-                            ${t.total_profit_usd || 0},
-                            ${t.buy_timestamp || '-'},${t.sell_timestamp || '-'}
-                        `)
-                    ].join('\n');
-
-                    const blob = new Blob([csv], { type: 'text/csv' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${bot}_completed_trades.csv`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                } catch (error) {
-                    console.error(`Error exporting trades for ${bot}:`, error);
-                    alert(`Failed to export trades for ${bot}. Check console for details.`);
-                }
-            }
-
-            // Setup sorting and filtering
+            // Setup sorting and filtering for all bots
             setupTableSortingAndFiltering('bread');
             setupTableSortingAndFiltering('moon');
             setupTableSortingAndFiltering('wax');
 
-            // Button Event Listeners for Bread and Butter Bot
-            const breadTopRefreshBtn = document.getElementById('bread-topRefreshBtn');
-            if (breadTopRefreshBtn) {
-                breadTopRefreshBtn.addEventListener('click', () => {
-                    console.log('Bread Top Refresh clicked');
-                    refreshTrades('bread');
-                });
-            } else {
-                console.error('bread-topRefreshBtn not found');
-            }
-            const breadMiddleRefreshBtn = document.getElementById('bread-middleRefreshBtn');
-            if (breadMiddleRefreshBtn) {
-                breadMiddleRefreshBtn.addEventListener('click', () => {
-                    console.log('Bread Middle Refresh clicked');
-                    refreshTrades('bread');
-                });
-            } else {
-                console.error('bread-middleRefreshBtn not found');
-            }
-            const breadBottomRefreshBtn = document.getElementById('bread-bottomRefreshBtn');
-            if (breadBottomRefreshBtn) {
-                breadBottomRefreshBtn.addEventListener('click', () => {
-                    console.log('Bread Bottom Refresh clicked');
-                    refreshTrades('bread');
-                });
-            } else {
-                console.error('bread-bottomRefreshBtn not found');
-            }
-            const breadExportBtn = document.getElementById('bread-exportBtn');
-            if (breadExportBtn) {
-                breadExportBtn.addEventListener('click', () => {
-                    console.log('Bread Export clicked');
-                    exportTrades('bread');
-                });
-            } else {
-                console.error('bread-exportBtn not found');
-            }
-            const breadProfitFilter = document.getElementById('bread-profitFilter');
-            if (breadProfitFilter) {
-                breadProfitFilter.addEventListener('change', () => {
-                    console.log('Bread Profit filter changed');
-                    refreshTrades('bread');
-                });
-            } else {
-                console.error('bread-profitFilter not found');
-            }
+            // Initial refresh
+            refreshTab('bread');
 
-            // Button Event Listeners for Moon Bot
-            const moonTopRefreshBtn = document.getElementById('moon-topRefreshBtn');
-            if (moonTopRefreshBtn) {
-                moonTopRefreshBtn.addEventListener('click', () => {
-                    console.log('Moon Top Refresh clicked');
-                    refreshTrades('moon');
-                });
-            } else {
-                console.error('moon-topRefreshBtn not found');
-            }
-            const moonMiddleRefreshBtn = document.getElementById('moon-middleRefreshBtn');
-            if (moonMiddleRefreshBtn) {
-                moonMiddleRefreshBtn.addEventListener('click', () => {
-                    console.log('Moon Middle Refresh clicked');
-                    refreshTrades('moon');
-                });
-            } else {
-                console.error('moon-middleRefreshBtn not found');
-            }
-            const moonBottomRefreshBtn = document.getElementById('moon-bottomRefreshBtn');
-            if (moonBottomRefreshBtn) {
-                moonBottomRefreshBtn.addEventListener('click', () => {
-                    console.log('Moon Bottom Refresh clicked');
-                    refreshTrades('moon');
-                });
-            } else {
-                console.error('moon-bottomRefreshBtn not found');
-            }
-            const moonExportBtn = document.getElementById('moon-exportBtn');
-            if (moonExportBtn) {
-                moonExportBtn.addEventListener('click', () => {
-                    console.log('Moon Export clicked');
-                    exportTrades('moon');
-                });
-            } else {
-                console.error('moon-exportBtn not found');
-            }
-            const moonProfitFilter = document.getElementById('moon-profitFilter');
-            if (moonProfitFilter) {
-                moonProfitFilter.addEventListener('change', () => {
-                    console.log('Moon Profit filter changed');
-                    refreshTrades('moon');
-                });
-            } else {
-                console.error('moon-profitFilter not found');
-            }
+            // Bind refresh buttons
+            document.getElementById('bread-topRefreshBtn')?.addEventListener('click', () => refreshTrades('bread'));
+            document.getElementById('bread-middleRefreshBtn')?.addEventListener('click', () => refreshTrades('bread'));
+            document.getElementById('bread-bottomRefreshBtn')?.addEventListener('click', () => refreshTrades('bread'));
+            document.getElementById('moon-topRefreshBtn')?.addEventListener('click', () => refreshTrades('moon'));
+            document.getElementById('moon-middleRefreshBtn')?.addEventListener('click', () => refreshTrades('moon'));
+            document.getElementById('moon-bottomRefreshBtn')?.addEventListener('click', () => refreshTrades('moon'));
+            document.getElementById('wax-refreshBtn')?.addEventListener('click', () => refreshWaxTrades());
+            document.getElementById('wax-bottomRefreshBtn')?.addEventListener('click', () => refreshWaxTrades());
 
-            // Button Event Listeners for Wax Bot
-            const waxRefreshBtn = document.getElementById('wax-refreshBtn');
-            if (waxRefreshBtn) {
-                waxRefreshBtn.addEventListener('click', () => {
-                    console.log('Wax Refresh clicked');
-                    refreshWaxTrades();
-                });
-            } else {
-                console.error('wax-refreshBtn not found');
-            }
-            const waxBottomRefreshBtn = document.getElementById('wax-bottomRefreshBtn');
-            if (waxBottomRefreshBtn) {
-                waxBottomRefreshBtn.addEventListener('click', () => {
-                    console.log('Wax Bottom Refresh clicked');
-                    refreshWaxTrades();
-                });
-            } else {
-                console.error('wax-bottomRefreshBtn not found');
-            }
-
-            // Initial load
-            console.log('Initial load');
-            refreshTrades('bread');
+            // Export functionality (placeholder)
+            document.getElementById('bread-exportBtn')?.addEventListener('click', () => alert('Export functionality not implemented'));
+            document.getElementById('moon-exportBtn')?.addEventListener('click', () => alert('Export functionality not implemented'));
         });
     </script>
 </body>
