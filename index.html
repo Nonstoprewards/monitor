@@ -406,7 +406,7 @@
                 <div id="tab-wax" class="tab">Wax Bot</div>
                 <div id="tab-funbags" class="tab">Fun Bags</div>
             </div>
-                        <div id="content-bread" class="tab-content active">
+            <div id="content-bread" class="tab-content active">
                 <div class="mb-6 section-card">
                     <h2 class="text-xl text-navy mb-2">Summary</h2>
                     <p class="text-gray-700">Total Completed Profit: <span id="bread-totalProfit" class="font-semibold text-navy">Calculating...</span></p>
@@ -635,7 +635,7 @@
                     </div>
                 </div>
             </div>
-            <div id="content-funbags" class="tab-content">
+                        <div id="content-funbags" class="tab-content">
                 <div class="mb-6 section-card">
                     <h2 class="text-xl text-navy mb-2">Summary</h2>
                     <p class="text-gray-700">Total Completed Profit: <span id="funbags-totalProfit" class="font-semibold text-navy">Calculating...</span></p>
@@ -657,7 +657,8 @@
                                     <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
                                     <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
                                     <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="timestamp">Timestamp<span class="sort-icon"></span></th>
+                                    <th data-sort="lowest_market_cap">Lowest Market Cap (USD)<span class="sort-icon"></span></th>
+                                    <th data-sort="timestamp">Monitoring Start<span class="sort-icon"></span></th>
                                 </tr>
                             </thead>
                             <tbody id="funbags-monitoredBody"></tbody>
@@ -761,9 +762,7 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+                    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
 console.log('Script loaded');
 
@@ -863,8 +862,8 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             let { data: monitoredCoins, error } = await supabase
                 .from('token_states')
-                .select('token_address')
-                .eq('watchlisted', true)
+                .select('token_address, lowestmarketcap, stayAboveStartTime')
+                .eq('monitoring', true)
                 .eq('bought', false);
 
             if (error) {
@@ -882,7 +881,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         symbol: symbol,
                         market_cap: marketCap,
                         current_price_usd: price,
-                        timestamp: new Date().toISOString()
+                        lowest_market_cap: coin.lowestmarketcap || 999999999,
+                        timestamp: coin.stayAboveStartTime ? new Date(coin.stayAboveStartTime).toISOString() : new Date().toISOString()
                     };
                 } catch (error) {
                     console.error(`Error fetching data for token ${coin.token_address}:`, error);
@@ -892,7 +892,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         symbol: '-',
                         market_cap: 0,
                         current_price_usd: 0,
-                        timestamp: new Date().toISOString()
+                        lowest_market_cap: coin.lowestmarketcap || 999999999,
+                        timestamp: coin.stayAboveStartTime ? new Date(coin.stayAboveStartTime).toISOString() : new Date().toISOString()
                     };
                 }
             }));
@@ -938,6 +939,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const tokenName = coin.token_name || '-';
                 const marketCap = coin.market_cap || 0;
                 const currentPrice = coin.current_price_usd || 0;
+                const lowestMarketCap = coin.lowest_market_cap || 999999999;
                 const timestamp = coin.timestamp ? new Date(coin.timestamp).toLocaleString() : '-';
 
                 const row = document.createElement('tr');
@@ -946,6 +948,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>${coin.symbol || '-'}</td>
                     <td>$${marketCap.toLocaleString()}</td>
                     <td>$${currentPrice.toFixed(8)}</td>
+                    <td>$${lowestMarketCap.toLocaleString()}</td>
                     <td>${timestamp}</td>
                 `;
                 monitoredBody.appendChild(row);
@@ -957,7 +960,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p><span class="card-label">Symbol:</span> ${coin.symbol || '-'}</p>
                     <p><span class="card-label">Market Cap:</span> $${marketCap.toLocaleString()}</p>
                     <p><span class="card-label">Current Price:</span> $${currentPrice.toFixed(8)}</p>
-                    <p><span class="card-label">Timestamp:</span> ${timestamp}</p>
+                    <p><span class="card-label">Lowest Market Cap:</span> $${lowestMarketCap.toLocaleString()}</p>
+                    <p><span class="card-label">Monitoring Start:</span> ${timestamp}</p>
                 `;
                 monitoredCards.appendChild(card);
             });
@@ -976,7 +980,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
                         let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
 
-                        if (['market_cap', 'current_price_usd'].includes(column)) {
+                        if (['market_cap', 'current_price_usd', 'lowest_market_cap'].includes(column)) {
                             aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
                             bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
                         } else if (column === 'timestamp') {
@@ -1120,7 +1124,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             market_cap: marketCap,
                             profit: profitPercent,
                             buy_timestamp: buyLog.timestamp || null,
-                            status: state.sold75 ? 'partial_sold' : 'open',
+                            status: state.sold50 ? 'partial_sold' : 'open',
                             amount: state.amount
                         };
                     } catch (error) {
@@ -1134,7 +1138,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             market_cap: 0,
                             profit: '0',
                             buy_timestamp: null,
-                            status: state.sold75 ? 'partial_sold' : 'open',
+                            status: state.sold50 ? 'partial_sold' : 'open',
                             amount: state.amount
                         };
                     }
@@ -1142,10 +1146,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Fetch completed trades
                 console.log('Fetching completed trades from bot_logs for Fun Bags');
-                let { data: sellLogs, error: sellLogError } = await supabase
-                    .from('bot_logs')
-                    .select('token_address, amount, timestamp, event_type')
-                    .in('event_type', ['sell_75', 'trailing_stop', 'stop_loss']);
+                let { data: sellLogs, error: sellLogEvent_type = ['sell_50', 'trailing_stop', 'stop_loss'];
                 
                 if (sellLogError) {
                     console.error('Sell logs fetch error for Fun Bags:', sellLogError.message, sellLogError.details, sellLogError.hint);
@@ -1662,7 +1663,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (['profit', 'profitpercent'].includes(column)) {
                     aValue = parseFloat(aValue.replace('%', '')) || 0;
                     bValue = parseFloat(bValue.replace('%', '')) || 0;
-                } else if (['buy_price_usd', 'sell_price_usd', 'current_price_usd', 'total_profit_usd', 'market_cap', 'popcandlehigh', 'entryprice', 'stoploss'].includes(column)) {
+                } else if (['buy_price_usd', 'sell_price_usd', 'current_price_usd', 'total_profit_usd', 'market_cap', 'popcandlehigh', 'entryprice', 'stoploss', 'lowest_market_cap'].includes(column)) {
                     aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
                     bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
                 } else if (column === 'solprofit') {
