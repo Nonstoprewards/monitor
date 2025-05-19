@@ -831,18 +831,33 @@ document.addEventListener('DOMContentLoaded', () => {
         funbags: { active: {}, completed: {}, monitored: {} }
     };
 
-    // Placeholder for fetching token data (replace with actual API call)
     async function fetchTokenData(tokenAddress) {
-        // TODO: Replace with actual API call (e.g., Moralis, CoinGecko, or DexScreener)
-        console.warn(`fetchTokenData is a placeholder for token ${tokenAddress}. Replace with real API call.`);
-        return {
-            marketCap: 0, // Placeholder; replace with actual market cap
-            price: 0,     // Placeholder; replace with actual price
-            symbol: '-'   // Placeholder; replace with actual symbol
-        };
+    console.log(`Fetching token data for ${tokenAddress}`);
+    const url = `https://solana-gateway.moralis.io/token/mainnet/${tokenAddress}/metadata`;
+    const moralisOptions = {
+        method: 'GET',
+        headers: {
+            accept: 'application/json',
+            'X-API-Key': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjZhMjdlMWU0LWUwNGEtNGRiNC05ZjQ5LTU4MjFkNGU2MmEzMiIsIm9yZ0lkIjoiNDQ3NjY4IiwidXNlcklkIjoiNDYwNTkzIiwidHlwZUlkIjoiMGRjZmM0ZTctNzhkOC00YzRhLWE2YzgtYzc2OWRiMTdkMzk3IiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NDc1MjU1NjAsImV4cCI6NDkwMzI4NTU2MH0.2CVGa61MAN5zUvbh8yssfNZdNSTORl1GBYXXBs2nJbM'
+        }
+    };
+    try {
+        const response = await fetch(url, moralisOptions);
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        const marketCap = parseFloat(data.fullyDilutedValue) || 0;
+        const price = parseFloat(data.price) || 0;
+        const symbol = data.symbol || '-';
+        console.log(`Token data fetched: ${tokenAddress}`, { marketCap, price, symbol });
+        return { marketCap, price, symbol };
+    } catch (error) {
+        console.error(`Error fetching token data for ${tokenAddress}:`, error.message);
+        return { marketCap: 0, price: 0, symbol: '-' };
     }
-
-    // Fetch monitored coins for Fun Bags
+}
+    
     async function fetchMonitoredCoins() {
         console.log('Fetching monitored coins from token_states');
         try {
@@ -1062,86 +1077,115 @@ document.addEventListener('DOMContentLoaded', () => {
             let completedTrades = [];
 
             if (bot === 'funbags') {
-                // Fetch monitored coins
-                await refreshMonitoredCoins();
+    // Fetch monitored coins
+    await refreshMonitoredCoins();
 
-                // Fetch active trades
-                console.log('Fetching active trades from token_states for Fun Bags');
-                let { data: tokenStates, error: tokenError } = await supabase
-                    .from('token_states')
-                    .select('*')
-                    .eq('bought', true)
-                    .gt('amount', 0);
-                
-                if (tokenError) {
-                    console.error('Token states fetch error for Fun Bags:', tokenError.message, tokenError.details, tokenError.hint);
-                    throw new Error(`Failed to fetch token states: ${tokenError.message}`);
-                }
-                console.log('Token states fetched for Fun Bags:', tokenStates);
+    // Fetch active trades
+    console.log('Fetching active trades from token_states for Fun Bags');
+    let { data: tokenStates, error: tokenError } = await supabase
+        .from('token_states')
+        .select('*')
+        .eq('bought', true)
+        .gt('amount', 0);
+    
+    if (tokenError) {
+        console.error('Token states fetch error for Fun Bags:', tokenError.message, tokenError.details, tokenError.hint);
+        throw new Error(`Failed to fetch token states: ${tokenError.message}`);
+    }
+    console.log('Token states fetched for Fun Bags:', tokenStates);
 
-                let { data: buyLogs, error: buyLogError } = await supabase
-                    .from('bot_logs')
-                    .select('token_address, amount, timestamp')
-                    .eq('event_type', 'buy');
-                
-                if (buyLogError) {
-                    console.error('Buy logs fetch error for Fun Bags:', buyLogError.message, buyLogError.details, buyLogError.hint);
-                    throw new Error(`Failed to fetch buy logs: ${buyLogError.message}`);
-                }
-                console.log('Buy logs fetched for Fun Bags:', buyLogs);
+    let { data: buyLogs, error: buyLogError } = await supabase
+        .from('bot_logs')
+        .select('token_address, amount, timestamp')
+        .eq('event_type', 'buy');
+    
+    if (buyLogError) {
+        console.error('Buy logs fetch error for Fun Bags:', buyLogError.message, buyLogError.details, buyLogError.hint);
+        throw new Error(`Failed to fetch buy logs: ${buyLogError.message}`);
+    }
+    console.log('Buy logs fetched for Fun Bags:', buyLogs);
 
-                activeTrades = (tokenStates || []).map(state => {
-                    const buyLog = buyLogs.find(log => log.token_address === state.token_address) || {};
-                    const buyPrice = state.purchase_price || 0;
-                    const currentPrice = 0; // Replace with actual price if available
-                    const profitPercent = buyPrice !== 0 ? (((currentPrice - buyPrice) / buyPrice) * 100).toFixed(2) : 'N/A';
-                    return {
-                        token_address: state.token_address,
-                        token_name: state.token_address.slice(0, 8),
-                        token_symbol: '-',
-                        buy_price_usd: buyPrice,
-                        current_price_usd: currentPrice,
-                        market_cap: 0,
-                        profit: profitPercent,
-                        buy_timestamp: buyLog.timestamp || null,
-                        status: state.sold75 ? 'partial_sold' : 'open',
-                        amount: state.amount
-                    };
-                });
+    activeTrades = await Promise.all((tokenStates || []).map(async (state) => {
+        try {
+            const buyLog = buyLogs.find(log => log.token_address === state.token_address) || {};
+            const { marketCap, price: currentPrice, symbol } = await fetchTokenData(state.token_address);
+            const buyPrice = state.purchase_price || 0;
+            const profitPercent = buyPrice !== 0 && currentPrice !== 0 ? (((currentPrice - buyPrice) / buyPrice) * 100).toFixed(2) : 'N/A';
+            return {
+                token_address: state.token_address,
+                token_name: state.token_address.slice(0, 8),
+                token_symbol: symbol,
+                buy_price_usd: buyPrice,
+                current_price_usd: currentPrice,
+                market_cap: marketCap,
+                profit: profitPercent,
+                buy_timestamp: buyLog.timestamp || null,
+                status: state.sold75 ? 'partial_sold' : 'open',
+                amount: state.amount
+            };
+        } catch (error) {
+            console.error(`Error processing active trade for ${state.token_address}:`, error);
+            return {
+                token_address: state.token_address,
+                token_name: state.token_address.slice(0, 8),
+                token_symbol: '-',
+                buy_price_usd: state.purchase_price || 0,
+                current_price_usd: 0,
+                market_cap: 0,
+                profit: 'N/A',
+                buy_timestamp: null,
+                status: state.sold75 ? 'partial_sold' : 'open',
+                amount: state.amount
+            };
+        }
+    }));
 
-                // Fetch completed trades
-                console.log('Fetching completed trades from bot_logs for Fun Bags');
-                let { data: sellLogs, error: sellLogError } = await supabase
-                    .from('bot_logs')
-                    .select('token_address, amount, timestamp, event_type')
-                    .in('event_type', ['sell_75', 'trailing_stop', 'stop_loss']);
-                
-                if (sellLogError) {
-                    console.error('Sell logs fetch error for Fun Bags:', sellLogError.message, sellLogError.details, sellLogError.hint);
-                    throw new Error(`Failed to fetch sell logs: ${sellLogError.message}`);
-                }
-                console.log('Sell logs fetched for Fun Bags:', sellLogs);
+    // Fetch completed trades
+    console.log('Fetching completed trades from bot_logs for Fun Bags');
+    let { data: sellLogs, error: sellLogError } = await supabase
+        .from('bot_logs')
+        .select('token_address, amount, timestamp, event_type')
+        .in('event_type', ['sell_75', 'trailing_stop', 'stop_loss']);
+    
+    if (sellLogError) {
+        console.error('Sell logs fetch error for Fun Bags:', sellLogError.message, sellLogError.details, sellLogError.hint);
+        throw new Error(`Failed to fetch sell logs: ${sellLogError.message}`);
+    }
+    console.log('Sell logs fetched for Fun Bags:', sellLogs);
 
-                completedTrades = sellLogs.map(sell => {
-                    const buyLog = buyLogs.find(log => log.token_address === sell.token_address) || {};
-                    const buyPrice = buyLog.amount ? (0.1 / buyLog.amount) : 0;
-                    const sellPrice = 0; // Replace with actual price if available
-                    const profitPercent = buyPrice !== 0 && sellPrice !== 0 ? (((sellPrice - buyPrice) / buyPrice) * 100).toFixed(2) : 'N/A';
-                    const totalProfit = buyPrice !== 0 && sellPrice !== 0 ? (sellPrice - buyPrice) * sell.amount : 0;
-                    return {
-                        token_address: sell.token_address,
-                        token_name: sell.token_address.slice(0, 8),
-                        token_symbol: '-',
-                        buy_price_usd: buyPrice,
-                        sell_price_usd: sellPrice,
-                        profit: profitPercent,
-                        total_profit_usd: totalProfit,
-                        buy_timestamp: buyLog.timestamp || null,
-                        sell_timestamp: sell.timestamp || null,
-                        status: 'closed'
-                    };
-                });
-            } else {
+    completedTrades = await Promise.all((sellLogs || []).map(async (sell) => {
+        try {
+            const buyLog = buyLogs.find(log => log.token_address === sell.token_address);
+            if (!buyLog) {
+                console.warn(`No buy log found for sell log ${sell.token_address}`);
+                return null;
+            }
+            const { price: sellPrice, symbol } = await fetchTokenData(sell.token_address);
+            const buyPrice = buyLog.amount ? (0.1 / buyLog.amount) : 0; // 0.1 SOL per buy
+            const profitPercent = buyPrice !== 0 && sellPrice !== 0 ? (((sellPrice - buyPrice) / buyPrice) * 100).toFixed(2) : 'N/A';
+            const totalProfit = buyPrice !== 0 && sellPrice !== 0 ? (sellPrice - buyPrice) * sell.amount : 0;
+            return {
+                token_address: sell.token_address,
+                token_name: sell.token_address.slice(0, 8),
+                token_symbol: symbol,
+                buy_price_usd: buyPrice,
+                sell_price_usd: sellPrice,
+                profit: profitPercent,
+                total_profit_usd: totalProfit,
+                buy_timestamp: buyLog.timestamp || null,
+                sell_timestamp: sell.timestamp || null,
+                status: 'closed'
+            };
+        } catch (error) {
+            console.error(`Error processing completed trade for ${sell.token_address}:`, error);
+            return null;
+        }
+    }));
+
+    completedTrades = completedTrades.filter(trade => trade !== null);
+}
+            
+                else {
                 // Fetch active trades for Bread or Moon
                 console.log(`Fetching active trades from ${tableName}`);
                 let { data, error } = await supabase
