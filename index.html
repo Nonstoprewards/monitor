@@ -1374,40 +1374,40 @@ document.addEventListener('DOMContentLoaded', () => {
             setupsStatus.textContent = `Trade setups loaded (${(setups || []).length})`;
 
             if (setupsSort && Object.keys(setupsSort).length > 0) {
-                const column = Object.keys(setupsSort)[0];
-                const direction = setupsSort[column];
-                const header = setupsTable.querySelector(`th[data-sort="${column}"]`);
-                if (header) {
-                    header.classList.add(`sort-${direction}`);
-                    header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
-                    const rows = Array.from(setupsBody.querySelectorAll('tr'));
-                    rows.sort((a, b) => {
-                        let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                        let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
+    const column = Object.keys(setupsSort)[0];
+    const direction = setupsSort[column];
+    const header = setupsTable.querySelector(`th[data-sort="${column}"]`);
+    if (header) {
+        header.classList.add(`sort-${direction}`);
+        header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
+        const rows = Array.from(setupsBody.querySelectorAll('tr'));
+        rows.sort((a, b) => {
+            let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
+            let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
 
-                        if (column === 'profitpercent') {
-                            aValue = parseFloat(aValue.replace('%', '')) || 0;
-                            bValue = parseFloat(bValue.replace('%', '')) || 0;
-                        } else if (['popcandlehigh', 'entryprice', 'stoploss', 'solprofit'].includes(column)) {
-                            aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
-                            bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
-                        } else if (['popcandletime', 'timestamp'].includes(column)) {
-                            aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
-                            bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
-                        } else if (column === 'pullbackcount') {
-                            aValue = parseInt(aValue) || 0;
-                            bValue = parseInt(bValue) || 0;
-                        } else {
-                            aValue = aValue.toLowerCase();
-                            bValue = bValue.toLowerCase();
-                        }
-
-                        return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
-                    });
-                    setupsBody.innerHTML = '';
-                    rows.forEach(row => setupsBody.appendChild(row));
-                }
+            if (column === 'profitpercent') {
+                aValue = parseFloat(aValue.replace('%', '')) || 0;
+                bValue = parseFloat(bValue.replace('%', '')) || 0;
+            } else if (['popcandlehigh', 'entryprice', 'stoploss', 'solprofit'].includes(column)) {
+                aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
+                bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
+            } else if (['popcandletime', 'timestamp'].includes(column)) {
+                aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
+                bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
+            } else if (column === 'pullbackcount') {
+                aValue = parseInt(aValue) || 0;
+                bValue = parseInt(bValue) || 0;
+            } else {
+                aValue = aValue.toLowerCase();
+                bValue = bValue.toLowerCase();
             }
+
+            return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
+        });
+        setupsBody.innerHTML = '';
+        rows.forEach(row => setupsBody.appendChild(row));
+    }
+}
 
             const filterInput = document.getElementById('wax-filter');
             if (filterInput && filterValue) {
