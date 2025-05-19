@@ -1,1664 +1,1306 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>Rich 1 Day</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Open+Sans:wght@400;600&display=swap');
-        body {
-            font-family: 'Open Sans', sans-serif;
-            background-color: #f4f7fa;
-            color: #2d3748;
-            transition: background-color 0.3s, color 0.3s;
-        }
-        h1, h2 {
-            font-family: 'Poppins', sans-serif;
-            font-weight: 600;
-        }
-        .sexy {
-            background-color: #1a0033;
-            color: #f8d1e9;
-        }
-        .sexy .bg-light {
-            background-color: #4b0082;
-        }
-        .sexy .text-gray-700 {
-            color: #f8d1e9;
-        }
-        .sexy .bg-teal-600 {
-            background: linear-gradient(145deg, #ff69b4, #c71585);
-        }
-        .sexy .hover\:bg-teal-700:hover {
-            background: linear-gradient(145deg, #c71585, #ff69b4);
-        }
-        .sexy .profit-positive {
-            color: #98fb98;
-        }
-        .sexy .profit-negative {
-            color: #ff4040;
-        }
-        .sexy .card {
-            background-color: #4b0082;
-            border-color: #ff69b4;
-        }
-        .sexy .card:hover {
-            background-color: #6a0dad;
-            transform: translateY(-3px);
-        }
-        .sexy th {
-            background-color: #2e004f;
-        }
-        .sexy tr:nth-child(even) {
-            background-color: #4b0082;
-        }
-        .sexy tr:hover {
-            background-color: #6a0dad;
-            border-left: 3px solid #ff69b4;
-        }
-        .table-container {
-            overflow-x: auto;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        .sexy .table-container {
-            box-shadow: 0 2px 10px rgba(255, 105, 180, 0.5);
-            border: 1px solid #ff69b4;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-        th, td {
-            text-align: left;
-            padding: 12px;
-            border: 1px solid #e2e8f0;
-        }
-        .sexy th, .sexy td {
-            border-color: #ff69b4;
-        }
-        th {
-            background-color: #1e2a44;
-            color: #ffffff;
-            font-size: 0.85rem;
-            white-space: nowrap;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            cursor: pointer;
-        }
-        th:hover {
-            background-color: #285e61;
-        }
-        .sexy th:hover {
-            background-color: #6a0dad;
-        }
-        .sexy th:hover::after {
-            content: '♥';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #ff69b4;
-            font-size: 1rem;
-            animation: heartPulse 0.5s ease-out;
-            opacity: 0;
-        }
-        @keyframes heartPulse {
-            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
-            100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
-        }
-        tr:nth-child(even) {
-            background-color: #edf2f7;
-        }
-        tr:hover {
-            background-color: #e6fffa;
-            border-left: 3px solid #2c7a7b;
-            transition: all 0.2s ease;
-        }
-        .pagination-arrow {
-            cursor: pointer;
-            padding: 8px;
-            color: #2c7a7b;
-            font-size: 1.5rem;
-            min-width: 44px;
-            min-height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: color 0.2s;
-        }
-        .sexy .pagination-arrow {
-            color: #ff69b4;
-        }
-        .pagination-arrow:hover {
-            color: #285e61;
-        }
-        .sexy .pagination-arrow:hover {
-            color: #c71585;
-        }
-        .pagination-arrow.disabled {
-            color: #a0aec0;
-            cursor: not-allowed;
-        }
-        a {
-            color: #2c7a7b;
-            position: relative;
-            text-decoration: none;
-        }
-        a::after {
-            content: '';
-            position: absolute;
-            width: 0;
-            height: 2px;
-            bottom: -2px;
-            left: 0;
-            background-color: #2c7a7b;
-            transition: width 0.3s ease;
-        }
-        a:hover::after {
-            width: 100%;
-        }
-        .sexy a {
-            color: #ff69b4;
-        }
-        .sexy a::after {
-            background-color: #ff69b4;
-        }
-        .profit-positive {
-            color: #38a169;
-            font-weight: 600;
-        }
-        .profit-negative {
-            color: #e53e3e;
-            font-weight: 600;
-        }
-        .card {
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 12px;
-            background-color: #ffffff;
-            transition: transform 0.2s, box-shadow 0.2s;
-            position: relative;
-        }
-        .card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-        }
-        .sexy .card:hover::after {
-            content: '♥';
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            color: #ff69b4;
-            font-size: 1rem;
-            animation: heartPulse 0.5s ease-out;
-            opacity: 0;
-        }
-        .card-label {
-            font-weight: 600;
-            color: #1e2a44;
-            margin-right: 8px;
-        }
-        .sexy .card-label {
-            color: #f8d1e9;
-        }
-        .btn {
-            position: relative;
-            overflow: hidden;
-            transition: transform 0.2s, background-color 0.2s;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-        }
-        .sexy .btn:hover::after {
-            content: '♥';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #ff69b4;
-            font-size: 1rem;
-            animation: heartPulse 0.5s ease-out;
-            opacity: 0;
-        }
-        .btn::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            transition: width 0.4s, height 0.4s;
-        }
-        .btn:active::after {
-            width: 200px;
-            height: 200px;
-            transition: width 0.4s, height 0.4s;
-        }
-        .section-card {
-            background: linear-gradient(145deg, #ffffff, #edf2f7);
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        }
-        .sexy .section-card {
-            background: linear-gradient(145deg, #4b0082, #1a0033);
-            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.5);
-        }
-        .flash {
-            animation: flash 0.5s ease-out;
-        }
-        @keyframes flash {
-            0% { background-color: #e6fffa; }
-            50% { background-color: #b2f5ea; }
-            100% { background-color: transparent; }
-        }
-        .sexy .flash {
-            animation: sexyFlash 0.5s ease-out;
-        }
-        @keyframes sexyFlash {
-            0% { background-color: #ff69b4; }
-            50% { background-color: #c71585; }
-            100% { background-color: transparent; }
-        }
-        .tab {
-            padding: 10px 20px;
-            cursor: pointer;
-            font-weight: 600;
-            border-bottom: 2px solid transparent;
-            transition: border-color 0.3s, color 0.3s;
-        }
-        .tab.active {
-            border-bottom: 2px solid #2c7a7b;
-            color: #2c7a7b;
-        }
-        .sexy .tab.active {
-            border-bottom: 2px solid #ff69b4;
-            color: #ff69b4;
-        }
-        .tab:hover {
-            color: #2c7a7b;
-        }
-        .sexy .tab:hover {
-            color: #ff69b4;
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        .filter-input {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 4px;
-            font-size: 0.875rem;
-        }
-        .sexy .filter-input {
-            background-color: #4b0082;
-            color: #f8d1e9;
-            border-color: #ff69b4;
-        }
-        .sort-icon::after {
-            content: '↕';
-            margin-left: 5px;
-            font-size: 0.8rem;
-        }
-        .sort-asc::after {
-            content: '↑';
-        }
-        .sort-desc::after {
-            content: '↓';
-        }
-        @media (max-width: 640px) {
-            .container {
-                padding: 1rem;
-            }
-            h1 {
-                font-size: 1.75rem;
-            }
-            .btn {
-                padding: 10px 16px;
-                font-size: 0.875rem;
-                min-height: 48px;
-                width: 100%;
-            }
-            .pagination-arrow {
-                padding: 6px;
-                font-size: 1.25rem;
-            }
-            .pagination-text {
-                font-size: 0.875rem;
-            }
-            .status {
-                font-size: 0.875rem;
-                margin-top: 1.5rem;
-            }
-            .table-container {
-                display: none;
-            }
-            .card-container {
-                display: block;
-            }
-            .tab {
-                padding: 8px 12px;
-                font-size: 0.875rem;
-            }
-            .filter-input {
-                font-size: 0.8rem;
-            }
-        }
-        @media (min-width: 641px) {
-            .card-container {
-                display: none;
-            }
-        }
-        @media (max-width: 400px) {
-            .card {
-                padding: 10px;
-                font-size: 0.8rem;
-            }
-            .card-label, .card-value {
-                font-size: 0.8rem;
-            }
-        }
-        @media (max-width: 1024px) and (min-width: 641px) {
-            th, td {
-                padding: 10px;
-                font-size: 0.875rem;
-            }
-            .btn {
-                padding: 10px 20px;
-                font-size: 0.875rem;
-            }
-            .filter-input {
-                font-size: 0.85rem;
-            }
-        }
-    </style>
-</head>
-<body class="flex items-center justify-center min-h-screen">
-    <div class="container mx-auto p-6 max-w-7xl">
-        <div class="section-card">
-            <div class="flex justify-between items-center mb-6">
-                <h1 class="text-3xl sm:text-4xl text-navy">Rich 1 Day</h1>
-                <button id="sexyModeToggle" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                    <i class="fas fa-moon mr-2"></i> Sexy Mode
-                </button>
-            </div>
-            <div class="flex border-b border-gray-200 mb-6">
-                <div id="tab-bread" class="tab active">Bread and Butter Bot</div>
-                <div id="tab-moon" class="tab">Moon Bot</div>
-                <div id="tab-wax" class="tab">Wax Bot</div>
-                <div id="tab-funbags" class="tab">Fun Bags</div>
-            </div>
-            <div id="content-bread" class="tab-content active">
-                <div class="mb-6 section-card">
-                    <h2 class="text-xl text-navy mb-2">Summary</h2>
-                    <p class="text-gray-700">Total Completed Profit: <span id="bread-totalProfit" class="font-semibold text-navy">Calculating...</span></p>
-                </div>
-                <div class="mb-6 section-card">
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <h2 class="text-xl text-navy">Active Trades</h2>
-                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                            <button id="bread-topRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                                <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                            </button>
-                            <button id="bread-exportBtn" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
-                                <i class="fas fa-file-export mr-2"></i> Export Trades
-                            </button>
-                        </div>
-                    </div>
-                    <p id="bread-active-status" class="text-gray-700 text-sm mb-2 status">Loading active trades...</p>
-                    <input type="text" id="bread-activeFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
-                    <div class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="bread-activeTradesBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="bread-activeTradesCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <button id="bread-middleRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                        </button>
-                        <div class="flex items-center space-x-2">
-                            <span id="bread-activePrevPage" class="pagination-arrow disabled"></span>
-                            <span class="pagination-text text-gray-700">Page <span id="bread-activeCurrentPage">1</span></span>
-                            <span id="bread-activeNextPage" class="pagination-arrow disabled"></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="mb-6 section-card">
-                    <h2 class="text-xl text-navy mb-4">Completed Trades</h2>
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <p id="bread-completed-status" class="text-gray-700 text-sm mb-2 sm:mb-0 status">Loading completed trades...</p>
-                        <select id="bread-profitFilter" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                            <option value="all">All Trades</option>
-                            <option value="positive">Positive Profit</option>
-                            <option value="negative">Negative Profit</option>
-                        </select>
-                    </div>
-                    <input type="text" id="bread-completedFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
-                    <div id="bread-completedTableContainer" class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="sell_price_usd">Sell Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
-                                    <th data-sort="total_profit_usd">Total Profit (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
-                                    <th data-sort="sell_timestamp">Sell Time<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="bread-completedTradesBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="bread-completedTradesCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <div class="flex items-center space-x-2">
-                            <span id="bread-completedPrevPage" class="pagination-arrow disabled"></span>
-                            <span class="pagination-text text-gray-700">Page <span id="bread-completedCurrentPage">1</span></span>
-                            <span id="bread-completedNextPage" class="pagination-arrow disabled"></span>
-                        </div>
-                        <button id="bread-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div id="content-moon" class="tab-content">
-                <div class="mb-6 section-card">
-                    <h2 class="text-xl text-navy mb-2">Summary</h2>
-                    <p class="text-gray-700">Total Completed Profit: <span id="moon-totalProfit" class="font-semibold text-navy">Calculating...</span></p>
-                </div>
-                <div class="mb-6 section-card">
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <h2 class="text-xl text-navy">Active Trades</h2>
-                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                            <button id="moon-topRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                                <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                            </button>
-                            <button id="moon-exportBtn" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
-                                <i class="fas fa-file-export mr-2"></i> Export Trades
-                            </button>
-                        </div>
-                    </div>
-                    <p id="moon-active-status" class="text-gray-700 text-sm mb-2 status">Loading active trades...</p>
-                    <input type="text" id="moon-activeFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
-                    <div class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="moon-activeTradesBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="moon-activeTradesCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <button id="moon-middleRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                        </button>
-                        <div class="flex items-center space-x-2">
-                            <span id="moon-activePrevPage" class="pagination-arrow disabled"></span>
-                            <span class="pagination-text text-gray-700">Page <span id="moon-activeCurrentPage">1</span></span>
-                            <span id="moon-activeNextPage" class="pagination-arrow disabled"></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="mb-6 section-card">
-                    <h2 class="text-xl text-navy mb-4">Completed Trades</h2>
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <p id="moon-completed-status" class="text-gray-700 text-sm mb-2 sm:mb-0 status">Loading completed trades...</p>
-                        <select id="moon-profitFilter" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                            <option value="all">All Trades</option>
-                            <option value="positive">Positive Profit</option>
-                            <option value="negative">Negative Profit</option>
-                        </select>
-                    </div>
-                    <input type="text" id="moon-completedFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
-                    <div id="moon-completedTableContainer" class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="sell_price_usd">Sell Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
-                                    <th data-sort="total_profit_usd">Total Profit (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
-                                    <th data-sort="sell_timestamp">Sell Time<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="moon-completedTradesBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="moon-completedTradesCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <div class="flex items-center space-x-2">
-                            <span id="moon-completedPrevPage" class="pagination-arrow disabled"></span>
-                            <span class="pagination-text text-gray-700">Page <span id="moon-completedCurrentPage">1</span></span>
-                            <span id="moon-completedNextPage" class="pagination-arrow disabled"></span>
-                        </div>
-                        <button id="moon-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div id="content-wax" class="tab-content">
-                <div class="mb-6 section-card">
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <h2 class="text-xl text-navy">Trade Setups</h2>
-                        <button id="wax-refreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Setups
-                        </button>
-                    </div>
-                    <p id="wax-status" class="text-gray-700 text-sm mb-2 status">Loading trade setups...</p>
-                    <input type="text" id="wax-filter" class="filter-input" placeholder="Filter by Symbol...">
-                    <div class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="symbol">Symbol<span class="sort-icon"></span></th>
-                                    <th data-sort="action">Action<span class="sort-icon"></span></th>
-                                    <th data-sort="popcandletime">Pop Candle Time<span class="sort-icon"></span></th>
-                                    <th data-sort="popcandlehigh">Pop Candle High (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="pullbackcount">Pullback Count<span class="sort-icon"></span></th>
-                                    <th data-sort="entryprice">Entry Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="stoploss">Stop Loss (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="profitpercent">Profit (%)<span class="sort-icon"></span></th>
-                                    <th data-sort="solprofit">Sol Profit<span class="sort-icon"></span></th>
-                                    <th data-sort="exit_reason">Exit Reason<span class="sort-icon"></span></th>
-                                    <th data-sort="timestamp">Timestamp<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="wax-setupsBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="wax-setupsCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <div class="flex items-center space-x-2">
-                            <span id="wax-prevPage" class="pagination-arrow disabled"></span>
-                            <span class="pagination-text text-gray-700">Page <span id="wax-currentPage">1</span></span>
-                            <span id="wax-nextPage" class="pagination-arrow disabled"></span>
-                        </div>
-                        <button id="wax-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Setups
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div id="content-funbags" class="tab-content">
-                <div class="mb-6 section-card">
-                    <h2 class="text-xl text-navy mb-2">Summary</h2>
-                    <p class="text-gray-700">Total Completed Profit: <span id="funbags-totalProfit" class="font-semibold text-navy">Calculating...</span></p>
-                </div>
-                <div class="mb-6 section-card">
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <h2 class="text-xl text-navy">Monitored Coins</h2>
-                        <button id="funbags-monitoredRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Monitored
-                        </button>
-                    </div>
-                    <p id="funbags-monitored-status" class="text-gray-700 text-sm mb-2 status">Loading monitored coins...</p>
-                    <input type="text" id="funbags-monitoredFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
-                    <div class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
-                                    <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="timestamp">Timestamp<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="funbags-monitoredBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="funbags-monitoredCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <div class="flex items-center space-x-2">
-                            <span id="funbags-monitoredPrevPage" class="pagination-arrow disabled"></span>
-                            <span class="pagination-text text-gray-700">Page <span id="funbags-monitoredCurrentPage">1</span></span>
-                            <span id="funbags-monitoredNextPage" class="pagination-arrow disabled"></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="mb-6 section-card">
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <h2 class="text-xl text-navy">Active Trades</h2>
-                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                            <button id="funbags-topRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                                <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                            </button>
-                            <button id="funbags-exportBtn" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
-                                <i class="fas fa-file-export mr-2"></i> Export Trades
-                            </button>
-                        </div>
-                    </div>
-                    <p id="funbags-active-status" class="text-gray-700 text-sm mb-2 status">Loading active trades...</p>
-                    <input type="text" id="funbags-activeFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
-                    <div class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="funbags-activeTradesBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="funbags-activeTradesCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <button id="funbags-middleRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                        </button>
-                        <div class="flex items-center space-x-2">
-                            <span id="funbags-activePrevPage" class="pagination-arrow disabled"></span>
-                            <span class="pagination-text text-gray-700">Page <span id="funbags-activeCurrentPage">1</span></span>
-                            <span id="funbags-activeNextPage" class="pagination-arrow disabled"></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="mb-6 section-card">
-                    <h2 class="text-xl text-navy mb-4">Completed Trades</h2>
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <p id="funbags-completed-status" class="text-gray-700 text-sm mb-2 sm:mb-0 status">Loading completed trades...</p>
-                        <select id="funbags-profitFilter" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                            <option value="all">All Trades</option>
-                            <option value="positive">Positive Profit</option>
-                            <option value="negative">Negative Profit</option>
-                        </select>
-                    </div>
-                    <input type="text" id="funbags-completedFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
-                    <div id="funbags-completedTableContainer" class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="sell_price_usd">Sell Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
-                                    <th data-sort="total_profit_usd">Total Profit (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
-                                    <th data-sort="sell_timestamp">Sell Time<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="funbags-completedTradesBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="funbags-completedTradesCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <div class="flex items-center space-x-2">
-                            <span id="funbags-completedPrevPage" class="pagination-arrow disabled"></span>
-                            <span class="pagination-text text-gray-700">Page <span id="funbags-completedCurrentPage">1</span></span>
-                            <span id="funbags-completedNextPage" class="pagination-arrow disabled"></span>
-                        </div>
-                        <button id="funbags-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-console.log('Script loaded');
+import pkg from '@solana/web3.js';
+const { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction, TransactionInstruction, SYSVAR_RENT_PUBKEY, SendTransactionError, VersionedTransaction } = pkg;
+import * as splToken from '@solana/spl-token';
+import { createClient } from '@supabase/supabase-js';
+import axios from 'axios';
+import * as dotenv from 'dotenv';
+import bs58 from 'bs58';
+import fs from 'fs/promises';
+import fetch from 'node-fetch';
+import TelegramBot from 'node-telegram-bot-api';
+dotenv.config();
+console.log('QUICKNODE_URL:', process.env.QUICKNODE_URL);
+console.log('SOLANA_PRIVATE_KEY:', process.env.SOLANA_PRIVATE_KEY ? '[REDACTED]' : 'undefined');
+console.log('SUPABASE_URL:', process.env.SUPABASE_URL);
+console.log('SUPABASE_SERVICE_KEY:', process.env.SUPABASE_SERVICE_KEY ? '[REDACTED]' : 'undefined');
+const TELEGRAM_TOKEN = '7898822158:AAHgGMOHqq5fX-vlLQB7WuTLz7Qb2v-dfgg';
+const telegramBot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
+const TELEGRAM_CHANNEL = '@YourChannelName'; // Replace with the channel/group to monitor
+const SOLANA_ADDRESS_REGEX = /[1-9A-HJ-NP-Za-km-z]{44}/g;
+const RUGCHECK_API = 'https://api.rugcheck.xyz/v1/tokens';
 
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded');
+// NEW: Helper function to create a timeout signal for fetch
+function createTimeoutSignal(ms) {
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), ms);
+  return controller.signal;
+}
 
-    // Initialize Supabase client
-    let supabase;
+// NEW: Function to check liquidity lock status using RugCheck API
+async function getLiquidityLockStatus(tokenAddress) {
+  const url = `${RUGCHECK_API}/${tokenAddress}/report`;
+  const maxRetries = 3;
+  let retryCount = 0;
+  while (retryCount < maxRetries) {
     try {
-        supabase = window.supabase.createClient(
-            'https://bprfbjsxbkitrbqszqpz.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcmZianN4YmtpdHJicXN6cXB6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4OTQzMzksImV4cCI6MjA2MTQ3MDMzOX0.Uc2iM_H3vEd4dnTLi_B2EncReqlYHXWyZ9zGHsXh4mM'
-        );
-        console.log('Supabase client initialized');
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        signal: createTimeoutSignal(30000) // 30-second timeout
+      });
+      if (response.ok) {
+        const report = await response.json();
+        const lp = report?.markets?.[0]?.lp || {};
+        const lockedPct = lp.lpLockedPct || 0;
+        const lockedUsd = lp.lpLockedUSD || 0;
+        console.log(`RugCheck for ${tokenAddress}: Locked Percentage: ${lockedPct}%, Locked Value: ${lockedUsd} USD`);
+        return { lockedPct, lockedUsd, success: true };
+      } else {
+        console.error(`RugCheck error for ${tokenAddress}: Status ${response.status}, ${await response.text()}`);
+        return { success: false };
+      }
     } catch (error) {
-        console.error('Error initializing Supabase:', error);
-        alert('Failed to initialize Supabase. Check console for details.');
-        return;
+      retryCount++;
+      if (retryCount === maxRetries) {
+        console.error(`RugCheck failed for ${tokenAddress} after ${maxRetries} attempts: ${error.message}`);
+        return { success: false };
+      }
+      console.log(`RugCheck retry (${retryCount}/${maxRetries}) for ${tokenAddress}: ${error.message}`);
+      await new Promise(resolve => setTimeout(resolve, retryCount * 1000)); // Backoff
+    }
+  }
+  return { success: false };
+}
+
+async function getTokenPrice(tokenAddress) {
+  const maxRetries = 3;
+  let attempt = 1;
+  while (attempt <= maxRetries) {
+    try {
+      console.log(`Fetching single price for ${tokenAddress} from Jupiter (attempt ${attempt})`);
+      const response = await axios.get(`https://api.jup.ag/price/v2`, {
+        params: { ids: tokenAddress },
+        timeout: 5000
+      });
+      const price = response.data.data?.[tokenAddress]?.price;
+      if (!price) {
+        throw new Error(`No price data returned for ${tokenAddress}: ${JSON.stringify(response.data.data)}`);
+      }
+      console.log(`Jupiter single price for ${tokenAddress}: $${price}`);
+      return price;
+    } catch (error) {
+      console.error(`Error fetching single price for ${tokenAddress} from Jupiter (attempt ${attempt}):`, error.message);
+      if (error.response) {
+        if (error.response.status === 400) {
+          throw new Error(`Invalid token address or no data available for ${tokenAddress}`);
+        }
+        if (error.response.status === 429 && attempt < maxRetries) {
+          console.log(`Rate limit hit, retrying after 10 seconds...`);
+          await new Promise(resolve => setTimeout(resolve, 10000));
+          attempt++;
+          continue;
+        }
+      } else if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+        console.error(`Request timed out`);
+        if (attempt < maxRetries) {
+          console.log(`Retrying after ${Math.pow(2, attempt) * 1000}ms...`);
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+          attempt++;
+          continue;
+        }
+      }
+      throw new Error(`Failed to fetch price for ${tokenAddress} after ${attempt} attempts: ${error.message}`);
+    }
+  }
+}
+
+async function getMultiTokenPrices(tokenAddresses) {
+  const maxRetries = 3;
+  let attempt = 1;
+  if (tokenAddresses.length === 0) throw new Error('No token addresses provided for multi_price');
+  while (attempt <= maxRetries) {
+    try {
+      console.log(`Fetching multi prices for ${tokenAddresses.length} tokens from Jupiter (attempt ${attempt})`);
+      const response = await axios.get(`https://api.jup.ag/price/v2`, {
+        params: { ids: tokenAddresses.join(',') },
+        timeout: 5000
+      });
+      const prices = {};
+      for (const address of tokenAddresses) {
+        const data = response.data.data?.[address];
+        if (!data || !data.price) {
+          throw new Error(`No price data returned for ${address} in multi_price: ${JSON.stringify(response.data.data?.[address] || {})}`);
+        }
+        prices[address] = data.price;
+        console.log(`Price for ${address}: $${data.price}`);
+      }
+      console.log(`Prices returned for ${Object.keys(prices).length} tokens`);
+      return prices;
+    } catch (error) {
+      console.error(`Error fetching multi prices for ${tokenAddresses.length} tokens (attempt ${attempt}):`, error.message);
+      if (error.response) {
+        if (error.response.status === 400) {
+          throw new Error(`Invalid token addresses or no data available`);
+        }
+        if (error.response.status === 429 && attempt < maxRetries) {
+          console.log(`Rate limit hit, retrying after 10 seconds...`);
+          await new Promise(resolve => setTimeout(resolve, 10000));
+          attempt++;
+          continue;
+        }
+      } else if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+        console.error(`Request timed out`);
+        if (attempt < maxRetries) {
+          console.log(`Retrying after ${Math.pow(2, attempt) * 1000}ms...`);
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+          attempt++;
+          continue;
+        }
+      }
+      throw new Error(`Failed to fetch multi prices after ${attempt} attempts: ${error.message}`);
+    }
+  }
+}
+
+async function getCirculatingSupply(tokenAddress) {
+  const maxRetries = 3;
+  let attempt = 1;
+  while (attempt <= maxRetries) {
+    try {
+      console.log(`Fetching supply for ${tokenAddress} from Solana blockchain (attempt ${attempt})`);
+      const mint = new PublicKey(tokenAddress);
+      const { program: tokenProgram } = await getTokenProgramAndExtensions(mint, connection);
+      if (!tokenProgram) {
+        throw new Error(`Invalid or unsupported token program for ${tokenAddress}`);
+      }
+      const mintInfo = await splToken.getMint(connection, mint, 'confirmed', tokenProgram);
+      const supply = Number(mintInfo.supply) / Math.pow(10, mintInfo.decimals);
+      console.log(`Supply for ${tokenAddress}: ${supply} (decimals: ${mintInfo.decimals})`);
+      return supply;
+    } catch (error) {
+      console.error(`Error fetching supply for ${tokenAddress} (attempt ${attempt}):`, error.message);
+      if (attempt === maxRetries) {
+        throw new Error(`Failed to fetch supply for ${tokenAddress} after ${maxRetries} attempts`);
+      }
+      attempt++;
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+    }
+  }
+}
+
+const connection = new Connection(process.env.QUICKNODE_URL, 'confirmed');
+const wallet = Keypair.fromSecretKey(bs58.decode(process.env.SOLANA_PRIVATE_KEY));
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+const BUY_AMOUNT = 0.26 * LAMPORTS_PER_SOL;
+const MIN_TRADE_BALANCE = 0.17 * LAMPORTS_PER_SOL;
+const MIN_BALANCE = 0.17 * LAMPORTS_PER_SOL;
+const ATA_RENT_LAMPORTS = 2039280;
+const MIN_SELL_FEE_LAMPORTS = 100000;
+const PROFIT_TARGET = 20;
+const STOP_LOSS = -99;
+const HOLD_DURATION = 1000000;
+const PRICE_CHECK_INTERVAL = 6 * 1000;
+const DEXSCREENER_API = 'https://api.dexscreener.com';
+const JUPITER_API = 'https://quote-api.jup.ag/v6';
+const CACHE_FILE = 'tokens_cache_bot2.json';
+const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+const TOKEN_2022_PROGRAM_ID = new PublicKey('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb');
+const EXCLUDED_TOKEN_TTL = 7 * 24 * 60 * 60 * 1000;
+const MIN_MARKET_CAP = 1000;
+const MAX_MARKET_CAP = 20000;
+const MAX_HISTORICAL_MARKET_CAP = 20000;
+const PRIORITY_FEE_LAMPORTS = 900000;
+const MARKET_CAP_SELL_THRESHOLD = 50000;
+const HISTORICAL_CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours
+let activeTrades = [];
+
+async function saveActiveTrades() {
+  try {
+    console.log(`Saving ${activeTrades.length} active trades to Supabase...`);
+    for (const trade of activeTrades) {
+      const { error } = await supabase
+        .from('trades_bot2')
+        .update({
+          token_account: trade.tokenAccount.toBase58(),
+          buy_price_usd: trade.buyPrice,
+          buy_timestamp: new Date(trade.buyTime).toISOString(),
+          status: trade.partialSell ? 'partial_sold' : 'open',
+        })
+        .eq('id', trade.tradeId);
+      if (error) console.error(`Error saving trade ${trade.tradeId}:`, error.message);
+      else console.log(`Saved trade ${trade.tradeId}`);
+    }
+    console.log('Active trades saved');
+  } catch (error) {
+    console.error('Error saving active trades:', error.message);
+  }
+}
+
+async function loadActiveTrades() {
+  try {
+    console.log('Loading active trades from Supabase...');
+    const { data, error } = await supabase
+      .from('trades_bot2')
+      .select('id, token_address, buy_price_usd, buy_timestamp, token_account, status')
+      .in('status', ['open', 'partial_sold'])
+      .eq('wallet_address', wallet.publicKey.toBase58());
+    if (error) {
+      console.error('Error loading active trades:', error.message);
+      return;
+    }
+    activeTrades = [];
+    for (const trade of data) {
+      try {
+        const tokenAccount = new PublicKey(trade.token_account);
+        activeTrades.push({
+          tradeId: trade.id,
+          tokenAddress: trade.token_address,
+          buyPrice: trade.buy_price_usd,
+          buyTime: new Date(trade.buy_timestamp).getTime(),
+          tokenAccount,
+          partialSell: trade.status === 'partial_sold',
+        });
+        console.log(`Loaded trade for ${trade.token_address}, tradeId: ${trade.id}, status: ${trade.status}`);
+      } catch (error) {
+        console.error(`Failed to load trade ${trade.id} for ${trade.token_address}: Invalid token_account ${trade.token_account}`, error.message);
+        await supabase
+          .from('trades_bot2')
+          .update({
+            status: 'failed',
+            error_message: `Invalid token_account: ${error.message}`,
+          })
+          .eq('id', trade.id);
+      }
+    }
+    console.log(`Loaded ${activeTrades.length} active trades:`, activeTrades.map(t => t.tokenAddress));
+    activeTrades.forEach(trade => {
+      console.log(`Resuming monitoring for ${trade.tokenAddress}, tradeId: ${trade.tradeId}, partialSell: ${trade.partialSell}`);
+      monitorAndSell(trade).catch(error => console.error(`Error monitoring ${trade.tokenAddress}:`, error.message));
+    });
+  } catch (error) {
+    console.error('Unexpected error loading active trades:', error.message);
+  }
+}
+      async function pruneExcludedTokens() {
+  try {
+    console.log('Pruning old entries from excluded_tokens_bot2...');
+    const { data, error } = await supabase
+      .from('excluded_tokens_bot2')
+      .delete()
+      .lt('created_at', new Date(Date.now() - EXCLUDED_TOKEN_TTL).toISOString());
+    if (error) {
+      console.error('Error pruning excluded_tokens_bot2:', error.message);
+      return;
+    }
+    console.log(`Pruned ${data ? data.length : 0} old excluded tokens`);
+
+    const { data: allExclusions, error: countError } = await supabase
+      .from('excluded_tokens_bot2')
+      .select('created_at');
+    if (countError) {
+      console.error('Error fetching excluded_tokens_bot2 stats:', countError.message);
+      return;
+    }
+    const totalExclusions = allExclusions.length;
+    const recentExclusions = allExclusions.filter(ex => new Date(ex.created_at) > new Date(Date.now() - 24 * 60 * 60 * 1000)).length;
+    console.log(`Excluded tokens: ${totalExclusions} total, ${recentExclusions} added in last 24 hours`);
+  } catch (error) {
+    console.error('Unexpected error pruning excluded_tokens_bot2:', error.message);
+  }
+}
+
+process.on('SIGINT', async () => {
+  console.log('SIGINT: Saving active trades and exiting...');
+  await saveActiveTrades();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM: Saving active trades and exiting...');
+  await saveActiveTrades();
+  process.exit(0);
+});
+
+process.on('uncaughtException', async (error) => {
+  console.error('Uncaught Exception:', error.message, error.stack);
+  await saveActiveTrades();
+  process.exit(1);
+});
+
+process.on('unhandledRejection', async (reason, promise) => {
+  console.error('Unhandled Rejection:', reason);
+  await saveActiveTrades();
+  process.exit(1);
+});
+
+async function loadCache() {
+  try {
+    const data = await fs.readFile(CACHE_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    return {};
+  }
+}
+
+async function saveCache(cache) {
+  try {
+    await fs.writeFile(CACHE_FILE, JSON.stringify(cache, null, 2));
+  } catch (error) {
+    console.error('Error saving cache:', error.message);
+  }
+}
+
+async function getTokenProgramAndExtensions(mint, connection) {
+  try {
+    console.log(`Checking token program and extensions for mint: ${mint.toBase58()}`);
+    const mintInfo = await connection.getAccountInfo(mint);
+    if (!mintInfo) {
+      console.error(`Mint ${mint.toBase58()} does not exist on-chain`);
+      return { program: null, hasExtensions: false, hasTransferFees: false };
+    }
+    let program;
+    if (mintInfo.owner.equals(TOKEN_PROGRAM_ID)) {
+      console.log(`Mint ${mint.toBase58()} uses standard SPL Token Program`);
+      program = TOKEN_PROGRAM_ID;
+    } else if (mintInfo.owner.equals(TOKEN_2022_PROGRAM_ID)) {
+      console.log(`Mint ${mint.toBase58()} uses Token-2022 Program`);
+      program = TOKEN_2022_PROGRAM_ID;
+    } else {
+      console.error(`Mint ${mint.toBase58()} uses unsupported program: ${mintInfo.owner.toBase58()}`);
+      return { program: null, hasExtensions: false, hasTransferFees: false };
     }
 
-    // Tab switching logic
-    let activeTab = 'bread';
-    const tabs = document.querySelectorAll('.tab');
-    const tabContents = document.querySelectorAll('.tab-content');
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            tabs.forEach(t => t.classList.remove('active'));
-            tabContents.forEach(c => c.classList.remove('active'));
-            tab.classList.add('active');
-            document.getElementById(`content-${tab.id.split('-')[1]}`).classList.add('active');
-            activeTab = tab.id.split('-')[1];
-            console.log(`Switched to tab: ${tab.textContent}, activeTab: ${activeTab}`);
-            refreshTab(activeTab);
-        });
+    let hasExtensions = false;
+    let hasTransferFees = false;
+    if (program.equals(TOKEN_2022_PROGRAM_ID)) {
+      console.warn(`Mint ${mint.toBase58()} uses Token-2022 Program, checking for extensions`);
+      hasExtensions = true;
+      try {
+        const mintAccount = await splToken.getMint(connection, mint, 'confirmed', TOKEN_2022_PROGRAM_ID);
+        const transferFeeConfig = await splToken.getTransferFeeConfig(mintAccount);
+        if (transferFeeConfig) {
+          console.log(`Mint ${mint.toBase58()} has transfer fee extension`);
+          hasTransferFees = true;
+        } else {
+          console.log(`Mint ${mint.toBase58()} has no transfer fee extension`);
+        }
+      } catch (error) {
+        console.error(`Error checking transfer fee extension for mint ${mint.toBase58()}:`, error.message);
+      }
+    }
+
+    return { program, hasExtensions, hasTransferFees };
+  } catch (error) {
+    console.error(`Error checking token program for mint ${mint.toBase58()}:`, error.message);
+    return { program: null, hasExtensions: false, hasTransferFees: false };
+  }
+}
+
+async function getOrCreateAssociatedTokenAccount(connection, payer, mint, owner) {
+  const maxRetries = 3;
+  let attempt = 1;
+
+  const { program: tokenProgram, hasExtensions } = await getTokenProgramAndExtensions(mint, connection);
+  if (!tokenProgram) {
+    throw new Error(`Invalid or unsupported token program for mint ${mint.toBase58()}`);
+  }
+
+  if (hasExtensions) {
+    console.warn(`Mint ${mint.toBase58()} has Token-2022 extensions, which may require special handling`);
+  }
+
+  while (attempt <= maxRetries) {
+    try {
+      console.log(`Creating/checking token account for mint ${mint.toBase58()} using program ${tokenProgram.toBase58()} (attempt ${attempt})`);
+
+      const balance = await connection.getBalance(payer.publicKey);
+      if (balance < ATA_RENT_LAMPORTS) {
+        throw new Error(`Insufficient balance for ATA rent: ${balance / LAMPORTS_PER_SOL} SOL available, need ${ATA_RENT_LAMPORTS / LAMPORTS_PER_SOL} SOL`);
+      }
+
+      const associatedTokenAddress = await splToken.getAssociatedTokenAddress(mint, owner, false, tokenProgram);
+      try {
+        const accountInfo = await splToken.getAccount(connection, associatedTokenAddress, 'confirmed', tokenProgram);
+        console.log(`Existing token account found: ${accountInfo.address.toBase58()}, balance: ${accountInfo.amount} tokens`);
+        return { address: accountInfo.address, amount: accountInfo.amount };
+      } catch (error) {
+        if (error.name !== 'TokenAccountNotFoundError') {
+          console.error(`Error checking existing ATA ${associatedTokenAddress.toBase58()}:`, error.message);
+        }
+      }
+
+      const transaction = new Transaction().add(
+        splToken.createAssociatedTokenAccountInstruction(
+          payer.publicKey,
+          associatedTokenAddress,
+          owner,
+          mint,
+          tokenProgram
+        )
+      );
+      const { blockhash } = await connection.getLatestBlockhash('confirmed');
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = payer.publicKey;
+
+      const signature = await sendAndConfirmTransaction(connection, transaction, [payer], { commitment: 'confirmed' });
+      console.log(`Created token account: ${associatedTokenAddress.toBase58()}, Tx: ${signature}`);
+
+      const accountInfo = await splToken.getAccount(connection, associatedTokenAddress, 'confirmed', tokenProgram);
+      console.log(`Token account balance: ${accountInfo.amount} tokens`);
+      return { address: accountInfo.address, amount: accountInfo.amount };
+    } catch (error) {
+      console.error(`Attempt ${attempt} failed to create token account for mint ${mint.toBase58()}:`, error.message, error.stack);
+      if (error instanceof SendTransactionError) {
+        console.error('Transaction logs:', error.logs);
+      }
+      if (attempt === maxRetries) {
+        throw new Error(`Failed to create token account after ${maxRetries} attempts: ${error.message}`);
+      }
+      attempt++;
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+    }
+  }
+}
+
+async function isTokenExcluded(tokenAddress) {
+  const maxRetries = 3;
+  let attempt = 1;
+  while (attempt <= maxRetries) {
+    try {
+      console.log(`Checking if token ${tokenAddress} is excluded (attempt ${attempt})`);
+      const { data, error } = await supabase
+        .from('excluded_tokens_bot2')
+        .select('token_address')
+        .eq('token_address', tokenAddress);
+      if (error) {
+        console.error(`Supabase error checking excluded token ${tokenAddress}:`, error.message);
+        throw error;
+      }
+      const isExcluded = data.length > 0;
+      console.log(`Token ${tokenAddress} excluded: ${isExcluded}`);
+      return isExcluded;
+    } catch (error) {
+      console.error(`Attempt ${attempt} failed for ${tokenAddress}:`, error.message);
+      if (attempt === maxRetries) {
+        console.error(`Failed to check excluded status for ${tokenAddress} after ${maxRetries} attempts`);
+        return false;
+      }
+      attempt++;
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+    }
+  }
+  return false;
+}
+
+async function addTokenToExcluded(tokenAddress) {
+  try {
+    console.log(`Adding ${tokenAddress} to excluded tokens`);
+    const { error } = await supabase
+      .from('excluded_tokens_bot2')
+      .upsert({ token_address: tokenAddress }, { onConflict: 'token_address' });
+    if (error) {
+      console.error(`Error adding ${tokenAddress} to excluded_tokens_bot2:`, error.message);
+      return false;
+    }
+    console.log(`Successfully added ${tokenAddress} to excluded_tokens_bot2`);
+    return true;
+  } catch (error) {
+    console.error(`Unexpected error adding ${tokenAddress} to excluded_tokens_bot2:`, error.message);
+    return false;
+  }
+}
+
+async function hasMarketCapExceededThreshold(tokenAddress) {
+  try {
+    console.log(`Checking if ${tokenAddress} exceeded ${MAX_HISTORICAL_MARKET_CAP} USD market cap in last 24h`);
+    const cache = await loadCache();
+    const cacheKey = `${tokenAddress}_dexscreener`;
+    const cached = cache[cacheKey];
+
+    if (cached && cached.timestamp > Date.now() - HISTORICAL_CACHE_TTL) {
+      console.log(`Cached result for ${tokenAddress}: ${cached.exceeded}`);
+      return cached.exceeded;
+    }
+
+    const supply = await getCirculatingSupply(tokenAddress);
+    console.log(`Circulating supply for ${tokenAddress}: ${supply}`);
+
+    // Fetch price history from Dexscreener
+    const url = `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`;
+    let maxCurrentPrice = 0;
+    let maxHigh24hPrice = 0;
+    let high24hFound = false;
+
+    try {
+      const res = await axios.get(url, { timeout: 5000 });
+      console.log(`Dexscreener response for ${tokenAddress}:`, JSON.stringify(res.data, null, 2));
+      const pairs = res.data.pairs || [];
+
+      if (!pairs || pairs.length === 0) {
+        console.error(`Dexscreener has no data for ${tokenAddress}. Excluding token.`);
+        await addTokenToExcluded(tokenAddress);
+        return true;
+      }
+
+      for (const pair of pairs) {
+        const price = parseFloat(pair.priceUsd) || 0;
+        const high24h = parseFloat(pair.priceHigh24h) || 0;
+
+        if (price > maxCurrentPrice) {
+          maxCurrentPrice = price;
+        }
+
+        if (high24h > 0) {
+          high24hFound = true;
+          if (high24h > maxHigh24hPrice) {
+            maxHigh24hPrice = high24h;
+          }
+        }
+      }
+
+      if (!high24hFound) {
+        console.warn(`No 24h high price found for ${tokenAddress}, using max current price: $${maxCurrentPrice.toFixed(8)}`);
+        maxHigh24hPrice = maxCurrentPrice;
+      }
+
+      console.log(`Dexscreener: Max Current=$${maxCurrentPrice.toFixed(8)}, Max 24hHigh=$${maxHigh24hPrice.toFixed(8)} for ${tokenAddress}`);
+    } catch (error) {
+      console.error(`Dexscreener error for ${tokenAddress}: ${error.message}`);
+      if (error.response?.status === 429) {
+        console.log(`Rate limit hit, retrying after 10 seconds...`);
+        await new Promise(resolve => setTimeout(resolve, 10000));
+        return await hasMarketCapExceededThreshold(tokenAddress); // Retry once
+      }
+      console.error(`No 24h price data for ${tokenAddress}. Excluding token.`);
+      await addTokenToExcluded(tokenAddress);
+      return true;
+    }
+
+    if (!maxHigh24hPrice || maxHigh24hPrice === 0) {
+      console.error(`No valid 24h price data for ${tokenAddress}. Excluding token.`);
+      await addTokenToExcluded(tokenAddress);
+      return true;
+    }
+
+    const peakMarketCap = maxHigh24hPrice * supply;
+    const exceeded = peakMarketCap > MAX_HISTORICAL_MARKET_CAP;
+
+    console.log(`Peak Market Cap for ${tokenAddress}: $${peakMarketCap.toFixed(2)}`);
+
+    if (exceeded) {
+      console.log(`Token ${tokenAddress} exceeded ${MAX_HISTORICAL_MARKET_CAP} USD market cap`);
+      await addTokenToExcluded(tokenAddress);
+    } else {
+      console.log(`Token ${tokenAddress} stayed below ${MAX_HISTORICAL_MARKET_CAP} USD market cap`);
+    }
+
+    cache[cacheKey] = { exceeded, timestamp: Date.now() };
+    await saveCache(cache);
+    return exceeded;
+  } catch (error) {
+    console.error(`Error checking market cap for ${tokenAddress}: ${error.message}`);
+    console.error(`Excluding token ${tokenAddress} for safety.`);
+    await addTokenToExcluded(tokenAddress);
+    return true;
+  }
+}
+
+async function getRecentTokens() {
+  try {
+    console.log('Fetching tokens with active boosts from DEXScreener...');
+    let tokens = [];
+    let filteredOut = [];
+
+    console.log('Fetching from /token-boosts/latest/v1...');
+    const latestBoostResponse = await axios.get(`${DEXSCREENER_API}/token-boosts/latest/v1`, {
+      headers: { 'Accept': 'application/json' },
     });
 
-    // Auto-refresh every 3 seconds for Bread, Moon, and Fun Bags
-    setInterval(() => {
-        if (activeTab === 'bread' || activeTab === 'moon' || activeTab === 'funbags') {
-            console.log(`Auto-refreshing for ${activeTab}`);
-            refreshTab(activeTab);
-        }
-    }, 3000);
+    console.log('Fetching from /token-boosts/top/v1...');
+    const topBoostResponse = await axios.get(`${DEXSCREENER_API}/token-boosts/top/v1`, {
+      headers: { 'Accept': 'application/json' },
+    });
 
-    // Sexy Mode Toggle
-    const sexyModeToggle = document.getElementById('sexyModeToggle');
-    if (sexyModeToggle) {
-        sexyModeToggle.addEventListener('click', () => {
-            console.log('Sexy Mode toggled');
-            const body = document.body;
-            const isSexy = body.classList.toggle('sexy');
-            sexyModeToggle.innerHTML = isSexy
-                ? '<i class="fas fa-sun mr-2"></i> Not Sexy Mode'
-                : '<i class="fas fa-moon mr-2"></i> Sexy Mode';
+    const boostedTokens = [
+      ...(Array.isArray(latestBoostResponse.data) ? latestBoostResponse.data : []),
+      ...(Array.isArray(topBoostResponse.data) ? topBoostResponse.data : []),
+    ];
+    console.log(`Fetched ${boostedTokens.length} boosted tokens from DEXScreener`);
+    if (boostedTokens.length === 0) {
+      console.log('No boosted tokens found from either endpoint.');
+      return [];
+    }
+
+    const uniqueBoostedTokens = Array.from(
+      new Map(boostedTokens.map(token => [token.tokenAddress, token])).values()
+    );
+    console.log(`Found ${uniqueBoostedTokens.length} unique boosted tokens`);
+
+    const solanaBoosted = uniqueBoostedTokens.filter(token => token.chainId === 'solana');
+    console.log(`Found ${solanaBoosted.length} Solana boosted tokens`);
+    if (solanaBoosted.length === 0) {
+      console.log('No boosted Solana tokens found.');
+      return [];
+    }
+
+    const batchSize = 200;
+    const batches = [];
+    for (let i = 0; i < solanaBoosted.length; i += batchSize) {
+      batches.push(solanaBoosted.slice(i, i + batchSize).map(token => token.tokenAddress));
+    }
+
+    for (const batch of batches) {
+      try {
+        const response = await axios.get(`${DEXSCREENER_API}/tokens/v1/solana/${batch.join(',')}`, {
+          headers: { 'Accept': 'application/json' },
         });
-    } else {
-        console.error('sexyModeToggle button not found');
+        console.log(`Batch response for ${batch.length} tokens`);
+
+        const tokensData = Array.isArray(response.data) ? response.data : [];
+        if (tokensData.length === 0) {
+          console.log(`No token data returned for batch: ${batch}`);
+          continue;
+        }
+
+        for (const token of tokensData) {
+          // Check if baseToken and baseToken.address exist
+          if (!token.baseToken || !token.baseToken.address) {
+            console.log(`Skipping token: missing baseToken or baseToken.address`, token);
+            filteredOut.push({
+              address: 'unknown',
+              dexId: token.dexId || 'unknown',
+              boosts: token.boosts?.active || 0,
+              reason: 'missing baseToken or baseToken.address',
+            });
+            continue;
+          }
+
+          const hasBoost = token.boosts?.active > 0;
+          if (!hasBoost) {
+            filteredOut.push({
+              address: token.baseToken.address,
+              dexId: token.dexId,
+              boosts: token.boosts?.active || 0,
+              reason: `hasBoost=${hasBoost}`,
+            });
+            continue;
+          }
+
+          tokens.push({
+            baseToken: {
+              address: token.baseToken.address,
+              name: token.baseToken.name || 'Unknown',
+              symbol: token.baseToken.symbol || 'Unknown',
+            },
+            priceUsd: token.priceUsd,
+            boosts: { active: token.boosts.active },
+            dexId: token.dexId,
+          });
+        }
+        console.log(`Fetched ${tokens.length} tokens from batch`);
+      } catch (error) {
+        console.error(`Error fetching batch from DEXScreener:`, error.message);
+      }
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
-    // Sorting and Filtering States
-    const sortStates = {
-        bread: { active: {}, completed: {} },
-        moon: { active: {}, completed: {} },
-        wax: { setups: {} },
-        funbags: { active: {}, completed: {}, monitored: {} }
-    };
-
-    async function fetchTokenData(tokenAddress) {
-    console.log(`Fetching token data for ${tokenAddress}`);
-    const url = `https://solana-gateway.moralis.io/token/mainnet/${tokenAddress}/metadata`;
-    const moralisOptions = {
-        method: 'GET',
-        headers: {
-            accept: 'application/json',
-            'X-API-Key': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjZhMjdlMWU0LWUwNGEtNGRiNC05ZjQ5LTU4MjFkNGU2MmEzMiIsIm9yZ0lkIjoiNDQ3NjY4IiwidXNlcklkIjoiNDYwNTkzIiwidHlwZUlkIjoiMGRjZmM0ZTctNzhkOC00YzRhLWE2YzgtYzc2OWRiMTdkMzk3IiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NDc1MjU1NjAsImV4cCI6NDkwMzI4NTU2MH0.2CVGa61MAN5zUvbh8yssfNZdNSTORl1GBYXXBs2nJbM'
-        }
-    };
-    try {
-        const response = await fetch(url, moralisOptions);
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        const data = await response.json();
-        const marketCap = parseFloat(data.fullyDilutedValue) || 0;
-        const price = parseFloat(data.price) || 0;
-        const symbol = data.symbol || '-';
-        console.log(`Token data fetched: ${tokenAddress}`, { marketCap, price, symbol });
-        return { marketCap, price, symbol };
-    } catch (error) {
-        console.error(`Error fetching token data for ${tokenAddress}:`, error.message);
-        return { marketCap: 0, price: 0, symbol: '-' };
-    }
+    console.log(`Found ${tokens.length} tokens with active boosts:`, tokens.map(t => t.baseToken.address));
+    console.log(`Filtered out tokens:`, filteredOut);
+    return tokens;
+  } catch (error) {
+    console.error('Error fetching tokens:', error.message);
+    return [];
+  }
 }
-    
-    async function fetchMonitoredCoins() {
-        console.log('Fetching monitored coins from token_states');
-        try {
-            let { data: monitoredCoins, error } = await supabase
-                .from('token_states')
-                .select('token_address')
-                .eq('watchlisted', true)
-                .eq('bought', false);
+        async function monitorTelegramTokens() {
+  console.log(`Starting Telegram bot to monitor ${TELEGRAM_CHANNEL}...`);
 
-            if (error) {
-                console.error('Monitored coins fetch error:', error.message, error.details, error.hint);
-                throw new Error(`Failed to fetch monitored coins: ${error.message}`);
-            }
-            console.log('Monitored coins fetched:', monitoredCoins);
+  telegramBot.on('message', async (msg) => {
+    if (msg.chat.username !== TELEGRAM_CHANNEL && msg.chat.title !== TELEGRAM_CHANNEL) return;
 
-            const coinsWithData = await Promise.all((monitoredCoins || []).map(async (coin) => {
-                try {
-                    const { marketCap, price, symbol } = await fetchTokenData(coin.token_address);
-                    return {
-                        token_address: coin.token_address,
-                        token_name: coin.token_address.slice(0, 8),
-                        symbol: symbol,
-                        market_cap: marketCap,
-                        current_price_usd: price,
-                        timestamp: new Date().toISOString()
-                    };
-                } catch (error) {
-                    console.error(`Error fetching data for token ${coin.token_address}:`, error);
-                    return {
-                        token_address: coin.token_address,
-                        token_name: coin.token_address.slice(0, 8),
-                        symbol: '-',
-                        market_cap: 0,
-                        current_price_usd: 0,
-                        timestamp: new Date().toISOString()
-                    };
-                }
-            }));
+    const text = msg.text || '';
+    const addresses = text.match(SOLANA_ADDRESS_REGEX) || [];
 
-            return coinsWithData;
-        } catch (error) {
-            console.error('Error in fetchMonitoredCoins:', error);
-            throw error;
-        }
-    }
+    for (const address of addresses) {
+      try {
+        const mint = new PublicKey(address);
+        const mintInfo = await connection.getAccountInfo(mint);
+        if (mintInfo && (mintInfo.owner.equals(TOKEN_PROGRAM_ID) || mintInfo.owner.equals(TOKEN_2022_PROGRAM_ID))) {
+          console.log(`Found token address in Telegram: ${address}`);
 
-    // Refresh monitored coins section for Fun Bags
-    async function refreshMonitoredCoins() {
-        console.log('Starting refreshMonitoredCoins');
-        const monitoredStatus = document.getElementById('funbags-monitored-status');
-        const monitoredBody = document.getElementById('funbags-monitoredBody');
-        const monitoredCards = document.getElementById('funbags-monitoredCards');
-        const monitoredTable = monitoredBody?.closest('table');
-        const monitoredFilterInput = document.getElementById('funbags-monitoredFilter');
+          const { data } = await supabase
+            .from('telegram_tokens_bot2')
+            .select('token_address')
+            .eq('token_address', address);
+          if (data.length > 0) {
+            console.log(`Token ${address} already processed`);
+            continue;
+          }
 
-        if (!monitoredStatus || !monitoredBody || !monitoredCards || !monitoredTable || !monitoredFilterInput) {
-            console.error('Missing DOM elements for monitored coins:', {
-                monitoredStatus: !!monitoredStatus,
-                monitoredBody: !!monitoredBody,
-                monitoredCards: !!monitoredCards,
-                monitoredTable: !!monitoredTable,
-                monitoredFilterInput: !!monitoredFilterInput
-            });
-            alert('Failed to load monitored coins section. Check console for details.');
-            return;
-        }
-
-        const monitoredSort = { ...sortStates.funbags.monitored };
-        const monitoredFilterValue = monitoredFilterInput.value || '';
-        console.log('Preserved sort state for monitored coins:', monitoredSort);
-
-        try {
-            const monitoredCoins = await fetchMonitoredCoins();
-            monitoredBody.innerHTML = '';
-            monitoredCards.innerHTML = '';
-            monitoredCoins.forEach((coin) => {
-                const tokenAddress = coin.token_address || '-';
-                const tokenName = coin.token_name || '-';
-                const marketCap = coin.market_cap || 0;
-                const currentPrice = coin.current_price_usd || 0;
-                const timestamp = coin.timestamp ? new Date(coin.timestamp).toLocaleString() : '-';
-
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
-                    <td>${coin.symbol || '-'}</td>
-                    <td>$${marketCap.toLocaleString()}</td>
-                    <td>$${currentPrice.toFixed(8)}</td>
-                    <td>${timestamp}</td>
-                `;
-                monitoredBody.appendChild(row);
-
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></p>
-                    <p><span class="card-label">Symbol:</span> ${coin.symbol || '-'}</p>
-                    <p><span class="card-label">Market Cap:</span> $${marketCap.toLocaleString()}</p>
-                    <p><span class="card-label">Current Price:</span> $${currentPrice.toFixed(8)}</p>
-                    <p><span class="card-label">Timestamp:</span> ${timestamp}</p>
-                `;
-                monitoredCards.appendChild(card);
-            });
-            monitoredStatus.textContent = `Monitored coins loaded (${monitoredCoins.length})`;
-
-            // Reapply sort
-            if (monitoredSort && Object.keys(monitoredSort).length > 0) {
-                const column = Object.keys(monitoredSort)[0];
-                const direction = monitoredSort[column];
-                const header = monitoredTable.querySelector(`th[data-sort="${column}"]`);
-                if (header) {
-                    header.classList.add(`sort-${direction}`);
-                    header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
-                    const rows = Array.from(monitoredBody.querySelectorAll('tr'));
-                    rows.sort((a, b) => {
-                        let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                        let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-
-                        if (['market_cap', 'current_price_usd'].includes(column)) {
-                            aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
-                            bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
-                        } else if (column === 'timestamp') {
-                            aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
-                            bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
-                        } else {
-                            aValue = aValue.toLowerCase();
-                            bValue = bValue.toLowerCase();
-                        }
-
-                        return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
-                    });
-                    monitoredBody.innerHTML = '';
-                    rows.forEach(row => monitoredBody.appendChild(row));
-                }
-            }
-
-            // Reapply filter
-            if (monitoredFilterValue) {
-                monitoredFilterInput.value = monitoredFilterValue;
-                monitoredFilterInput.dispatchEvent(new Event('input'));
-            }
-
-            console.log('refreshMonitoredCoins completed successfully');
-        } catch (error) {
-            console.error('Error refreshing monitored coins:', error);
-            monitoredStatus.textContent = 'Error loading monitored coins';
-            alert('Failed to refresh monitored coins. Check console for details.');
-        }
-    }
-
-    // Refresh tab logic
-    async function refreshTab(bot) {
-        if (bot === 'wax') {
-            await refreshWaxTrades();
+          await supabase.from('telegram_tokens_bot2').insert({
+            token_address: address,
+            source: TELEGRAM_CHANNEL,
+            timestamp: new Date().toISOString(),
+            processed: false,
+          });
+          console.log(`Logged token ${address} to Supabase for trading bot processing`);
         } else {
-            await refreshTrades(bot);
+          console.log(`Address ${address} is not a valid token mint, skipping`);
         }
+      } catch (error) {
+        console.error(`Error processing address ${address}:`, error.message);
+      }
     }
-
-    // Refresh trades for Bread, Moon, and Fun Bags
-    async function refreshTrades(bot) {
-        console.log(`Starting refreshTrades for ${bot}`);
-        const prefix = bot === 'bread' ? 'bread' : bot === 'moon' ? 'moon' : 'funbags';
-        const tableName = bot === 'bread' ? 'trades' : bot === 'moon' ? 'trades_bot2' : 'funbags_trades';
-        const activeStatus = document.getElementById(`${prefix}-active-status`);
-        const completedStatus = document.getElementById(`${prefix}-completed-status`);
-        const activeTradesBody = document.getElementById(`${prefix}-activeTradesBody`);
-        const activeTradesCards = document.getElementById(`${prefix}-activeTradesCards`);
-        const completedTradesBody = document.getElementById(`${prefix}-completedTradesBody`);
-        const completedTradesCards = document.getElementById(`${prefix}-completedTradesCards`);
-        const totalProfitElement = document.getElementById(`${prefix}-totalProfit`);
-        const activeTable = activeTradesBody?.closest('table');
-        const completedTable = completedTradesBody?.closest('table');
-
-        let monitoredStatus, monitoredBody, monitoredCards, monitoredTable, monitoredFilterInput;
-        if (bot === 'funbags') {
-            monitoredStatus = document.getElementById('funbags-monitored-status');
-            monitoredBody = document.getElementById('funbags-monitoredBody');
-            monitoredCards = document.getElementById('funbags-monitoredCards');
-            monitoredTable = monitoredBody?.closest('table');
-            monitoredFilterInput = document.getElementById('funbags-monitoredFilter');
-        }
-
-        if (!activeStatus || !completedStatus || !activeTradesBody || !activeTradesCards || !completedTradesBody || !completedTradesCards || !totalProfitElement || !activeTable || !completedTable ||
-            (bot === 'funbags' && (!monitoredStatus || !monitoredBody || !monitoredCards || !monitoredTable || !monitoredFilterInput))) {
-            console.error(`Missing DOM elements for ${bot}:`, {
-                activeStatus: !!activeStatus,
-                completedStatus: !!completedStatus,
-                activeTradesBody: !!activeTradesBody,
-                activeTradesCards: !!activeTradesCards,
-                completedTradesBody: !!completedTradesBody,
-                completedTradesCards: !!completedTradesCards,
-                totalProfitElement: !!totalProfitElement,
-                activeTable: !!activeTable,
-                completedTable: !!completedTable,
-                monitoredStatus: bot === 'funbags' ? !!monitoredStatus : true,
-                monitoredBody: bot === 'funbags' ? !!monitoredBody : true,
-                monitoredCards: bot === 'funbags' ? !!monitoredCards : true,
-                monitoredTable: bot === 'funbags' ? !!monitoredTable : true,
-                monitoredFilterInput: bot === 'funbags' ? !!monitoredFilterInput : true
-            });
-            alert(`Failed to load ${bot} dashboard. Check console for details.`);
-            return;
-        }
-
-        const activeSort = { ...sortStates[bot].active };
-        const completedSort = { ...sortStates[bot].completed };
-        const activeFilterValue = document.getElementById(`${prefix}-activeFilter`)?.value || '';
-        const completedFilterValue = document.getElementById(`${prefix}-completedFilter`)?.value || '';
-        const profitFilterValue = document.getElementById(`${prefix}-profitFilter`)?.value || 'all';
-        const monitoredSort = bot === 'funbags' ? { ...sortStates.funbags.monitored } : {};
-        const monitoredFilterValue = bot === 'funbags' ? document.getElementById('funbags-monitoredFilter')?.value || '' : '';
-        console.log(`Preserved sort states for ${bot}:`, { activeSort, completedSort, monitoredSort });
-
-        try {
-            let activeTrades = [];
-            let completedTrades = [];
-
-            if (bot === 'funbags') {
-    // Fetch monitored coins
-    await refreshMonitoredCoins();
-
-    // Fetch active trades
-    console.log('Fetching active trades from token_states for Fun Bags');
-    let { data: tokenStates, error: tokenError } = await supabase
-        .from('token_states')
-        .select('*')
-        .eq('bought', true)
-        .gt('amount', 0);
-    
-    if (tokenError) {
-        console.error('Token states fetch error for Fun Bags:', tokenError.message, tokenError.details, tokenError.hint);
-        throw new Error(`Failed to fetch token states: ${tokenError.message}`);
-    }
-    console.log('Token states fetched for Fun Bags:', tokenStates);
-
-    let { data: buyLogs, error: buyLogError } = await supabase
-        .from('bot_logs')
-        .select('token_address, amount, timestamp')
-        .eq('event_type', 'buy');
-    
-    if (buyLogError) {
-        console.error('Buy logs fetch error for Fun Bags:', buyLogError.message, buyLogError.details, buyLogError.hint);
-        throw new Error(`Failed to fetch buy logs: ${buyLogError.message}`);
-    }
-    console.log('Buy logs fetched for Fun Bags:', buyLogs);
-
-    activeTrades = await Promise.all((tokenStates || []).map(async (state) => {
-        try {
-            const buyLog = buyLogs.find(log => log.token_address === state.token_address) || {};
-            const { marketCap, price: currentPrice, symbol } = await fetchTokenData(state.token_address);
-            const buyPrice = state.purchase_price || 0;
-            const profitPercent = buyPrice !== 0 && currentPrice !== 0 ? (((currentPrice - buyPrice) / buyPrice) * 100).toFixed(2) : 'N/A';
-            return {
-                token_address: state.token_address,
-                token_name: state.token_address.slice(0, 8),
-                token_symbol: symbol,
-                buy_price_usd: buyPrice,
-                current_price_usd: currentPrice,
-                market_cap: marketCap,
-                profit: profitPercent,
-                buy_timestamp: buyLog.timestamp || null,
-                status: state.sold75 ? 'partial_sold' : 'open',
-                amount: state.amount
-            };
-        } catch (error) {
-            console.error(`Error processing active trade for ${state.token_address}:`, error);
-            return {
-                token_address: state.token_address,
-                token_name: state.token_address.slice(0, 8),
-                token_symbol: '-',
-                buy_price_usd: state.purchase_price || 0,
-                current_price_usd: 0,
-                market_cap: 0,
-                profit: 'N/A',
-                buy_timestamp: null,
-                status: state.sold75 ? 'partial_sold' : 'open',
-                amount: state.amount
-            };
-        }
-    }));
-
-    // Fetch completed trades
-    console.log('Fetching completed trades from bot_logs for Fun Bags');
-    let { data: sellLogs, error: sellLogError } = await supabase
-        .from('bot_logs')
-        .select('token_address, amount, timestamp, event_type')
-        .in('event_type', ['sell_75', 'trailing_stop', 'stop_loss']);
-    
-    if (sellLogError) {
-        console.error('Sell logs fetch error for Fun Bags:', sellLogError.message, sellLogError.details, sellLogError.hint);
-        throw new Error(`Failed to fetch sell logs: ${sellLogError.message}`);
-    }
-    console.log('Sell logs fetched for Fun Bags:', sellLogs);
-
-    completedTrades = await Promise.all((sellLogs || []).map(async (sell) => {
-        try {
-            const buyLog = buyLogs.find(log => log.token_address === sell.token_address);
-            if (!buyLog) {
-                console.warn(`No buy log found for sell log ${sell.token_address}`);
-                return null;
-            }
-            const { price: sellPrice, symbol } = await fetchTokenData(sell.token_address);
-            const buyPrice = buyLog.amount ? (0.1 / buyLog.amount) : 0; // 0.1 SOL per buy
-            const profitPercent = buyPrice !== 0 && sellPrice !== 0 ? (((sellPrice - buyPrice) / buyPrice) * 100).toFixed(2) : 'N/A';
-            const totalProfit = buyPrice !== 0 && sellPrice !== 0 ? (sellPrice - buyPrice) * sell.amount : 0;
-            return {
-                token_address: sell.token_address,
-                token_name: sell.token_address.slice(0, 8),
-                token_symbol: symbol,
-                buy_price_usd: buyPrice,
-                sell_price_usd: sellPrice,
-                profit: profitPercent,
-                total_profit_usd: totalProfit,
-                buy_timestamp: buyLog.timestamp || null,
-                sell_timestamp: sell.timestamp || null,
-                status: 'closed'
-            };
-        } catch (error) {
-            console.error(`Error processing completed trade for ${sell.token_address}:`, error);
-            return null;
-        }
-    }));
-
-    completedTrades = completedTrades.filter(trade => trade !== null);
+  });
 }
-            
-                else {
-                // Fetch active trades for Bread or Moon
-                console.log(`Fetching active trades from ${tableName}`);
-                let { data, error } = await supabase
-                    .from(tableName)
-                    .select('*')
-                    .in('status', ['open', 'partial_sold']);
-                
-                if (error) {
-                    console.error(`Active trades fetch error for ${bot}:`, error.message, error.details, error.hint);
-                    throw new Error(`Failed to fetch active trades: ${error.message}`);
-                }
-                activeTrades = data || [];
-                console.log(`Active trades fetched for ${bot}:`, activeTrades);
 
-                // Fetch completed trades for Bread or Moon
-                console.log(`Fetching completed trades from ${tableName}`);
-                let { data: completedData, error: completedError } = await supabase
-                    .from(tableName)
-                    .select('*')
-                    .eq('status', 'closed');
-                
-                if (completedError) {
-                    console.error(`Completed trades fetch error for ${bot}:`, completedError.message, completedError.details, completedError.hint);
-                    throw new Error(`Failed to fetch completed trades: ${completedError.message}`);
-                }
-                completedTrades = completedData || [];
-                console.log(`Completed trades fetched for ${bot}:`, completedTrades);
-            }
+async function getTelegramTokens() {
+  try {
+    const { data, error } = await supabase
+      .from('telegram_tokens_bot2')
+      .select('token_address')
+      .eq('processed', false);
+    if (error) {
+      console.error('Error fetching Telegram tokens:', error.message);
+      return [];
+    }
+    console.log(`Found ${data.length} unprocessed Telegram tokens`);
+    return data.map(item => ({
+      baseToken: {
+        address: item.token_address,
+        name: 'Unknown',
+        symbol: 'Unknown',
+      },
+      marketCap: 0,
+      priceUsd: '0',
+      boosts: { active: 1 },
+      dexId: 'telegram',
+    }));
+  } catch (error) {
+    console.error('Error in getTelegramTokens:', error.message);
+    return [];
+  }
+}
 
-            // Render active trades
-            activeTradesBody.innerHTML = '';
-            activeTradesCards.innerHTML = '';
-            activeTrades.forEach((trade, index) => {
-                console.log(`Processing active trade ${index} for ${bot}:`, trade);
-                const buyPrice = trade.buy_price_usd || 0;
-                const currentPrice = trade.current_price_usd || 0;
-                const profitPercent = trade.profit !== 'N/A' ? trade.profit : (buyPrice !== 0 ? (((currentPrice - buyPrice) / buyPrice) * 100).toFixed(2) : 'N/A');
-                const profitClass = profitPercent !== 'N/A' && profitPercent >= 0 ? 'profit-positive' : 'profit-negative';
-                const tokenAddress = trade.token_address || '-';
-                const tokenName = trade.token_name || '-';
-                const status = trade.status || 'open';
-                const buyTime = trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-';
+async function getEligibleTokens() {
+  try {
+    const cache = await loadCache();
+    const newCache = { ...cache };
 
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
-                    <td>${trade.token_symbol || '-'}</td>
-                    <td>$${buyPrice.toFixed(8)}</td>
-                    <td>$${currentPrice.toFixed(8)}</td>
-                    <td>$${trade.market_cap ? trade.market_cap.toLocaleString() : '-'}</td>
-                    <td class="${profitClass}">${profitPercent}%</td>
-                    <td>${buyTime}</td>
-                `;
-                activeTradesBody.appendChild(row);
+    const dexscreenerTokens = await getRecentTokens();
+    const telegramTokens = await getTelegramTokens();
 
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName} (${status})</a></p>
-                    <p><span class="card-label">Symbol:</span> ${trade.token_symbol || '-'}</p>
-                    <p><span class="card-label">Buy Price:</span> $${buyPrice.toFixed(8)}</p>
-                    <p><span class="card-label">Current Price:</span> $${currentPrice.toFixed(8)}</p>
-                    <p><span class="card-label">Market Cap:</span> $${trade.market_cap ? trade.market_cap.toLocaleString() : '-'}</p>
-                    <p><span class="card-label">Profit:</span> <span class="${profitClass}">${profitPercent}%</span></p>
-                    <p><span class="card-label">Buy Time:</span> ${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</p>
-                `;
-                activeTradesCards.appendChild(card);
-            });
-
-            activeStatus.textContent = `Active trades loaded (${activeTrades.length})`;
-
-            // Reapply active table sort
-            if (activeSort && Object.keys(activeSort).length > 0) {
-                const column = Object.keys(activeSort)[0];
-                const direction = activeSort[column];
-                const header = activeTable.querySelector(`th[data-sort="${column}"]`);
-                if (header) {
-                    header.classList.add(`sort-${direction}`);
-                    header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
-                    const rows = Array.from(activeTradesBody.querySelectorAll('tr'));
-                    rows.sort((a, b) => {
-                        let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                        let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-
-                        if (column === 'profit') {
-                            aValue = parseFloat(aValue.replace('%', '')) || 0;
-                            bValue = parseFloat(bValue.replace('%', '')) || 0;
-                        } else if (['buy_price_usd', 'current_price_usd', 'market_cap'].includes(column)) {
-                            aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
-                            bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
-                        } else if (['buy_timestamp'].includes(column)) {
-                            aValue = aValue === '-' ? 0 : new Date(aValue.includes(':') && !aValue.includes('/') ? `1970-01-01T${aValue}:00Z` : aValue).getTime();
-                            bValue = bValue === '-' ? 0 : new Date(bValue.includes(':') && !aValue.includes('/') ? `1970-01-01T${bValue}:00Z` : bValue).getTime();
-                        } else {
-                            aValue = aValue.toLowerCase();
-                            bValue = bValue.toLowerCase();
-                        }
-
-                        return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
-                    });
-                    activeTradesBody.innerHTML = '';
-                    rows.forEach(row => activeTradesBody.appendChild(row));
-                }
-            }
-
-            // Render completed trades
-            completedTradesBody.innerHTML = '';
-            completedTradesCards.innerHTML = '';
-            const filteredTrades = completedTrades.filter(trade => {
-                const buyPrice = trade.buy_price_usd || 0;
-                const sellPrice = trade.sell_price_usd || 0;
-                const profitPercent = trade.profit !== 'N/A' ? trade.profit : (buyPrice !== 0 ? ((sellPrice - buyPrice) / buyPrice * 100).toFixed(2) : 0);
-                if (profitFilterValue === 'positive') return profitPercent >= 0;
-                if (profitFilterValue === 'negative') return profitPercent < 0;
-                return true;
-            });
-
-            filteredTrades.forEach((trade, index) => {
-                console.log(`Processing completed trade ${index} for ${bot}:`, trade);
-                const buyPrice = trade.buy_price_usd || 0;
-                const sellPrice = trade.sell_price_usd || 0;
-                const profitPercent = trade.profit !== 'N/A' ? trade.profit : (buyPrice !== 0 ? ((sellPrice - buyPrice) / buyPrice * 100).toFixed(2) : 'N/A');
-                const profitClass = profitPercent !== 'N/A' && profitPercent >= 0 ? 'profit-positive' : 'profit-negative';
-                const tokenAddress = trade.token_address || '-';
-                const tokenName = trade.token_name || '-';
-
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
-                    <td>${trade.token_symbol || '-'}</td>
-                    <td>$${buyPrice.toFixed(8)}</td>
-                    <td>$${sellPrice.toFixed(8)}</td>
-                    <td class="${profitClass}">${profitPercent}%</td>
-                    <td class="${profitClass}">$${trade.total_profit_usd ? trade.total_profit_usd.toFixed(2) : '-'}</td>
-                    <td>${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</td>
-                    <td>${trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-'}</td>
-                `;
-                completedTradesBody.appendChild(row);
-
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></p>
-                    <p><span class="card-label">Symbol:</span> ${trade.token_symbol || '-'}</p>
-                    <p><span class="card-label">Buy Price:</span> $${buyPrice.toFixed(8)}</p>
-                    <p><span class="card-label">Sell Price:</span> $${sellPrice.toFixed(8)}</p>
-                    <p><span class="card-label">Profit:</span> <span class="${profitClass}">${profitPercent}%</span></p>
-                    <p><span class="card-label">Total Profit:</span> <span class="${profitClass}">$${trade.total_profit_usd ? trade.total_profit_usd.toFixed(2) : '-'}</span></p>
-                    <p><span class="card-label">Buy Time:</span> ${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</p>
-                    <p><span class="card-label">Sell Time:</span> ${trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-'}</p>
-                `;
-                completedTradesCards.appendChild(card);
-            });
-
-            completedStatus.textContent = `Completed trades loaded (${filteredTrades.length})`;
-
-            // Reapply completed table sort
-            if (completedSort && Object.keys(completedSort).length > 0) {
-                const column = Object.keys(completedSort)[0];
-                const direction = completedSort[column];
-                const header = completedTable.querySelector(`th[data-sort="${column}"]`);
-                if (header) {
-                    header.classList.add(`sort-${direction}`);
-                    header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
-                    const rows = Array.from(completedTradesBody.querySelectorAll('tr'));
-                    rows.sort((a, b) => {
-                        let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                        let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-
-                        if (column === 'profit') {
-                            aValue = parseFloat(aValue.replace('%', '')) || 0;
-                            bValue = parseFloat(bValue.replace('%', '')) || 0;
-                        } else if (['buy_price_usd', 'sell_price_usd', 'total_profit_usd'].includes(column)) {
-                            aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
-                            bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
-                        } else if (['buy_timestamp', 'sell_timestamp'].includes(column)) {
-                            aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
-                            bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
-                        } else {
-                            aValue = aValue.toLowerCase();
-                            bValue = bValue.toLowerCase();
-                        }
-
-                        return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
-                    });
-                    completedTradesBody.innerHTML = '';
-                    rows.forEach(row => completedTradesBody.appendChild(row));
-                }
-            }
-
-            // Update total profit
-            const totalProfit = filteredTrades.reduce((sum, trade) => {
-                const profit = trade.total_profit_usd || 0;
-                return sum + profit;
-            }, 0);
-            totalProfitElement.textContent = `$${totalProfit.toFixed(2)}`;
-            console.log(`Total profit updated for ${bot}:`, totalProfit);
-
-            // Reapply filters
-            const activeFilterInput = document.getElementById(`${prefix}-activeFilter`);
-            const completedFilterInput = document.getElementById(`${prefix}-completedFilter`);
-            if (activeFilterInput && activeFilterValue) {
-                activeFilterInput.value = activeFilterValue;
-                activeFilterInput.dispatchEvent(new Event('input'));
-            }
-            if (completedFilterInput && completedFilterValue) {
-                completedFilterInput.value = completedFilterValue;
-                completedFilterInput.dispatchEvent(new Event('input'));
-            }
-
-            console.log(`refreshTrades completed successfully for ${bot}`);
-        } catch (error) {
-            console.error(`Error refreshing trades for ${bot}:`, error);
-            activeStatus.textContent = 'Error loading active trades';
-            completedStatus.textContent = 'Error loading completed trades';
-            alert(`Failed to refresh trades for ${bot}. Check console for details.`);
-        }
+    const tokens = [...dexscreenerTokens, ...telegramTokens];
+    if (tokens.length === 0) {
+      console.log('No eligible tokens found.');
+      return [];
     }
 
-    // Refresh Wax trades
-    async function refreshWaxTrades() {
-        console.log('Starting refreshWaxTrades');
-        const setupsStatus = document.getElementById('wax-status');
-        const setupsBody = document.getElementById('wax-setupsBody');
-        const setupsCards = document.getElementById('wax-setupsCards');
-        const setupsTable = setupsBody?.closest('table');
+    const eligibleTokens = [];
+    let excludedCount = 0;
+    let lowMarketCapCount = 0;
+    let highMarketCapCount = 0;
+    let highHistoricalMarketCapCount = 0;
 
-        if (!setupsStatus || !setupsBody || !setupsCards || !setupsTable) {
-            console.error('Missing DOM elements for Wax:', {
-                setupsStatus: !!setupsStatus,
-                setupsBody: !!setupsBody,
-                setupsCards: !!setupsCards,
-                setupsTable: !!setupsTable
-            });
-            alert('Failed to load Wax dashboard. Check console for details.');
-            return;
-        }
+    const validTokens = [];
+    for (const token of tokens) {
+      const tokenAddress = token.baseToken.address;
 
-        const setupsSort = { ...sortStates.wax.setups };
-        const filterValue = document.getElementById('wax-filter')?.value || '';
-        console.log('Preserved sort state for Wax:', setupsSort);
+      try {
+        new PublicKey(tokenAddress);
+      } catch (error) {
+        console.log(`Skipping ${tokenAddress}: invalid token address`);
+        excludedCount++;
+        await addTokenToExcluded(tokenAddress);
+        continue;
+      }
 
-        try {
-            console.log('Fetching trade setups from trade_setups');
-            let { data: setups, error } = await supabase
-                .from('trade_setups')
-                .select('symbol, tokenaddress, action, popcandletime, popcandlehigh, popcandlelow, pullbackcount, lastpullbackhigh, entryprice, stoploss, profitpercent, solprofit, exit_reason, timestamp, signal_type')
-                .order('timestamp', { ascending: false });
-            
-            if (error) {
-                console.error('Trade setups fetch error:', error.message, error.details, error.hint);
-                throw new Error(`Failed to fetch trade setups: ${error.message}`);
-            }
-            console.log('Trade setups fetched:', setups);
+      // Filter out tokens whose address doesn't end with 'pump'
+      if (!tokenAddress.toLowerCase().endsWith('pump')) {
+        console.log(`Skipping ${tokenAddress}: token address does not end with 'pump'`);
+        excludedCount++;
+        await addTokenToExcluded(tokenAddress);
+        continue;
+      }
 
-            setupsBody.innerHTML = '';
-            setupsCards.innerHTML = '';
-            (setups || []).forEach((setup, index) => {
-                console.log(`Processing trade setup ${index}:`, setup);
-                const profitPercent = setup.profitpercent != null ? parseFloat(setup.profitpercent).toFixed(2) : '-';
-                const profitClass = profitPercent !== '-' && profitPercent >= 0 ? 'profit-positive' : 'profit-negative';
-                const tokenAddress = setup.tokenaddress || '-';
-                const symbol = setup.symbol || '-';
-                const popCandleTime = setup.popcandletime ? new Date(setup.popcandletime).toLocaleString() : '-';
-                const timestamp = setup.timestamp ? new Date(setup.timestamp).toLocaleString() : '-';
-                const solProfit = setup.solprofit != null ? parseFloat(setup.solprofit).toFixed(6) : '-';
-                const exitReason = setup.exit_reason || '-';
-                const popCandleHigh = setup.popcandlehigh != null ? parseFloat(setup.popcandlehigh).toFixed(8) : '-';
-                const pullbackCount = setup.pullbackcount != null ? setup.pullbackcount : '-';
-                const entryPrice = setup.entryprice != null ? parseFloat(setup.entryprice).toFixed(8) : '-';
-                const stopLoss = setup.stoploss != null ? parseFloat(setup.stoploss).toFixed(8) : '-';
+      if (tokenAddress.toLowerCase().endsWith('rev')) {
+        console.log(`Skipping ${tokenAddress}: token address ends with 'rev'`);
+        excludedCount++;
+        await addTokenToExcluded(tokenAddress);
+        continue;
+      }
 
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${symbol}</a></td>
-                    <td>${setup.action || '-'}</td>
-                    <td>${popCandleTime}</td>
-                    <td>$${popCandleHigh}</td>
-                    <td>${pullbackCount}</td>
-                    <td>$${entryPrice}</td>
-                    <td>$${stopLoss}</td>
-                    <td class="${profitClass}">${profitPercent}%</td>
-                    <td>${solProfit}</td>
-                    <td>${exitReason}</td>
-                    <td>${timestamp}</td>
-                `;
-                setupsBody.appendChild(row);
+      const isExcluded = await isTokenExcluded(tokenAddress);
+      if (isExcluded) {
+        console.log(`Skipping ${tokenAddress}: already traded`);
+        excludedCount++;
+        continue;
+      }
 
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <p><span class="card-label">Symbol:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${symbol}</a></p>
-                    <p><span class="card-label">Action:</span> ${setup.action || '-'}</p>
-                    <p><span class="card-label">Pop Candle Time:</span> ${popCandleTime}</p>
-                    <p><span class="card-label">Pop Candle High:</span> $${popCandleHigh}</p>
-                    <p><span class="card-label">Pullback Count:</span> ${pullbackCount}</p>
-                    <p><span class="card-label">Entry Price:</span> $${entryPrice}</p>
-                    <p><span class="card-label">Stop Loss:</span> $${stopLoss}</p>
-                    <p><span class="card-label">Profit:</span> <span class="${profitClass}">${profitPercent}%</span></p>
-                    <p><span class="card-label">Sol Profit:</span> ${solProfit}</p>
-                    <p><span class="card-label">Exit Reason:</span> ${exitReason}</p>
-                    <p><span class="card-label">Timestamp:</span> ${timestamp}</p>
-                `;
-                setupsCards.appendChild(card);
-            });
-
-            setupsStatus.textContent = `Trade setups loaded (${(setups || []).length})`;
-
-            // Reapply sort
-            if (setupsSort && Object.keys(setupsSort).length > 0) {
-                const column = Object.keys(setupsSort)[0];
-                const direction = setupsSort[column];
-                const header = setupsTable.querySelector(`th[data-sort="${column}"]`);
-                if (header) {
-                    header.classList.add(`sort-${direction}`);
-                    header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
-                    const rows = Array.from(setupsBody.querySelectorAll('tr'));
-                    rows.sort((a, b) => {
-                        let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                        let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-
-                        if (column === 'profitpercent') {
-                            aValue = parseFloat(aValue.replace('%', '')) || 0;
-                            bValue = parseFloat(bValue.replace('%', '')) || 0;
-                        } else if (['popcandlehigh', 'entryprice', 'stoploss', 'solprofit'].includes(column)) {
-                            aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
-                            bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
-                        } else if (['popcandletime', 'timestamp'].includes(column)) {
-                            aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
-                            bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
-                        } else if (column === 'pullbackcount') {
-                            aValue = parseInt(aValue) || 0;
-                            bValue = parseInt(bValue) || 0;
-                        } else {
-                            aValue = aValue.toLowerCase();
-                            bValue = bValue.toLowerCase();
-                        }
-
-                        return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
-                    });
-                    setupsBody.innerHTML = '';
-                    rows.forEach(row => setupsBody.appendChild(row));
-                }
-            }
-
-            // Reapply filter
-            const filterInput = document.getElementById('wax-filter');
-            if (filterInput && filterValue) {
-                filterInput.value = filterValue;
-                filterInput.dispatchEvent(new Event('input'));
-            }
-
-            console.log('refreshWaxTrades completed successfully');
-        } catch (error) {
-            console.error('Error refreshing Wax trades:', error);
-            setupsStatus.textContent = 'Error loading trade setups';
-            alert('Failed to refresh Wax trades. Check console for details.');
-        }
+      validTokens.push(token);
     }
 
-    // Setup sorting and filtering for tables
-    function setupTableSortingAndFiltering(bot) {
-        const prefix = bot === 'bread' ? 'bread' : bot === 'moon' ? 'moon' : bot === 'wax' ? 'wax' : 'funbags';
-        const activeTable = document.getElementById(`${prefix}-activeTradesBody`)?.closest('table');
-        const completedTable = document.getElementById(`${prefix}-completedTradesBody`)?.closest('table');
-        const setupsTable = document.getElementById(`${prefix}-setupsBody`)?.closest('table');
-        const monitoredTable = bot === 'funbags' ? document.getElementById('funbags-monitoredBody')?.closest('table') : null;
-        const activeFilterInput = document.getElementById(`${prefix}-activeFilter`);
-        const completedFilterInput = document.getElementById(`${prefix}-completedFilter`);
-        const setupsFilterInput = document.getElementById(`${prefix}-filter`);
-        const monitoredFilterInput = bot === 'funbags' ? document.getElementById('funbags-monitoredFilter') : null;
-
-        function setupSorting(table, tableType) {
-            if (!table) return;
-            const headers = table.querySelectorAll('th[data-sort]');
-            headers.forEach(header => {
-                header.addEventListener('click', () => {
-                    const column = header.dataset.sort;
-                    let direction = sortStates[bot][tableType][column] === 'asc' ? 'desc' : 'asc';
-                    if (!sortStates[bot][tableType][column]) direction = 'asc';
-                    sortStates[bot][tableType] = { [column]: direction };
-
-                    headers.forEach(h => {
-                        h.classList.remove('sort-asc', 'sort-desc');
-                        h.querySelector('.sort-icon').innerHTML = '↕';
-                    });
-                    header.classList.add(`sort-${direction}`);
-                    header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
-
-                    const tbody = table.querySelector('tbody');
-                    const rows = Array.from(tbody.querySelectorAll('tr'));
-                    rows.sort((a, b) => {
-                        let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                        let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-
-                        if (['profit', 'profitpercent'].includes(column)) {
-                            aValue = parseFloat(aValue.replace('%', '')) || 0;
-                            bValue = parseFloat(bValue.replace('%', '')) || 0;
-                        } else if (['buy_price_usd', 'current_price_usd', 'sell_price_usd', 'total_profit_usd', 'market_cap', 'popcandlehigh', 'entryprice', 'stoploss', 'solprofit'].includes(column)) {
-                            aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
-                            bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
-                        } else if (['buy_timestamp', 'sell_timestamp', 'popcandletime', 'timestamp'].includes(column)) {
-                            aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
-                            bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
-                        } else if (column === 'pullbackcount') {
-                            aValue = parseInt(aValue) || 0;
-                            bValue = parseInt(bValue) || 0;
-                        } else {
-                            aValue = aValue.toLowerCase();
-                            bValue = bValue.toLowerCase();
-                        }
-
-                        return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
-                    });
-
-                    tbody.innerHTML = '';
-                    rows.forEach(row => tbody.appendChild(row));
-                });
-            });
-        }
-
-        if (activeTable) setupSorting(activeTable, 'active');
-        if (completedTable) setupSorting(completedTable, 'completed');
-        if (setupsTable) setupSorting(setupsTable, 'setups');
-        if (monitoredTable) setupSorting(monitoredTable, 'monitored');
-
-        function applyFilter(table, input, cardsContainer) {
-            if (!input || !table || !cardsContainer) return;
-            input.addEventListener('input', () => {
-                const filterValue = input.value.toLowerCase();
-                const rows = table.querySelectorAll('tbody tr');
-                const cards = cardsContainer.querySelectorAll('.card');
-                rows.forEach((row, index) => {
-                    const symbol = row.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
-                    const isVisible = symbol.includes(filterValue);
-                    row.style.display = isVisible ? '' : 'none';
-                    if (cards[index]) cards[index].style.display = isVisible ? '' : 'none';
-                });
-            });
-        }
-
-        applyFilter(activeTable, activeFilterInput, document.getElementById(`${prefix}-activeTradesCards`));
-        applyFilter(completedTable, completedFilterInput, document.getElementById(`${prefix}-completedTradesCards`));
-        applyFilter(setupsTable, setupsFilterInput, document.getElementById(`${prefix}-setupsCards`));
-        applyFilter(monitoredTable, monitoredFilterInput, document.getElementById('funbags-monitoredCards'));
+    const tokenAddresses = validTokens.map(token => token.baseToken.address);
+    let prices = {};
+    if (tokenAddresses.length > 0) {
+      try {
+        prices = await getMultiTokenPrices(tokenAddresses);
+      } catch (error) {
+        console.error('Error fetching prices from Jupiter:', error.message);
+        return [];
+      }
     }
 
-    // Initialize sorting and filtering
-    setupTableSortingAndFiltering('bread');
-    setupTableSortingAndFiltering('moon');
-    setupTableSortingAndFiltering('wax');
-    setupTableSortingAndFiltering('funbags');
+    for (const token of validTokens) {
+      const tokenAddress = token.baseToken.address;
 
-    // Initial refresh
-    refreshTab('bread');
+      const hasHighHistoricalMarketCap = await hasMarketCapExceededThreshold(tokenAddress);
+      if (hasHighHistoricalMarketCap) {
+        console.log(`Skipping ${tokenAddress}: historical market cap exceeded ${MAX_HISTORICAL_MARKET_CAP} USD`);
+        highHistoricalMarketCapCount++;
+        await addTokenToExcluded(tokenAddress);
+        continue;
+      }
 
-    // Bind refresh buttons
-    document.getElementById('bread-topRefreshBtn')?.addEventListener('click', () => refreshTrades('bread'));
-    document.getElementById('bread-middleRefreshBtn')?.addEventListener('click', () => refreshTrades('bread'));
-    document.getElementById('bread-bottomRefreshBtn')?.addEventListener('click', () => refreshTrades('bread'));
-    document.getElementById('moon-topRefreshBtn')?.addEventListener('click', () => refreshTrades('moon'));
-    document.getElementById('moon-middleRefreshBtn')?.addEventListener('click', () => refreshTrades('moon'));
-    document.getElementById('moon-bottomRefreshBtn')?.addEventListener('click', () => refreshTrades('moon'));
-    document.getElementById('wax-refreshBtn')?.addEventListener('click', () => refreshWaxTrades());
-    document.getElementById('wax-bottomRefreshBtn')?.addEventListener('click', () => refreshWaxTrades());
-    document.getElementById('funbags-topRefreshBtn')?.addEventListener('click', () => refreshTrades('funbags'));
-    document.getElementById('funbags-middleRefreshBtn')?.addEventListener('click', () => refreshTrades('funbags'));
-    document.getElementById('funbags-bottomRefreshBtn')?.addEventListener('click', () => refreshTrades('funbags'));
-    document.getElementById('funbags-monitoredRefreshBtn')?.addEventListener('click', () => refreshMonitoredCoins());
+      let supply;
+      try {
+        supply = await getCirculatingSupply(tokenAddress);
+      } catch (error) {
+        console.error(`Skipping ${tokenAddress}: failed to fetch circulating supply`);
+        continue;
+      }
 
-    // Bind export buttons
-    document.getElementById('bread-exportBtn')?.addEventListener('click', () => alert('Export functionality not implemented'));
-    document.getElementById('moon-exportBtn')?.addEventListener('click', () => alert('Export functionality not implemented'));
-    document.getElementById('funbags-exportBtn')?.addEventListener('click', () => alert('Export functionality not implemented'));
+      const price = prices[tokenAddress];
+      if (!price) {
+        console.log(`Skipping ${tokenAddress}: no price data available`);
+        continue;
+      }
+      const marketCap = price * supply;
+      console.log(`Token ${tokenAddress}: price=$${price}, supply=${supply}, marketCap=$${marketCap}`);
+
+      if (marketCap < MIN_MARKET_CAP) {
+        console.log(`Skipping ${tokenAddress}: marketCap=${marketCap} below minimum ${MIN_MARKET_CAP}`);
+        lowMarketCapCount++;
+        continue;
+      }
+      if (marketCap > MAX_MARKET_CAP) {
+        console.log(`Skipping ${tokenAddress}: marketCap=${marketCap} above maximum ${MAX_MARKET_CAP}`);
+        highMarketCapCount++;
+        continue;
+      }
+
+      const isTelegramToken = token.dexId === 'telegram';
+      const boostsActive = token.boosts?.active || 0;
+      const status = {
+        tokenAddress,
+        marketCap,
+        boosted: isTelegramToken ? true : boostsActive > 0,
+        boostsActive,
+        dexId: token.dexId,
+      };
+
+      console.log(`Token ${tokenAddress}: marketCap=${marketCap}, telegram=${isTelegramToken}, boosted=${status.boosted}, boosts=${boostsActive}`);
+
+      const tokenData = {
+        baseToken: {
+          address: tokenAddress,
+          name: token.baseToken.name,
+          symbol: token.baseToken.symbol,
+        },
+        marketCap: marketCap,
+        priceUsd: token.priceUsd.toString(),
+        boosts: { active: boostsActive },
+        dexId: token.dexId,
+      };
+      eligibleTokens.push(tokenData);
+      newCache[tokenAddress] = { data: tokenData, status, timestamp: Date.now() };
+      console.log(`Eligible token: ${tokenAddress} (marketCap=${marketCap}, telegram=${isTelegramToken}, boosts=${boostsActive})`);
+
+      if (isTelegramToken) {
+        await supabase.from('telegram_tokens_bot2').update({
+          processed: true,
+        }).eq('token_address', tokenAddress);
+      }
+    }
+
+    await saveCache(newCache);
+
+    console.log(`Eligible tokens for trading: ${eligibleTokens.length}, skipped ${excludedCount} excluded tokens, ${lowMarketCapCount} low market cap tokens, ${highMarketCapCount} high market cap tokens, ${highHistoricalMarketCapCount} high historical market cap tokens`);
+    return eligibleTokens;
+  } catch (error) {
+    console.error('Error in getEligibleTokens:', error.message);
+    return [];
+  }
+}
+
+async function buyToken(tokenData) {
+  try {
+    const tokenAddress = tokenData.baseToken.address;
+    console.log(`Attempting to buy token ${tokenAddress}...`);
+
+    const balance = await connection.getBalance(wallet.publicKey);
+    if (balance < MIN_TRADE_BALANCE) {
+      console.error(`Insufficient balance: ${balance / LAMPORTS_PER_SOL} SOL, required: ${MIN_TRADE_BALANCE / LAMPORTS_PER_SOL} SOL`);
+      return false;
+    }
+
+    const mint = new PublicKey(tokenAddress);
+    const tokenAccountInfo = await getOrCreateAssociatedTokenAccount(connection, wallet, mint, wallet.publicKey);
+    const tokenAccount = tokenAccountInfo.address;
+
+    const quoteResponse = await axios.get(`${JUPITER_API}/quote`, {
+      params: {
+        inputMint: 'So11111111111111111111111111111111111111112',
+        outputMint: tokenAddress,
+        amount: BUY_AMOUNT,
+        slippageBps: 100,
+      },
+      timeout: 5000,
+    });
+
+    const quote = quoteResponse.data;
+    if (!quote || !quote.data || quote.data.length === 0) {
+      console.error(`No valid swap routes found for ${tokenAddress}`);
+      await addTokenToExcluded(tokenAddress);
+      return false;
+    }
+
+    const swapResponse = await axios.post(`${JUPITER_API}/swap`, {
+      quoteResponse: quote.data[0],
+      userPublicKey: wallet.publicKey.toBase58(),
+      wrapAndUnwrapSol: true,
+      dynamicComputeUnitLimit: true,
+      prioritizationFeeLamports: PRIORITY_FEE_LAMPORTS,
+    }, {
+      timeout: 10000,
+    });
+
+    const swapData = swapResponse.data;
+    if (!swapData.swapTransaction) {
+      console.error(`No swap transaction returned for ${tokenAddress}`);
+      await addTokenToExcluded(tokenAddress);
+      return false;
+    }
+
+    const swapTransactionBuf = Buffer.from(swapData.swapTransaction, 'base64');
+    const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
+    transaction.sign([wallet]);
+
+    const signature = await connection.sendRawTransaction(transaction.serialize(), {
+      skipPreflight: true,
+      maxRetries: 3,
+    });
+
+    const confirmation = await connection.confirmTransaction(signature, 'confirmed');
+    if (confirmation.value.err) {
+      console.error(`Transaction failed for ${tokenAddress}:`, confirmation.value.err);
+      await addTokenToExcluded(tokenAddress);
+      return false;
+    }
+
+    console.log(`Bought ${tokenAddress}, Tx: ${signature}`);
+    const updatedAccountInfo = await splToken.getAccount(connection, tokenAccount, 'confirmed');
+    const tokenAmount = updatedAccountInfo.amount;
+
+    const buyPrice = parseFloat(tokenData.priceUsd);
+    const { data: insertData, error } = await supabase
+      .from('trades_bot2')
+      .insert({
+        wallet_address: wallet.publicKey.toBase58(),
+        token_address: tokenAddress,
+        token_account: tokenAccount.toBase58(),
+        buy_price_usd: buyPrice,
+        buy_timestamp: new Date().toISOString(),
+        status: 'open',
+        token_amount: tokenAmount.toString(),
+      })
+      .select('id')
+      .single();
+
+    if (error) {
+      console.error(`Error saving trade for ${tokenAddress}:`, error.message);
+      return false;
+    }
+
+    const trade = {
+      tradeId: insertData.id,
+      tokenAddress,
+      buyPrice,
+      buyTime: Date.now(),
+      tokenAccount,
+      tokenAmount,
+      partialSell: false,
+    };
+
+    activeTrades.push(trade);
+    console.log(`Trade recorded for ${tokenAddress}, tradeId: ${trade.tradeId}, amount: ${tokenAmount}`);
+
+    monitorAndSell(trade).catch(error => console.error(`Error monitoring ${tokenAddress}:`, error.message));
+    return true;
+  } catch (error) {
+    console.error(`Error buying ${tokenData.baseToken.address}:`, error.message);
+    await addTokenToExcluded(tokenData.baseToken.address);
+    return false;
+  }
+}
+
+async function monitorAndSell(trade) {
+  try {
+    console.log(`Monitoring trade ${trade.tradeId} for ${trade.tokenAddress}`);
+    const startTime = trade.buyTime;
+    let partialSell = trade.partialSell;
+
+    while (true) {
+      await new Promise(resolve => setTimeout(resolve, PRICE_CHECK_INTERVAL));
+
+      let currentPrice;
+      try {
+        currentPrice = await getTokenPrice(trade.tokenAddress);
+      } catch (error) {
+        console.error(`Error fetching price for ${trade.tokenAddress}:`, error.message);
+        continue;
+      }
+
+      const supply = await getCirculatingSupply(trade.tokenAddress);
+      const marketCap = currentPrice * supply;
+      console.log(`Monitoring ${trade.tokenAddress}: CurrentPrice=$${currentPrice.toFixed(8)}, MarketCap=$${marketCap.toFixed(2)}`);
+
+      // FIXED: Ensure profitPercent is always a valid number to prevent undefined
+      const buyPrice = trade.buyPrice || 0;
+      const profitPercent = (buyPrice !== 0 && !isNaN(currentPrice)) 
+        ? ((currentPrice - buyPrice) / buyPrice * 100).toFixed(2) 
+        : 0;
+
+      const { error } = await supabase
+        .from('trades_bot2')
+        .update({
+          current_price_usd: currentPrice,
+          profit_percentage: parseFloat(profitPercent),
+          market_cap: marketCap,
+          status: partialSell ? 'partial_sold' : 'open',
+        })
+        .eq('id', trade.tradeId);
+
+      if (error) {
+        console.error(`Error updating trade ${trade.tradeId}:`, error.message);
+        continue;
+      }
+
+      console.log(`Trade ${trade.tradeId}: Profit=${profitPercent}%, MarketCap=$${marketCap.toFixed(2)}, Status=${partialSell ? 'partial_sold' : 'open'}`);
+
+      if (marketCap > MARKET_CAP_SELL_THRESHOLD && !partialSell) {
+        console.log(`Market cap for ${trade.tokenAddress} exceeded ${MARKET_CAP_SELL_THRESHOLD} USD, selling 75%...`);
+        const sold = await sellToken(trade, 0.75);
+        if (sold) {
+          partialSell = true;
+          trade.partialSell = true;
+          console.log(`Partial sell completed for ${trade.tokenAddress}`);
+        } else {
+          console.error(`Partial sell failed for ${trade.tokenAddress}`);
+        }
+      }
+
+      if (parseFloat(profitPercent) >= PROFIT_TARGET && partialSell) {
+        console.log(`Profit target ${PROFIT_TARGET}% reached for ${trade.tokenAddress}, selling remaining...`);
+        const sold = await sellToken(trade, 1.0);
+        if (sold) {
+          console.log(`Full sell completed for ${trade.tokenAddress}`);
+          break;
+        }
+      }
+
+      if (parseFloat(profitPercent) <= STOP_LOSS) {
+        console.log(`Stop loss ${STOP_LOSS}% hit for ${trade.tokenAddress}, selling all...`);
+        const sold = await sellToken(trade, 1.0);
+        if (sold) {
+          console.log(`Stop loss sell completed for ${trade.tokenAddress}`);
+          break;
+        }
+      }
+
+      const holdTime = Date.now() - startTime;
+      if (holdTime > HOLD_DURATION) {
+        console.log(`Hold duration ${HOLD_DURATION / 1000}s exceeded for ${trade.tokenAddress}, selling all...`);
+        const sold = await sellToken(trade, 1.0);
+        if (sold) {
+          console.log(`Hold duration sell completed for ${trade.tokenAddress}`);
+          break;
+        }
+      }
+    }
+
+    activeTrades = activeTrades.filter(t => t.tradeId !== trade.tradeId);
+    console.log(`Trade ${trade.tradeId} for ${trade.tokenAddress} completed and removed from active trades`);
+  } catch (error) {
+    console.error(`Error monitoring trade ${trade.tradeId} for ${trade.tokenAddress}:`, error.message);
+    await supabase
+      .from('trades_bot2')
+      .update({
+        status: 'failed',
+        error_message: error.message,
+      })
+      .eq('id', trade.tradeId);
+    activeTrades = activeTrades.filter(t => t.tradeId !== trade.tradeId);
+  }
+}
+
+async function sellToken(trade, fraction) {
+  try {
+    console.log(`Selling ${fraction * 100}% of ${trade.tokenAddress} (tradeId: ${trade.tradeId})...`);
+
+    const accountInfo = await splToken.getAccount(connection, trade.tokenAccount, 'confirmed');
+    const tokenAmount = accountInfo.amount;
+    const sellAmount = Math.floor(Number(tokenAmount) * fraction);
+
+    if (sellAmount <= 0) {
+      console.error(`Invalid sell amount: ${sellAmount} for ${trade.tokenAddress}`);
+      return false;
+    }
+
+    const balance = await connection.getBalance(wallet.publicKey);
+    if (balance < MIN_SELL_FEE_LAMPORTS) {
+      console.error(`Insufficient balance for sell fees: ${balance / LAMPORTS_PER_SOL} SOL, required: ${MIN_SELL_FEE_LAMPORTS / LAMPORTS_PER_SOL} SOL`);
+      return false;
+    }
+
+    const quoteResponse = await axios.get(`${JUPITER_API}/quote`, {
+      params: {
+        inputMint: trade.tokenAddress,
+        outputMint: 'So11111111111111111111111111111111111111112',
+        amount: sellAmount,
+        slippageBps: 100,
+      },
+      timeout: 5000,
+    });
+
+    const quote = quoteResponse.data;
+    if (!quote || !quote.data || quote.data.length === 0) {
+      console.error(`No valid swap routes found for ${trade.tokenAddress}`);
+      return false;
+    }
+
+    const swapResponse = await axios.post(`${JUPITER_API}/swap`, {
+      quoteResponse: quote.data[0],
+      userPublicKey: wallet.publicKey.toBase58(),
+      wrapAndUnwrapSol: true,
+      dynamicComputeUnitLimit: true,
+      prioritizationFeeLamports: PRIORITY_FEE_LAMPORTS,
+    }, {
+      timeout: 10000,
+    });
+
+    const swapData = swapResponse.data;
+    if (!swapData.swapTransaction) {
+      console.error(`No swap transaction returned for ${trade.tokenAddress}`);
+      return false;
+    }
+
+    const swapTransactionBuf = Buffer.from(swapData.swapTransaction, 'base64');
+    const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
+    transaction.sign([wallet]);
+
+    const signature = await connection.sendRawTransaction(transaction.serialize(), {
+      skipPreflight: true,
+      maxRetries: 3,
+    });
+
+    const confirmation = await connection.confirmTransaction(signature, 'confirmed');
+    if (confirmation.value.err) {
+      console.error(`Sell transaction failed for ${trade.tokenAddress}:`, confirmation.value.err);
+      return false;
+    }
+
+    console.log(`Sold ${fraction * 100}% of ${trade.tokenAddress}, Tx: ${signature}`);
+
+    const currentPrice = await getTokenPrice(trade.tokenAddress);
+    const profitPercent = trade.buyPrice !== 0 ? ((currentPrice - trade.buyPrice) / trade.buyPrice * 100).toFixed(2) : 0;
+    const totalProfit = (currentPrice - trade.buyPrice) * (sellAmount / Math.pow(10, 9));
+
+    const status = fraction === 1.0 ? 'closed' : 'partial_sold';
+    const { error } = await supabase
+      .from('trades_bot2')
+      .update({
+        sell_price_usd: currentPrice,
+        profit_percentage: parseFloat(profitPercent),
+        total_profit_usd: totalProfit,
+        sell_timestamp: new Date().toISOString(),
+        status,
+      })
+      .eq('id', trade.tradeId);
+
+    if (error) {
+      console.error(`Error updating trade ${trade.tradeId} after sell:`, error.message);
+      return false;
+    }
+
+    console.log(`Trade ${trade.tradeId} updated: Sold ${sellAmount} tokens, Profit=${profitPercent}%, TotalProfit=$${totalProfit.toFixed(2)}, Status=${status}`);
+    return true;
+  } catch (error) {
+    console.error(`Error selling ${trade.tokenAddress}:`, error.message);
+    return false;
+  }
+}
+
+async function startBot() {
+  try {
+    console.log('Starting Moon Bot...');
+    await loadActiveTrades();
+    await pruneExcludedTokens();
+    await monitorTelegramTokens();
+
+    while (true) {
+      try {
+        console.log('Checking for new eligible tokens...');
+        const tokens = await getEligibleTokens();
+        if (tokens.length === 0) {
+          console.log('No eligible tokens found, waiting 30 seconds...');
+          await new Promise(resolve => setTimeout(resolve, 30 * 1000));
+          continue;
+        }
+
+        const balance = await connection.getBalance(wallet.publicKey);
+        console.log(`Wallet balance: ${balance / LAMPORTS_PER_SOL} SOL`);
+
+        if (balance < MIN_TRADE_BALANCE) {
+          console.log(`Balance below minimum (${MIN_TRADE_BALANCE / LAMPORTS_PER_SOL} SOL), waiting 60 seconds...`);
+          await new Promise(resolve => setTimeout(resolve, 60 * 1000));
+          continue;
+        }
+
+        for (const token of tokens) {
+          try {
+            const tokenAddress = token.baseToken.address;
+            console.log(`Evaluating token ${tokenAddress}...`);
+
+            const { lockedPct, success } = await getLiquidityLockStatus(tokenAddress);
+            if (!success) {
+              console.log(`Skipping ${tokenAddress}: RugCheck failed`);
+              await addTokenToExcluded(tokenAddress);
+              continue;
+            }
+
+            if (lockedPct < 75) {
+              console.log(`Skipping ${tokenAddress}: Liquidity lock ${lockedPct}% is below 75%`);
+              await addTokenToExcluded(tokenAddress);
+              continue;
+            }
+
+            const successBuy = await buyToken(token);
+            if (successBuy) {
+              console.log(`Successfully bought ${tokenAddress}`);
+            } else {
+              console.log(`Failed to buy ${tokenAddress}`);
+            }
+          } catch (error) {
+            console.error(`Error processing ${token.baseToken.address}:`, error.message);
+            await addTokenToExcluded(token.baseToken.address);
+          }
+        }
+
+        console.log(`Waiting 30 seconds before next cycle...`);
+        await new Promise(resolve => setTimeout(resolve, 30 * 1000));
+      } catch (error) {
+        console.error('Error in trading cycle:', error.message);
+        await new Promise(resolve => setTimeout(resolve, 60 * 1000));
+      }
+    }
+  } catch (error) {
+    console.error('Fatal error in startBot:', error.message);
+    process.exit(1);
+  }
+}
+
+startBot().catch(error => {
+  console.error('Error starting bot:', error.message);
+  process.exit(1);
 });
-</script>
