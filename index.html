@@ -841,9 +841,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
         try {
+            if (!tokenAddress || typeof tokenAddress !== 'string' || tokenAddress.length < 10) {
+                throw new Error('Invalid token address');
+            }
             const response = await fetch(url, moralisOptions);
             if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
+                throw new Error(`HTTP error! Status: ${response.status}, Message: ${response.statusText}`);
             }
             const data = await response.json();
             const marketCap = parseFloat(data.fullyDilutedValue) || 0;
@@ -860,52 +863,63 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchMonitoredCoins() {
         console.log('Fetching monitored coins from token_states');
         try {
-            let { data: monitoredCoins, error } = await supabase
+            const { data: monitoredCoins, error } = await supabase
                 .from('token_states')
                 .select('token_address, lowestmarketcap, stayAboveStartTime')
                 .eq('monitoring', true)
                 .eq('bought', false);
 
             if (error) {
-                console.error('Monitored coins fetch error:', error.message, error.details, error.hint);
+                console.error('Supabase query error:', {
+                    message: error.message,
+                    details: error.details || 'No details provided',
+                    hint: error.hint || 'No hint provided',
+                    code: error.code || 'No code provided'
+                });
                 throw new Error(`Failed to fetch monitored coins: ${error.message}`);
             }
-            console.log('Monitored coins fetched:', monitoredCoins);
 
-            const coinsWithData = await Promise.all((monitoredCoins || []).map(async (coin) => {
+            console.log('Monitored coins fetched:', monitoredCoins || 'No coins returned');
+
+            if (!monitoredCoins || monitoredCoins.length === 0) {
+                console.warn('No monitored coins found in token_states');
+                return [];
+            }
+
+            const coinsWithData = await Promise.all(monitoredCoins.map(async (coin) => {
                 try {
                     const { marketCap, price, symbol } = await fetchTokenData(coin.token_address);
                     return {
-                        token_address: coin.token_address,
-                        token_name: coin.token_address.slice(0, 8),
+                        token_address: coin.token_address || '-',
+                        token_name: (coin.token_address || '-').slice(0, 8),
                         symbol: symbol,
                         market_cap: marketCap,
                         current_price_usd: price,
-                        lowest_market_cap: coin.lowestmarketcap || 999999999,
+                        lowest_market_cap: parseFloat(coin.lowestmarketcap) || 999999999,
                         timestamp: coin.stayAboveStartTime ? new Date(coin.stayAboveStartTime).toISOString() : new Date().toISOString()
                     };
                 } catch (error) {
-                    console.error(`Error fetching data for token ${coin.token_address}:`, error);
+                    console.error(`Error processing token ${coin.token_address}:`, error.message);
                     return {
-                        token_address: coin.token_address,
-                        token_name: coin.token_address.slice(0, 8),
+                        token_address: coin.token_address || '-',
+                        token_name: (coin.token_address || '-').slice(0, 8),
                         symbol: '-',
                         market_cap: 0,
                         current_price_usd: 0,
-                        lowest_market_cap: coin.lowestmarketcap || 999999999,
+                        lowest_market_cap: parseFloat(coin.lowestmarketcap) || 999999999,
                         timestamp: coin.stayAboveStartTime ? new Date(coin.stayAboveStartTime).toISOString() : new Date().toISOString()
                     };
                 }
             }));
 
+            console.log('Processed coins with data:', coinsWithData);
             return coinsWithData;
         } catch (error) {
-            console.error('Error in fetchMonitoredCoins:', error);
+            console.error('Error in fetchMonitoredCoins:', error.message, error.stack);
             throw error;
         }
     }
 
-    // Refresh monitored coins section for Fun Bags
     async function refreshMonitoredCoins() {
         console.log('Starting refreshMonitoredCoins');
         const monitoredStatus = document.getElementById('funbags-monitored-status');
@@ -922,10 +936,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 monitoredTable: !!monitoredTable,
                 monitoredFilterInput: !!monitoredFilterInput
             });
-            alert('Failed to load monitored coins section. Check console for details.');
+            alert('Failed to load monitored coins section. Missing DOM elements. Check console for details.');
             return;
         }
 
+        monitoredStatus.textContent = 'Loading monitored coins...';
         const monitoredSort = { ...sortStates.funbags.monitored };
         const monitoredFilterValue = monitoredFilterInput.value || '';
         console.log('Preserved sort state for monitored coins:', monitoredSort);
@@ -934,7 +949,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const monitoredCoins = await fetchMonitoredCoins();
             monitoredBody.innerHTML = '';
             monitoredCards.innerHTML = '';
-            monitoredCoins.forEach((coin) => {
+
+            if (monitoredCoins.length === 0) {
+                monitoredStatus.textContent = 'No monitored coins found';
+                console.log('No coins to display');
+                return;
+            }
+
+            monitoredCoins.forEach((coin, index) => {
+                console.log(`Rendering coin ${index}:`, coin);
                 const tokenAddress = coin.token_address || '-';
                 const tokenName = coin.token_name || '-';
                 const marketCap = coin.market_cap || 0;
@@ -965,7 +988,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 monitoredCards.appendChild(card);
             });
+
             monitoredStatus.textContent = `Monitored coins loaded (${monitoredCoins.length})`;
+            console.log(`Rendered ${monitoredCoins.length} monitored coins`);
 
             // Reapply sort
             if (monitoredSort && Object.keys(monitoredSort).length > 0) {
@@ -973,6 +998,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const direction = monitoredSort[column];
                 const header = monitoredTable.querySelector(`th[data-sort="${column}"]`);
                 if (header) {
+                    console.log(`Reapplying sort: ${column} ${direction}`);
                     header.classList.add(`sort-${direction}`);
                     header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
                     const rows = Array.from(monitoredBody.querySelectorAll('tr'));
@@ -1000,19 +1026,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Reapply filter
             if (monitoredFilterValue) {
+                console.log(`Reapplying filter: ${monitoredFilterValue}`);
                 monitoredFilterInput.value = monitoredFilterValue;
                 monitoredFilterInput.dispatchEvent(new Event('input'));
             }
 
             console.log('refreshMonitoredCoins completed successfully');
         } catch (error) {
-            console.error('Error refreshing monitored coins:', error);
-            monitoredStatus.textContent = 'Error loading monitored coins';
-            alert('Failed to refresh monitored coins. Check console for details.');
+            console.error('Error in refreshMonitoredCoins:', error.message, error.stack);
+            monitoredStatus.textContent = `Error loading monitored coins: ${error.message}`;
+            alert(`Failed to refresh monitored coins: ${error.message}. Check console for details.`);
         }
     }
 
-    // Refresh tab logic
     async function refreshTab(bot) {
         if (bot === 'wax') {
             await refreshWaxTrades();
@@ -1021,7 +1047,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Refresh trades for Bread, Moon, and Fun Bags
     async function refreshTrades(bot) {
         console.log(`Starting refreshTrades for ${bot}`);
         const prefix = bot === 'bread' ? 'bread' : bot === 'moon' ? 'moon' : 'funbags';
@@ -1081,10 +1106,8 @@ document.addEventListener('DOMContentLoaded', () => {
             let completedTrades = [];
 
             if (bot === 'funbags') {
-                // Fetch monitored coins
                 await refreshMonitoredCoins();
 
-                // Fetch active trades
                 console.log('Fetching active trades from token_states for Fun Bags');
                 let { data: tokenStates, error: tokenError } = await supabase
                     .from('token_states')
@@ -1144,7 +1167,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }));
 
-                // Fetch completed trades
                 console.log('Fetching completed trades from bot_logs for Fun Bags');
                 let { data: sellLogs, error: sellLogError } = await supabase
                     .from('bot_logs')
@@ -1188,7 +1210,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 completedTrades = completedTrades.filter(trade => trade !== null);
             } else {
-                // Fetch active trades for Bread or Moon
                 console.log(`Fetching active trades from ${tableName}`);
                 let { data, error } = await supabase
                     .from(tableName)
@@ -1202,7 +1223,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 activeTrades = data || [];
                 console.log(`Active trades fetched for ${bot}:`, activeTrades);
 
-                // Fetch completed trades for Bread or Moon
                 console.log(`Fetching completed trades from ${tableName}`);
                 let { data: completedData, error: completedError } = await supabase
                     .from(tableName)
@@ -1217,7 +1237,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log(`Completed trades fetched for ${bot}:`, completedTrades);
             }
 
-            // Render active trades
             activeTradesBody.innerHTML = '';
             activeTradesCards.innerHTML = '';
             activeTrades.forEach((trade, index) => {
@@ -1259,7 +1278,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             activeStatus.textContent = `Active trades loaded (${activeTrades.length})`;
 
-            // Reapply active table sort
             if (activeSort && Object.keys(activeSort).length > 0) {
                 const column = Object.keys(activeSort)[0];
                 const direction = activeSort[column];
@@ -1293,7 +1311,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Render completed trades
             completedTradesBody.innerHTML = '';
             completedTradesCards.innerHTML = '';
             const filteredTrades = completedTrades.filter(trade => {
@@ -1344,7 +1361,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             completedStatus.textContent = `Completed trades loaded (${filteredTrades.length})`;
 
-            // Reapply completed table sort
             if (completedSort && Object.keys(completedSort).length > 0) {
                 const column = Object.keys(completedSort)[0];
                 const direction = completedSort[column];
@@ -1378,7 +1394,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Update total profit
             const totalProfit = filteredTrades.reduce((sum, trade) => {
                 const profit = trade.total_profit_usd || 0;
                 return sum + profit;
@@ -1386,7 +1401,6 @@ document.addEventListener('DOMContentLoaded', () => {
             totalProfitElement.textContent = `$${totalProfit.toFixed(2)}`;
             console.log(`Total profit updated for ${bot}:`, totalProfit);
 
-            // Reapply filters
             const activeFilterInput = document.getElementById(`${prefix}-activeFilter`);
             const completedFilterInput = document.getElementById(`${prefix}-completedFilter`);
             if (activeFilterInput && activeFilterValue) {
@@ -1407,7 +1421,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Retry utility function
     async function withRetry(fn, maxRetries = 3, delayMs = 1000) {
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
@@ -1422,7 +1435,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Refresh Wax trades
     async function refreshWaxTrades() {
         console.log('Starting refreshWaxTrades');
         const setupsStatus = document.getElementById('wax-status');
@@ -1518,7 +1530,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             setupsStatus.textContent = `Trade setups loaded (${setups.length})`;
 
-            // Reapply sort
             if (sortState && Object.keys(sortState).length > 0) {
                 const column = Object.keys(sortState)[0];
                 const direction = sortState[column];
@@ -1552,7 +1563,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Reapply filter
             if (filterValue) {
                 filterInput.value = filterValue;
                 filterInput.dispatchEvent(new Event('input'));
@@ -1566,10 +1576,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Initial refresh for the default tab
     refreshTab('bread');
 
-    // Setup event listeners for refresh buttons
     ['bread', 'moon', 'funbags'].forEach(bot => {
         ['topRefreshBtn', 'middleRefreshBtn', 'bottomRefreshBtn'].forEach(btn => {
             const button = document.getElementById(`${bot}-${btn}`);
@@ -1617,7 +1625,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Wax refresh buttons
     ['refreshBtn', 'bottomRefreshBtn'].forEach(btn => {
         const button = document.getElementById(`wax-${btn}`);
         if (button) {
@@ -1630,7 +1637,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Fun Bags monitored refresh button
     const monitoredRefreshBtn = document.getElementById('funbags-monitoredRefreshBtn');
     if (monitoredRefreshBtn) {
         monitoredRefreshBtn.addEventListener('click', () => {
@@ -1641,7 +1647,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('Button funbags-monitoredRefreshBtn not found');
     }
 
-    // Sorting logic for all tables
     document.querySelectorAll('th[data-sort]').forEach(header => {
         header.addEventListener('click', () => {
             const column = header.dataset.sort;
@@ -1656,7 +1661,6 @@ document.addEventListener('DOMContentLoaded', () => {
             let direction = sortStates[bot][sortKey][column] === 'asc' ? 'desc' : 'asc';
             sortStates[bot][sortKey] = { [column]: direction };
 
-            // Reset other headers
             table.querySelectorAll('th').forEach(th => {
                 th.classList.remove('sort-asc', 'sort-desc');
                 const icon = th.querySelector('.sort-icon');
@@ -1700,7 +1704,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Filter logic for all tables
     document.querySelectorAll('.filter-input').forEach(input => {
         input.addEventListener('input', () => {
             const filterValue = input.value.toLowerCase();
@@ -1718,7 +1721,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Profit filter logic
     document.querySelectorAll('select[id$="-profitFilter"]').forEach(select => {
         select.addEventListener('change', () => {
             const bot = select.id.split('-')[0];
