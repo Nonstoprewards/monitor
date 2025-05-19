@@ -765,11 +765,12 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        console.log('Script loaded');
+console.log('Script loaded');
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded');
 
+    // Initialize Supabase client
     let supabase;
     try {
         supabase = window.supabase.createClient(
@@ -783,6 +784,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    // Tab switching logic
     let activeTab = 'bread';
     const tabs = document.querySelectorAll('.tab');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -798,6 +800,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Auto-refresh every 3 seconds for Bread, Moon, and Fun Bags
     setInterval(() => {
         if (activeTab === 'bread' || activeTab === 'moon' || activeTab === 'funbags') {
             console.log(`Auto-refreshing for ${activeTab}`);
@@ -805,6 +808,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 3000);
 
+    // Sexy Mode Toggle
     const sexyModeToggle = document.getElementById('sexyModeToggle');
     if (sexyModeToggle) {
         sexyModeToggle.addEventListener('click', () => {
@@ -819,6 +823,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('sexyModeToggle button not found');
     }
 
+    // Sorting and Filtering States
     const sortStates = {
         bread: { active: {}, completed: {} },
         moon: { active: {}, completed: {} },
@@ -826,43 +831,169 @@ document.addEventListener('DOMContentLoaded', () => {
         funbags: { active: {}, completed: {}, monitored: {} }
     };
 
+    // Placeholder for fetching token data (replace with actual API call)
     async function fetchTokenData(tokenAddress) {
+        // TODO: Replace with actual API call (e.g., Moralis, CoinGecko, or DexScreener)
+        console.warn(`fetchTokenData is a placeholder for token ${tokenAddress}. Replace with real API call.`);
         return {
-            marketCap: Math.random() * 100000,
-            price: Math.random() * 0.01,
-            symbol: 'SYM'
+            marketCap: 0, // Placeholder; replace with actual market cap
+            price: 0,     // Placeholder; replace with actual price
+            symbol: '-'   // Placeholder; replace with actual symbol
         };
     }
 
+    // Fetch monitored coins for Fun Bags
     async function fetchMonitoredCoins() {
         console.log('Fetching monitored coins from token_states');
-        let { data: monitoredCoins, error } = await supabase
-            .from('token_states')
-            .select('token_address')
-            .eq('watchlisted', true)
-            .eq('bought', false);
+        try {
+            let { data: monitoredCoins, error } = await supabase
+                .from('token_states')
+                .select('token_address')
+                .eq('watchlisted', true)
+                .eq('bought', false);
 
-        if (error) {
-            console.error('Monitored coins fetch error:', error.message, error.details, error.hint);
-            throw new Error(`Failed to fetch monitored coins: ${error.message}`);
+            if (error) {
+                console.error('Monitored coins fetch error:', error.message, error.details, error.hint);
+                throw new Error(`Failed to fetch monitored coins: ${error.message}`);
+            }
+            console.log('Monitored coins fetched:', monitoredCoins);
+
+            const coinsWithData = await Promise.all((monitoredCoins || []).map(async (coin) => {
+                try {
+                    const { marketCap, price, symbol } = await fetchTokenData(coin.token_address);
+                    return {
+                        token_address: coin.token_address,
+                        token_name: coin.token_address.slice(0, 8),
+                        symbol: symbol,
+                        market_cap: marketCap,
+                        current_price_usd: price,
+                        timestamp: new Date().toISOString()
+                    };
+                } catch (error) {
+                    console.error(`Error fetching data for token ${coin.token_address}:`, error);
+                    return {
+                        token_address: coin.token_address,
+                        token_name: coin.token_address.slice(0, 8),
+                        symbol: '-',
+                        market_cap: 0,
+                        current_price_usd: 0,
+                        timestamp: new Date().toISOString()
+                    };
+                }
+            }));
+
+            return coinsWithData;
+        } catch (error) {
+            console.error('Error in fetchMonitoredCoins:', error);
+            throw error;
         }
-        console.log('Monitored coins fetched:', monitoredCoins);
-
-        const coinsWithData = await Promise.all((monitoredCoins || []).map(async (coin) => {
-            const { marketCap, price, symbol } = await fetchTokenData(coin.token_address);
-            return {
-                token_address: coin.token_address,
-                token_name: coin.token_address.slice(0, 8),
-                symbol: symbol,
-                market_cap: marketCap,
-                current_price_usd: price,
-                timestamp: new Date().toISOString()
-            };
-        }));
-
-        return coinsWithData;
     }
 
+    // Refresh monitored coins section for Fun Bags
+    async function refreshMonitoredCoins() {
+        console.log('Starting refreshMonitoredCoins');
+        const monitoredStatus = document.getElementById('funbags-monitored-status');
+        const monitoredBody = document.getElementById('funbags-monitoredBody');
+        const monitoredCards = document.getElementById('funbags-monitoredCards');
+        const monitoredTable = monitoredBody?.closest('table');
+        const monitoredFilterInput = document.getElementById('funbags-monitoredFilter');
+
+        if (!monitoredStatus || !monitoredBody || !monitoredCards || !monitoredTable || !monitoredFilterInput) {
+            console.error('Missing DOM elements for monitored coins:', {
+                monitoredStatus: !!monitoredStatus,
+                monitoredBody: !!monitoredBody,
+                monitoredCards: !!monitoredCards,
+                monitoredTable: !!monitoredTable,
+                monitoredFilterInput: !!monitoredFilterInput
+            });
+            alert('Failed to load monitored coins section. Check console for details.');
+            return;
+        }
+
+        const monitoredSort = { ...sortStates.funbags.monitored };
+        const monitoredFilterValue = monitoredFilterInput.value || '';
+        console.log('Preserved sort state for monitored coins:', monitoredSort);
+
+        try {
+            const monitoredCoins = await fetchMonitoredCoins();
+            monitoredBody.innerHTML = '';
+            monitoredCards.innerHTML = '';
+            monitoredCoins.forEach((coin) => {
+                const tokenAddress = coin.token_address || '-';
+                const tokenName = coin.token_name || '-';
+                const marketCap = coin.market_cap || 0;
+                const currentPrice = coin.current_price_usd || 0;
+                const timestamp = coin.timestamp ? new Date(coin.timestamp).toLocaleString() : '-';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
+                    <td>${coin.symbol || '-'}</td>
+                    <td>$${marketCap.toLocaleString()}</td>
+                    <td>$${currentPrice.toFixed(8)}</td>
+                    <td>${timestamp}</td>
+                `;
+                monitoredBody.appendChild(row);
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></p>
+                    <p><span class="card-label">Symbol:</span> ${coin.symbol || '-'}</p>
+                    <p><span class="card-label">Market Cap:</span> $${marketCap.toLocaleString()}</p>
+                    <p><span class="card-label">Current Price:</span> $${currentPrice.toFixed(8)}</p>
+                    <p><span class="card-label">Timestamp:</span> ${timestamp}</p>
+                `;
+                monitoredCards.appendChild(card);
+            });
+            monitoredStatus.textContent = `Monitored coins loaded (${monitoredCoins.length})`;
+
+            // Reapply sort
+            if (monitoredSort && Object.keys(monitoredSort).length > 0) {
+                const column = Object.keys(monitoredSort)[0];
+                const direction = monitoredSort[column];
+                const header = monitoredTable.querySelector(`th[data-sort="${column}"]`);
+                if (header) {
+                    header.classList.add(`sort-${direction}`);
+                    header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
+                    const rows = Array.from(monitoredBody.querySelectorAll('tr'));
+                    rows.sort((a, b) => {
+                        let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
+                        let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
+
+                        if (['market_cap', 'current_price_usd'].includes(column)) {
+                            aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
+                            bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
+                        } else if (column === 'timestamp') {
+                            aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
+                            bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
+                        } else {
+                            aValue = aValue.toLowerCase();
+                            bValue = bValue.toLowerCase();
+                        }
+
+                        return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
+                    });
+                    monitoredBody.innerHTML = '';
+                    rows.forEach(row => monitoredBody.appendChild(row));
+                }
+            }
+
+            // Reapply filter
+            if (monitoredFilterValue) {
+                monitoredFilterInput.value = monitoredFilterValue;
+                monitoredFilterInput.dispatchEvent(new Event('input'));
+            }
+
+            console.log('refreshMonitoredCoins completed successfully');
+        } catch (error) {
+            console.error('Error refreshing monitored coins:', error);
+            monitoredStatus.textContent = 'Error loading monitored coins';
+            alert('Failed to refresh monitored coins. Check console for details.');
+        }
+    }
+
+    // Refresh tab logic
     async function refreshTab(bot) {
         if (bot === 'wax') {
             await refreshWaxTrades();
@@ -871,6 +1002,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Refresh trades for Bread, Moon, and Fun Bags
     async function refreshTrades(bot) {
         console.log(`Starting refreshTrades for ${bot}`);
         const prefix = bot === 'bread' ? 'bread' : bot === 'moon' ? 'moon' : 'funbags';
@@ -928,77 +1060,12 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             let activeTrades = [];
             let completedTrades = [];
-            let monitoredCoins = [];
 
             if (bot === 'funbags') {
-                monitoredCoins = await fetchMonitoredCoins();
-                monitoredBody.innerHTML = '';
-                monitoredCards.innerHTML = '';
-                monitoredCoins.forEach((coin) => {
-                    const tokenAddress = coin.token_address || '-';
-                    const tokenName = coin.token_name || '-';
-                    const marketCap = coin.market_cap || 0;
-                    const currentPrice = coin.current_price_usd || 0;
-                    const timestamp = coin.timestamp ? new Date(coin.timestamp).toLocaleString() : '-';
+                // Fetch monitored coins
+                await refreshMonitoredCoins();
 
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
-                        <td>${coin.symbol || '-'}</td>
-                        <td>$${marketCap.toLocaleString()}</td>
-                        <td>$${currentPrice.toFixed(8)}</td>
-                        <td>${timestamp}</td>
-                    `;
-                    monitoredBody.appendChild(row);
-
-                    const card = document.createElement('div');
-                    card.className = 'card';
-                    card.innerHTML = `
-                        <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></p>
-                        <p><span class="card-label">Symbol:</span> ${coin.symbol || '-'}</p>
-                        <p><span class="card-label">Market Cap:</span> $${marketCap.toLocaleString()}</p>
-                        <p><span class="card-label">Current Price:</span> $${currentPrice.toFixed(8)}</p>
-                        <p><span class="card-label">Timestamp:</span> ${timestamp}</p>
-                    `;
-                    monitoredCards.appendChild(card);
-                });
-                monitoredStatus.textContent = `Monitored coins loaded (${monitoredCoins.length})`;
-
-                if (monitoredSort && Object.keys(monitoredSort).length > 0) {
-                    const column = Object.keys(monitoredSort)[0];
-                    const direction = monitoredSort[column];
-                    const header = monitoredTable.querySelector(`th[data-sort="${column}"]`);
-                    if (header) {
-                        header.classList.add(`sort-${direction}`);
-                        header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
-                        const rows = Array.from(monitoredBody.querySelectorAll('tr'));
-                        rows.sort((a, b) => {
-                            let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                            let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-
-                            if (['market_cap', 'current_price_usd'].includes(column)) {
-                                aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
-                                bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
-                            } else if (column === 'timestamp') {
-                                aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
-                                bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
-                            } else {
-                                aValue = aValue.toLowerCase();
-                                bValue = bValue.toLowerCase();
-                            }
-
-                            return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
-                        });
-                        monitoredBody.innerHTML = '';
-                        rows.forEach(row => monitoredBody.appendChild(row));
-                    }
-                }
-
-                if (monitoredFilterInput && monitoredFilterValue) {
-                    monitoredFilterInput.value = monitoredFilterValue;
-                    monitoredFilterInput.dispatchEvent(new Event('input'));
-                }
-
+                // Fetch active trades
                 console.log('Fetching active trades from token_states for Fun Bags');
                 let { data: tokenStates, error: tokenError } = await supabase
                     .from('token_states')
@@ -1026,7 +1093,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 activeTrades = (tokenStates || []).map(state => {
                     const buyLog = buyLogs.find(log => log.token_address === state.token_address) || {};
                     const buyPrice = state.purchase_price || 0;
-                    const currentPrice = 0;
+                    const currentPrice = 0; // Replace with actual price if available
                     const profitPercent = buyPrice !== 0 ? (((currentPrice - buyPrice) / buyPrice) * 100).toFixed(2) : 'N/A';
                     return {
                         token_address: state.token_address,
@@ -1042,6 +1109,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     };
                 });
 
+                // Fetch completed trades
                 console.log('Fetching completed trades from bot_logs for Fun Bags');
                 let { data: sellLogs, error: sellLogError } = await supabase
                     .from('bot_logs')
@@ -1057,7 +1125,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 completedTrades = sellLogs.map(sell => {
                     const buyLog = buyLogs.find(log => log.token_address === sell.token_address) || {};
                     const buyPrice = buyLog.amount ? (0.1 / buyLog.amount) : 0;
-                    const sellPrice = 0;
+                    const sellPrice = 0; // Replace with actual price if available
                     const profitPercent = buyPrice !== 0 && sellPrice !== 0 ? (((sellPrice - buyPrice) / buyPrice) * 100).toFixed(2) : 'N/A';
                     const totalProfit = buyPrice !== 0 && sellPrice !== 0 ? (sellPrice - buyPrice) * sell.amount : 0;
                     return {
@@ -1074,6 +1142,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     };
                 });
             } else {
+                // Fetch active trades for Bread or Moon
                 console.log(`Fetching active trades from ${tableName}`);
                 let { data, error } = await supabase
                     .from(tableName)
@@ -1087,6 +1156,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 activeTrades = data || [];
                 console.log(`Active trades fetched for ${bot}:`, activeTrades);
 
+                // Fetch completed trades for Bread or Moon
                 console.log(`Fetching completed trades from ${tableName}`);
                 let { data: completedData, error: completedError } = await supabase
                     .from(tableName)
@@ -1101,6 +1171,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log(`Completed trades fetched for ${bot}:`, completedTrades);
             }
 
+            // Render active trades
             activeTradesBody.innerHTML = '';
             activeTradesCards.innerHTML = '';
             activeTrades.forEach((trade, index) => {
@@ -1142,6 +1213,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             activeStatus.textContent = `Active trades loaded (${activeTrades.length})`;
 
+            // Reapply active table sort
             if (activeSort && Object.keys(activeSort).length > 0) {
                 const column = Object.keys(activeSort)[0];
                 const direction = activeSort[column];
@@ -1174,7 +1246,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     rows.forEach(row => activeTradesBody.appendChild(row));
                 }
             }
-                        completedTradesBody.innerHTML = '';
+
+            // Render completed trades
+            completedTradesBody.innerHTML = '';
             completedTradesCards.innerHTML = '';
             const filteredTrades = completedTrades.filter(trade => {
                 const buyPrice = trade.buy_price_usd || 0;
@@ -1224,6 +1298,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             completedStatus.textContent = `Completed trades loaded (${filteredTrades.length})`;
 
+            // Reapply completed table sort
             if (completedSort && Object.keys(completedSort).length > 0) {
                 const column = Object.keys(completedSort)[0];
                 const direction = completedSort[column];
@@ -1257,6 +1332,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
+            // Update total profit
             const totalProfit = filteredTrades.reduce((sum, trade) => {
                 const profit = trade.total_profit_usd || 0;
                 return sum + profit;
@@ -1264,6 +1340,7 @@ document.addEventListener('DOMContentLoaded', () => {
             totalProfitElement.textContent = `$${totalProfit.toFixed(2)}`;
             console.log(`Total profit updated for ${bot}:`, totalProfit);
 
+            // Reapply filters
             const activeFilterInput = document.getElementById(`${prefix}-activeFilter`);
             const completedFilterInput = document.getElementById(`${prefix}-completedFilter`);
             if (activeFilterInput && activeFilterValue) {
@@ -1280,11 +1357,11 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error(`Error refreshing trades for ${bot}:`, error);
             activeStatus.textContent = 'Error loading active trades';
             completedStatus.textContent = 'Error loading completed trades';
-            if (bot === 'funbags') monitoredStatus.textContent = 'Error loading monitored coins';
             alert(`Failed to refresh trades for ${bot}. Check console for details.`);
         }
     }
 
+    // Refresh Wax trades
     async function refreshWaxTrades() {
         console.log('Starting refreshWaxTrades');
         const setupsStatus = document.getElementById('wax-status');
@@ -1373,42 +1450,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
             setupsStatus.textContent = `Trade setups loaded (${(setups || []).length})`;
 
+            // Reapply sort
             if (setupsSort && Object.keys(setupsSort).length > 0) {
-    const column = Object.keys(setupsSort)[0];
-    const direction = setupsSort[column];
-    const header = setupsTable.querySelector(`th[data-sort="${column}"]`);
-    if (header) {
-        header.classList.add(`sort-${direction}`);
-        header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
-        const rows = Array.from(setupsBody.querySelectorAll('tr'));
-        rows.sort((a, b) => {
-            let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-            let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
+                const column = Object.keys(setupsSort)[0];
+                const direction = setupsSort[column];
+                const header = setupsTable.querySelector(`th[data-sort="${column}"]`);
+                if (header) {
+                    header.classList.add(`sort-${direction}`);
+                    header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
+                    const rows = Array.from(setupsBody.querySelectorAll('tr'));
+                    rows.sort((a, b) => {
+                        let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
+                        let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
 
-            if (column === 'profitpercent') {
-                aValue = parseFloat(aValue.replace('%', '')) || 0;
-                bValue = parseFloat(bValue.replace('%', '')) || 0;
-            } else if (['popcandlehigh', 'entryprice', 'stoploss', 'solprofit'].includes(column)) {
-                aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
-                bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
-            } else if (['popcandletime', 'timestamp'].includes(column)) {
-                aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
-                bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
-            } else if (column === 'pullbackcount') {
-                aValue = parseInt(aValue) || 0;
-                bValue = parseInt(bValue) || 0;
-            } else {
-                aValue = aValue.toLowerCase();
-                bValue = bValue.toLowerCase();
+                        if (column === 'profitpercent') {
+                            aValue = parseFloat(aValue.replace('%', '')) || 0;
+                            bValue = parseFloat(bValue.replace('%', '')) || 0;
+                        } else if (['popcandlehigh', 'entryprice', 'stoploss', 'solprofit'].includes(column)) {
+                            aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
+                            bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
+                        } else if (['popcandletime', 'timestamp'].includes(column)) {
+                            aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
+                            bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
+                        } else if (column === 'pullbackcount') {
+                            aValue = parseInt(aValue) || 0;
+                            bValue = parseInt(bValue) || 0;
+                        } else {
+                            aValue = aValue.toLowerCase();
+                            bValue = bValue.toLowerCase();
+                        }
+
+                        return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
+                    });
+                    setupsBody.innerHTML = '';
+                    rows.forEach(row => setupsBody.appendChild(row));
+                }
             }
 
-            return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
-        });
-        setupsBody.innerHTML = '';
-        rows.forEach(row => setupsBody.appendChild(row));
-    }
-}
-
+            // Reapply filter
             const filterInput = document.getElementById('wax-filter');
             if (filterInput && filterValue) {
                 filterInput.value = filterValue;
@@ -1423,6 +1502,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Setup sorting and filtering for tables
     function setupTableSortingAndFiltering(bot) {
         const prefix = bot === 'bread' ? 'bread' : bot === 'moon' ? 'moon' : bot === 'wax' ? 'wax' : 'funbags';
         const activeTable = document.getElementById(`${prefix}-activeTradesBody`)?.closest('table');
@@ -1509,13 +1589,16 @@ document.addEventListener('DOMContentLoaded', () => {
         applyFilter(monitoredTable, monitoredFilterInput, document.getElementById('funbags-monitoredCards'));
     }
 
+    // Initialize sorting and filtering
     setupTableSortingAndFiltering('bread');
     setupTableSortingAndFiltering('moon');
     setupTableSortingAndFiltering('wax');
     setupTableSortingAndFiltering('funbags');
 
+    // Initial refresh
     refreshTab('bread');
 
+    // Bind refresh buttons
     document.getElementById('bread-topRefreshBtn')?.addEventListener('click', () => refreshTrades('bread'));
     document.getElementById('bread-middleRefreshBtn')?.addEventListener('click', () => refreshTrades('bread'));
     document.getElementById('bread-bottomRefreshBtn')?.addEventListener('click', () => refreshTrades('bread'));
@@ -1527,9 +1610,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('funbags-topRefreshBtn')?.addEventListener('click', () => refreshTrades('funbags'));
     document.getElementById('funbags-middleRefreshBtn')?.addEventListener('click', () => refreshTrades('funbags'));
     document.getElementById('funbags-bottomRefreshBtn')?.addEventListener('click', () => refreshTrades('funbags'));
-    document.getElementById('funbags-monitoredRefreshBtn')?.addEventListener('click', () => refreshTrades('funbags'));
+    document.getElementById('funbags-monitoredRefreshBtn')?.addEventListener('click', () => refreshMonitoredCoins());
 
+    // Bind export buttons
     document.getElementById('bread-exportBtn')?.addEventListener('click', () => alert('Export functionality not implemented'));
     document.getElementById('moon-exportBtn')?.addEventListener('click', () => alert('Export functionality not implemented'));
     document.getElementById('funbags-exportBtn')?.addEventListener('click', () => alert('Export functionality not implemented'));
 });
+</script>
