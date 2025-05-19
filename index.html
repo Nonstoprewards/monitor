@@ -861,16 +861,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function fetchMonitoredCoins() {
-        console.log('Fetching monitored coins from token_states');
-        try {
+    console.log('Fetching monitored coins from token_states');
+    try {
+        const fetchCoins = async () => {
             const { data: monitoredCoins, error } = await supabase
                 .from('token_states')
-                .select('token_address, lowestmarketcap, stayAboveStartTime')
+                .select('token_address, lowestmarketcap')
                 .eq('monitoring', true)
                 .eq('bought', false);
 
             if (error) {
-                console.error('Supabase query error:', {
+                console.error('Supabase query error for token_states:', {
                     message: error.message,
                     details: error.details || 'No details provided',
                     hint: error.hint || 'No hint provided',
@@ -880,164 +881,169 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             console.log('Monitored coins fetched:', monitoredCoins || 'No coins returned');
+            return monitoredCoins || [];
+        };
 
-            if (!monitoredCoins || monitoredCoins.length === 0) {
-                console.warn('No monitored coins found in token_states');
-                return [];
-            }
+        const monitoredCoins = await withRetry(fetchCoins, 3, 1000);
 
-            const coinsWithData = await Promise.all(monitoredCoins.map(async (coin) => {
-                try {
-                    const { marketCap, price, symbol } = await fetchTokenData(coin.token_address);
-                    return {
-                        token_address: coin.token_address || '-',
-                        token_name: (coin.token_address || '-').slice(0, 8),
-                        symbol: symbol,
-                        market_cap: marketCap,
-                        current_price_usd: price,
-                        lowest_market_cap: parseFloat(coin.lowestmarketcap) || 999999999,
-                        timestamp: coin.stayAboveStartTime ? new Date(coin.stayAboveStartTime).toISOString() : new Date().toISOString()
-                    };
-                } catch (error) {
-                    console.error(`Error processing token ${coin.token_address}:`, error.message);
-                    return {
-                        token_address: coin.token_address || '-',
-                        token_name: (coin.token_address || '-').slice(0, 8),
-                        symbol: '-',
-                        market_cap: 0,
-                        current_price_usd: 0,
-                        lowest_market_cap: parseFloat(coin.lowestmarketcap) || 999999999,
-                        timestamp: coin.stayAboveStartTime ? new Date(coin.stayAboveStartTime).toISOString() : new Date().toISOString()
-                    };
-                }
-            }));
-
-            console.log('Processed coins with data:', coinsWithData);
-            return coinsWithData;
-        } catch (error) {
-            console.error('Error in fetchMonitoredCoins:', error.message, error.stack);
-            throw error;
+        if (monitoredCoins.length === 0) {
+            console.warn('No monitored coins found in token_states');
+            return [];
         }
+
+        const coinsWithData = await Promise.all(monitoredCoins.map(async (coin, index) => {
+            console.log(`Processing coin ${index}: ${coin.token_address}`);
+            try {
+                const { marketCap, price, symbol } = await fetchTokenData(coin.token_address);
+                return {
+                    token_address: coin.token_address || '-',
+                    token_name: (coin.token_address || '-').slice(0, 8),
+                    symbol: symbol,
+                    market_cap: marketCap,
+                    current_price_usd: price,
+                    lowest_market_cap: parseFloat(coin.lowestmarketcap) || 999999999,
+                    timestamp: new Date().toISOString() // Fallback to current time
+                };
+            } catch (error) {
+                console.error(`Error processing token ${coin.token_address}:`, error.message);
+                return {
+                    token_address: coin.token_address || '-',
+                    token_name: (coin.token_address || '-').slice(0, 8),
+                    symbol: '-',
+                    market_cap: 0,
+                    current_price_usd: 0,
+                    lowest_market_cap: parseFloat(coin.lowestmarketcap) || 999999999,
+                    timestamp: new Date().toISOString()
+                };
+            }
+        }));
+
+        console.log('Processed coins with data:', coinsWithData);
+        return coinsWithData;
+    } catch (error) {
+        console.error('Error in fetchMonitoredCoins:', error.message, error.stack);
+        throw error;
+    }
+}
+
+async function refreshMonitoredCoins() {
+    console.log('Starting refreshMonitoredCoins');
+    const monitoredStatus = document.getElementById('funbags-monitored-status');
+    const monitoredBody = document.getElementById('funbags-monitoredBody');
+    const monitoredCards = document.getElementById('funbags-monitoredCards');
+    const monitoredTable = monitoredBody?.closest('table');
+    const monitoredFilterInput = document.getElementById('funbags-monitoredFilter');
+
+    if (!monitoredStatus || !monitoredBody || !monitoredCards || !monitoredTable || !monitoredFilterInput) {
+        console.error('Missing DOM elements for monitored coins:', {
+            monitoredStatus: !!monitoredStatus,
+            monitoredBody: !!monitoredBody,
+            monitoredCards: !!monitoredCards,
+            monitoredTable: !!monitoredTable,
+            monitoredFilterInput: !!monitoredFilterInput
+        });
+        alert('Failed to load monitored coins section. Missing DOM elements. Check console for details.');
+        return;
     }
 
-    async function refreshMonitoredCoins() {
-        console.log('Starting refreshMonitoredCoins');
-        const monitoredStatus = document.getElementById('funbags-monitored-status');
-        const monitoredBody = document.getElementById('funbags-monitoredBody');
-        const monitoredCards = document.getElementById('funbags-monitoredCards');
-        const monitoredTable = monitoredBody?.closest('table');
-        const monitoredFilterInput = document.getElementById('funbags-monitoredFilter');
+    monitoredStatus.textContent = 'Loading monitored coins...';
+    const monitoredSort = { ...sortStates.funbags.monitored };
+    const monitoredFilterValue = monitoredFilterInput.value || '';
+    console.log('Preserved sort state for monitored coins:', monitoredSort);
 
-        if (!monitoredStatus || !monitoredBody || !monitoredCards || !monitoredTable || !monitoredFilterInput) {
-            console.error('Missing DOM elements for monitored coins:', {
-                monitoredStatus: !!monitoredStatus,
-                monitoredBody: !!monitoredBody,
-                monitoredCards: !!monitoredCards,
-                monitoredTable: !!monitoredTable,
-                monitoredFilterInput: !!monitoredFilterInput
-            });
-            alert('Failed to load monitored coins section. Missing DOM elements. Check console for details.');
+    try {
+        const monitoredCoins = await fetchMonitoredCoins();
+        monitoredBody.innerHTML = '';
+        monitoredCards.innerHTML = '';
+
+        if (monitoredCoins.length === 0) {
+            monitoredStatus.textContent = 'No monitored coins found';
+            console.log('No coins to display');
             return;
         }
 
-        monitoredStatus.textContent = 'Loading monitored coins...';
-        const monitoredSort = { ...sortStates.funbags.monitored };
-        const monitoredFilterValue = monitoredFilterInput.value || '';
-        console.log('Preserved sort state for monitored coins:', monitoredSort);
+        monitoredCoins.forEach((coin, index) => {
+            console.log(`Rendering coin ${index}:`, coin);
+            const tokenAddress = coin.token_address || '-';
+            const tokenName = coin.token_name || '-';
+            const marketCap = coin.market_cap || 0;
+            const currentPrice = coin.current_price_usd || 0;
+            const lowestMarketCap = coin.lowest_market_cap || 999999999;
+            const timestamp = coin.timestamp ? new Date(coin.timestamp).toLocaleString() : '-';
 
-        try {
-            const monitoredCoins = await fetchMonitoredCoins();
-            monitoredBody.innerHTML = '';
-            monitoredCards.innerHTML = '';
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
+                <td>${coin.symbol || '-'}</td>
+                <td>$${marketCap.toLocaleString()}</td>
+                <td>$${currentPrice.toFixed(8)}</td>
+                <td>$${lowestMarketCap.toLocaleString()}</td>
+                <td>${timestamp}</td>
+            `;
+            monitoredBody.appendChild(row);
 
-            if (monitoredCoins.length === 0) {
-                monitoredStatus.textContent = 'No monitored coins found';
-                console.log('No coins to display');
-                return;
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></p>
+                <p><span class="card-label">Symbol:</span> ${coin.symbol || '-'}</p>
+                <p><span class="card-label">Market Cap:</span> $${marketCap.toLocaleString()}</p>
+                <p><span class="card-label">Current Price:</span> $${currentPrice.toFixed(8)}</p>
+                <p><span class="card-label">Lowest Market Cap:</span> $${lowestMarketCap.toLocaleString()}</p>
+                <p><span class="card-label">Monitoring Start:</span> ${timestamp}</p>
+            `;
+            monitoredCards.appendChild(card);
+        });
+
+        monitoredStatus.textContent = `Monitored coins loaded (${monitoredCoins.length})`;
+        console.log(`Rendered ${monitoredCoins.length} monitored coins`);
+
+        // Reapply sort
+        if (monitoredSort && Object.keys(monitoredSort).length > 0) {
+            const column = Object.keys(monitoredSort)[0];
+            const direction = monitoredSort[column];
+            const header = monitoredTable.querySelector(`th[data-sort="${column}"]`);
+            if (header) {
+                console.log(`Reapplying sort: ${column} ${direction}`);
+                header.classList.add(`sort-${direction}`);
+                header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
+                const rows = Array.from(monitoredBody.querySelectorAll('tr'));
+                rows.sort((a, b) => {
+                    let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
+                    let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
+
+                    if (['market_cap', 'current_price_usd', 'lowest_market_cap'].includes(column)) {
+                        aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
+                        bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
+                    } else if (column === 'timestamp') {
+                        aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
+                        bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
+                    } else {
+                        aValue = aValue.toLowerCase();
+                        bValue = bValue.toLowerCase();
+                    }
+
+                    return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
+                });
+                monitoredBody.innerHTML = '';
+                rows.forEach(row => monitoredBody.appendChild(row));
             }
-
-            monitoredCoins.forEach((coin, index) => {
-                console.log(`Rendering coin ${index}:`, coin);
-                const tokenAddress = coin.token_address || '-';
-                const tokenName = coin.token_name || '-';
-                const marketCap = coin.market_cap || 0;
-                const currentPrice = coin.current_price_usd || 0;
-                const lowestMarketCap = coin.lowest_market_cap || 999999999;
-                const timestamp = coin.timestamp ? new Date(coin.timestamp).toLocaleString() : '-';
-
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
-                    <td>${coin.symbol || '-'}</td>
-                    <td>$${marketCap.toLocaleString()}</td>
-                    <td>$${currentPrice.toFixed(8)}</td>
-                    <td>$${lowestMarketCap.toLocaleString()}</td>
-                    <td>${timestamp}</td>
-                `;
-                monitoredBody.appendChild(row);
-
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></p>
-                    <p><span class="card-label">Symbol:</span> ${coin.symbol || '-'}</p>
-                    <p><span class="card-label">Market Cap:</span> $${marketCap.toLocaleString()}</p>
-                    <p><span class="card-label">Current Price:</span> $${currentPrice.toFixed(8)}</p>
-                    <p><span class="card-label">Lowest Market Cap:</span> $${lowestMarketCap.toLocaleString()}</p>
-                    <p><span class="card-label">Monitoring Start:</span> ${timestamp}</p>
-                `;
-                monitoredCards.appendChild(card);
-            });
-
-            monitoredStatus.textContent = `Monitored coins loaded (${monitoredCoins.length})`;
-            console.log(`Rendered ${monitoredCoins.length} monitored coins`);
-
-            // Reapply sort
-            if (monitoredSort && Object.keys(monitoredSort).length > 0) {
-                const column = Object.keys(monitoredSort)[0];
-                const direction = monitoredSort[column];
-                const header = monitoredTable.querySelector(`th[data-sort="${column}"]`);
-                if (header) {
-                    console.log(`Reapplying sort: ${column} ${direction}`);
-                    header.classList.add(`sort-${direction}`);
-                    header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
-                    const rows = Array.from(monitoredBody.querySelectorAll('tr'));
-                    rows.sort((a, b) => {
-                        let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                        let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-
-                        if (['market_cap', 'current_price_usd', 'lowest_market_cap'].includes(column)) {
-                            aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
-                            bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
-                        } else if (column === 'timestamp') {
-                            aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
-                            bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
-                        } else {
-                            aValue = aValue.toLowerCase();
-                            bValue = bValue.toLowerCase();
-                        }
-
-                        return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
-                    });
-                    monitoredBody.innerHTML = '';
-                    rows.forEach(row => monitoredBody.appendChild(row));
-                }
-            }
-
-            // Reapply filter
-            if (monitoredFilterValue) {
-                console.log(`Reapplying filter: ${monitoredFilterValue}`);
-                monitoredFilterInput.value = monitoredFilterValue;
-                monitoredFilterInput.dispatchEvent(new Event('input'));
-            }
-
-            console.log('refreshMonitoredCoins completed successfully');
-        } catch (error) {
-            console.error('Error in refreshMonitoredCoins:', error.message, error.stack);
-            monitoredStatus.textContent = `Error loading monitored coins: ${error.message}`;
-            alert(`Failed to refresh monitored coins: ${error.message}. Check console for details.`);
         }
+
+        // Reapply filter
+        if (monitoredFilterValue) {
+            console.log(`Reapplying filter: ${monitoredFilterValue}`);
+            monitoredFilterInput.value = monitoredFilterValue;
+            monitoredFilterInput.dispatchEvent(new Event('input'));
+        }
+
+        console.log('refreshMonitoredCoins completed successfully');
+    } catch (error) {
+        console.error('Error in refreshMonitoredCoins:', error.message, error.stack);
+        monitoredStatus.textContent = `Error loading monitored coins: ${error.message}`;
+        alert(`Failed to refresh monitored coins: ${error.message}. Check console for details.`);
     }
+}
 
     async function refreshTab(bot) {
         if (bot === 'wax') {
