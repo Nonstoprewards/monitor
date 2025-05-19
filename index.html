@@ -762,8 +762,8 @@
                     </div>
                 </div>
             </div>
-                    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
+                   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
 console.log('Script loaded');
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1146,7 +1146,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Fetch completed trades
                 console.log('Fetching completed trades from bot_logs for Fun Bags');
-                let { data: sellLogs, error: sellLogEvent_type = ['sell_50', 'trailing_stop', 'stop_loss'];
+                let { data: sellLogs, error: sellLogError } = await supabase
+                    .from('bot_logs')
+                    .select('token_address, amount, timestamp, event_type')
+                    .in('event_type', ['sell_50', 'trailing_stop', 'stop_loss']);
                 
                 if (sellLogError) {
                     console.error('Sell logs fetch error for Fun Bags:', sellLogError.message, sellLogError.details, sellLogError.hint);
@@ -1575,6 +1578,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log(`Manual refresh triggered for ${bot}`);
                     refreshTrades(bot);
                 });
+            } else {
+                console.warn(`Button ${bot}-${btn} not found`);
             }
         });
         const exportBtn = document.getElementById(`${bot}-exportBtn`);
@@ -1607,6 +1612,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     alert('Failed to export trades. Check console for details.');
                 }
             });
+        } else {
+            console.warn(`Export button ${bot}-exportBtn not found`);
         }
     });
 
@@ -1618,6 +1625,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('Manual refresh triggered for Wax Bot');
                 refreshWaxTrades();
             });
+        } else {
+            console.warn(`Button wax-${btn} not found`);
         }
     });
 
@@ -1628,6 +1637,8 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Manual refresh triggered for Fun Bags monitored coins');
             refreshMonitoredCoins();
         });
+    } else {
+        console.warn('Button funbags-monitoredRefreshBtn not found');
     }
 
     // Sorting logic for all tables
@@ -1716,6 +1727,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
-    </script>
+</script>
 </body>
 </html>
