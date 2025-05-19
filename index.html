@@ -400,22 +400,17 @@
                     <i class="fas fa-moon mr-2"></i> Sexy Mode
                 </button>
             </div>
-            <!-- Tabs Navigation -->
             <div class="flex border-b border-gray-200 mb-6">
                 <div id="tab-bread" class="tab active">Bread and Butter Bot</div>
                 <div id="tab-moon" class="tab">Moon Bot</div>
                 <div id="tab-wax" class="tab">Wax Bot</div>
                 <div id="tab-funbags" class="tab">Fun Bags</div>
             </div>
-            <!-- Tab Content -->
-            <!-- Bread and Butter Bot -->
             <div id="content-bread" class="tab-content active">
-                <!-- Summary Section -->
                 <div class="mb-6 section-card">
                     <h2 class="text-xl text-navy mb-2">Summary</h2>
                     <p class="text-gray-700">Total Completed Profit: <span id="bread-totalProfit" class="font-semibold text-navy">Calculating...</span></p>
                 </div>
-                <!-- Active Trades Section -->
                 <div class="mb-6 section-card">
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
                         <h2 class="text-xl text-navy">Active Trades</h2>
@@ -460,7 +455,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- Completed Trades Section -->
                 <div class="mb-6 section-card">
                     <h2 class="text-xl text-navy mb-4">Completed Trades</h2>
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
@@ -504,14 +498,11 @@
                     </div>
                 </div>
             </div>
-            <!-- Moon Bot -->
             <div id="content-moon" class="tab-content">
-                <!-- Summary Section -->
                 <div class="mb-6 section-card">
                     <h2 class="text-xl text-navy mb-2">Summary</h2>
                     <p class="text-gray-700">Total Completed Profit: <span id="moon-totalProfit" class="font-semibold text-navy">Calculating...</span></p>
                 </div>
-                <!-- Active Trades Section -->
                 <div class="mb-6 section-card">
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
                         <h2 class="text-xl text-navy">Active Trades</h2>
@@ -556,7 +547,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- Completed Trades Section -->
                 <div class="mb-6 section-card">
                     <h2 class="text-xl text-navy mb-4">Completed Trades</h2>
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
@@ -600,9 +590,7 @@
                     </div>
                 </div>
             </div>
-            <!-- Wax Bot -->
             <div id="content-wax" class="tab-content">
-                <!-- Trade Setups Section -->
                 <div class="mb-6 section-card">
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
                         <h2 class="text-xl text-navy">Trade Setups</h2>
@@ -647,14 +635,11 @@
                     </div>
                 </div>
             </div>
-            <!-- Fun Bags Bot -->
             <div id="content-funbags" class="tab-content">
-                <!-- Summary Section -->
                 <div class="mb-6 section-card">
                     <h2 class="text-xl text-navy mb-2">Summary</h2>
                     <p class="text-gray-700">Total Completed Profit: <span id="funbags-totalProfit" class="font-semibold text-navy">Calculating...</span></p>
                 </div>
-                <!-- Monitored Coins Section -->
                 <div class="mb-6 section-card">
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
                         <h2 class="text-xl text-navy">Monitored Coins</h2>
@@ -689,7 +674,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- Active Trades Section -->
                 <div class="mb-6 section-card">
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
                         <h2 class="text-xl text-navy">Active Trades</h2>
@@ -734,7 +718,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- Completed Trades Section -->
                 <div class="mb-6 section-card">
                     <h2 class="text-xl text-navy mb-4">Completed Trades</h2>
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
@@ -780,19 +763,13 @@
             </div>
         </div>
     </div>
-    <!-- Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // JavaScript code will be in Part 2 and Part 3
-    </script>
-</body>
-</html>
-console.log('Script loaded');
+        console.log('Script loaded');
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded');
 
-    // Initialize Supabase client
     let supabase;
     try {
         supabase = window.supabase.createClient(
@@ -806,7 +783,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // Tab switching logic
     let activeTab = 'bread';
     const tabs = document.querySelectorAll('.tab');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -822,7 +798,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Auto-refresh every 3 seconds for Bread, Moon, and Fun Bags, manual for Wax
     setInterval(() => {
         if (activeTab === 'bread' || activeTab === 'moon' || activeTab === 'funbags') {
             console.log(`Auto-refreshing for ${activeTab}`);
@@ -830,7 +805,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 3000);
 
-    // Sexy Mode Toggle
     const sexyModeToggle = document.getElementById('sexyModeToggle');
     if (sexyModeToggle) {
         sexyModeToggle.addEventListener('click', () => {
@@ -845,7 +819,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('sexyModeToggle button not found');
     }
 
-    // Sorting and Filtering States
     const sortStates = {
         bread: { active: {}, completed: {} },
         moon: { active: {}, completed: {} },
@@ -853,17 +826,14 @@ document.addEventListener('DOMContentLoaded', () => {
         funbags: { active: {}, completed: {}, monitored: {} }
     };
 
-    // Placeholder function to fetch token data (market cap and price)
     async function fetchTokenData(tokenAddress) {
-        // Simulated data; replace with actual API call (e.g., Moralis) in a production environment
         return {
-            marketCap: Math.random() * 100000, // Placeholder
-            price: Math.random() * 0.01,       // Placeholder
-            symbol: 'SYM'                      // Placeholder
+            marketCap: Math.random() * 100000,
+            price: Math.random() * 0.01,
+            symbol: 'SYM'
         };
     }
 
-    // Function to fetch monitored coins for Fun Bags
     async function fetchMonitoredCoins() {
         console.log('Fetching monitored coins from token_states');
         let { data: monitoredCoins, error } = await supabase
@@ -878,7 +848,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         console.log('Monitored coins fetched:', monitoredCoins);
 
-        // Fetch current data for each coin
         const coinsWithData = await Promise.all((monitoredCoins || []).map(async (coin) => {
             const { marketCap, price, symbol } = await fetchTokenData(coin.token_address);
             return {
@@ -916,7 +885,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const activeTable = activeTradesBody?.closest('table');
         const completedTable = completedTradesBody?.closest('table');
 
-        // Fun Bags-specific elements for monitored coins
         let monitoredStatus, monitoredBody, monitoredCards, monitoredTable, monitoredFilterInput;
         if (bot === 'funbags') {
             monitoredStatus = document.getElementById('funbags-monitored-status');
@@ -948,7 +916,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Store current sort states and filter values
         const activeSort = { ...sortStates[bot].active };
         const completedSort = { ...sortStates[bot].completed };
         const activeFilterValue = document.getElementById(`${prefix}-activeFilter`)?.value || '';
@@ -964,7 +931,6 @@ document.addEventListener('DOMContentLoaded', () => {
             let monitoredCoins = [];
 
             if (bot === 'funbags') {
-                // Fetch monitored coins
                 monitoredCoins = await fetchMonitoredCoins();
                 monitoredBody.innerHTML = '';
                 monitoredCards.innerHTML = '';
@@ -998,7 +964,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 monitoredStatus.textContent = `Monitored coins loaded (${monitoredCoins.length})`;
 
-                // Reapply monitored table sort
                 if (monitoredSort && Object.keys(monitoredSort).length > 0) {
                     const column = Object.keys(monitoredSort)[0];
                     const direction = monitoredSort[column];
@@ -1029,13 +994,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                // Reapply monitored filter
                 if (monitoredFilterInput && monitoredFilterValue) {
                     monitoredFilterInput.value = monitoredFilterValue;
                     monitoredFilterInput.dispatchEvent(new Event('input'));
                 }
 
-                // Fetch active trades from token_states
                 console.log('Fetching active trades from token_states for Fun Bags');
                 let { data: tokenStates, error: tokenError } = await supabase
                     .from('token_states')
@@ -1049,7 +1012,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 console.log('Token states fetched for Fun Bags:', tokenStates);
 
-                // Fetch buy events from bot_logs
                 let { data: buyLogs, error: buyLogError } = await supabase
                     .from('bot_logs')
                     .select('token_address, amount, timestamp')
@@ -1061,11 +1023,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 console.log('Buy logs fetched for Fun Bags:', buyLogs);
 
-                // Map token_states to active trades
                 activeTrades = (tokenStates || []).map(state => {
                     const buyLog = buyLogs.find(log => log.token_address === state.token_address) || {};
                     const buyPrice = state.purchase_price || 0;
-                    const currentPrice = 0; // Placeholder; requires external API
+                    const currentPrice = 0;
                     const profitPercent = buyPrice !== 0 ? (((currentPrice - buyPrice) / buyPrice) * 100).toFixed(2) : 'N/A';
                     return {
                         token_address: state.token_address,
@@ -1073,7 +1034,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         token_symbol: '-',
                         buy_price_usd: buyPrice,
                         current_price_usd: currentPrice,
-                        market_cap: 0, // Placeholder
+                        market_cap: 0,
                         profit: profitPercent,
                         buy_timestamp: buyLog.timestamp || null,
                         status: state.sold75 ? 'partial_sold' : 'open',
@@ -1081,7 +1042,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     };
                 });
 
-                // Fetch completed trades from bot_logs
                 console.log('Fetching completed trades from bot_logs for Fun Bags');
                 let { data: sellLogs, error: sellLogError } = await supabase
                     .from('bot_logs')
@@ -1097,7 +1057,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 completedTrades = sellLogs.map(sell => {
                     const buyLog = buyLogs.find(log => log.token_address === sell.token_address) || {};
                     const buyPrice = buyLog.amount ? (0.1 / buyLog.amount) : 0;
-                    const sellPrice = 0; // Placeholder
+                    const sellPrice = 0;
                     const profitPercent = buyPrice !== 0 && sellPrice !== 0 ? (((sellPrice - buyPrice) / buyPrice) * 100).toFixed(2) : 'N/A';
                     const totalProfit = buyPrice !== 0 && sellPrice !== 0 ? (sellPrice - buyPrice) * sell.amount : 0;
                     return {
@@ -1114,7 +1074,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     };
                 });
             } else {
-                // Fetch active trades for Bread or Moon
                 console.log(`Fetching active trades from ${tableName}`);
                 let { data, error } = await supabase
                     .from(tableName)
@@ -1128,7 +1087,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 activeTrades = data || [];
                 console.log(`Active trades fetched for ${bot}:`, activeTrades);
 
-                // Fetch completed trades for Bread or Moon
                 console.log(`Fetching completed trades from ${tableName}`);
                 let { data: completedData, error: completedError } = await supabase
                     .from(tableName)
@@ -1143,7 +1101,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log(`Completed trades fetched for ${bot}:`, completedTrades);
             }
 
-            // Clear and render active trades
             activeTradesBody.innerHTML = '';
             activeTradesCards.innerHTML = '';
             activeTrades.forEach((trade, index) => {
@@ -1185,7 +1142,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             activeStatus.textContent = `Active trades loaded (${activeTrades.length})`;
 
-            // Reapply active table sort
             if (activeSort && Object.keys(activeSort).length > 0) {
                 const column = Object.keys(activeSort)[0];
                 const direction = activeSort[column];
@@ -1218,10 +1174,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     rows.forEach(row => activeTradesBody.appendChild(row));
                 }
             }
-
-            // Continue in Part 3...
-                                        // Clear and render completed trades
-            completedTradesBody.innerHTML = '';
+                        completedTradesBody.innerHTML = '';
             completedTradesCards.innerHTML = '';
             const filteredTrades = completedTrades.filter(trade => {
                 const buyPrice = trade.buy_price_usd || 0;
@@ -1271,7 +1224,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             completedStatus.textContent = `Completed trades loaded (${filteredTrades.length})`;
 
-            // Reapply completed table sort
             if (completedSort && Object.keys(completedSort).length > 0) {
                 const column = Object.keys(completedSort)[0];
                 const direction = completedSort[column];
@@ -1305,7 +1257,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Update total profit
             const totalProfit = filteredTrades.reduce((sum, trade) => {
                 const profit = trade.total_profit_usd || 0;
                 return sum + profit;
@@ -1313,7 +1264,6 @@ document.addEventListener('DOMContentLoaded', () => {
             totalProfitElement.textContent = `$${totalProfit.toFixed(2)}`;
             console.log(`Total profit updated for ${bot}:`, totalProfit);
 
-            // Reapply filters
             const activeFilterInput = document.getElementById(`${prefix}-activeFilter`);
             const completedFilterInput = document.getElementById(`${prefix}-completedFilter`);
             if (activeFilterInput && activeFilterValue) {
@@ -1353,13 +1303,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Store current sort state and filter value
         const setupsSort = { ...sortStates.wax.setups };
         const filterValue = document.getElementById('wax-filter')?.value || '';
         console.log('Preserved sort state for Wax:', setupsSort);
 
         try {
-            // Fetch trade setups
             console.log('Fetching trade setups from trade_setups');
             let { data: setups, error } = await supabase
                 .from('trade_setups')
@@ -1372,7 +1320,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             console.log('Trade setups fetched:', setups);
 
-            // Clear and render trade setups
             setupsBody.innerHTML = '';
             setupsCards.innerHTML = '';
             (setups || []).forEach((setup, index) => {
@@ -1426,7 +1373,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             setupsStatus.textContent = `Trade setups loaded (${(setups || []).length})`;
 
-            // Reapply table sort
             if (setupsSort && Object.keys(setupsSort).length > 0) {
                 const column = Object.keys(setupsSort)[0];
                 const direction = setupsSort[column];
@@ -1463,7 +1409,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Reapply filter
             const filterInput = document.getElementById('wax-filter');
             if (filterInput && filterValue) {
                 filterInput.value = filterValue;
@@ -1564,16 +1509,13 @@ document.addEventListener('DOMContentLoaded', () => {
         applyFilter(monitoredTable, monitoredFilterInput, document.getElementById('funbags-monitoredCards'));
     }
 
-    // Setup sorting and filtering for all bots
     setupTableSortingAndFiltering('bread');
     setupTableSortingAndFiltering('moon');
     setupTableSortingAndFiltering('wax');
     setupTableSortingAndFiltering('funbags');
 
-    // Initial refresh
     refreshTab('bread');
 
-    // Bind refresh buttons
     document.getElementById('bread-topRefreshBtn')?.addEventListener('click', () => refreshTrades('bread'));
     document.getElementById('bread-middleRefreshBtn')?.addEventListener('click', () => refreshTrades('bread'));
     document.getElementById('bread-bottomRefreshBtn')?.addEventListener('click', () => refreshTrades('bread'));
@@ -1587,7 +1529,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('funbags-bottomRefreshBtn')?.addEventListener('click', () => refreshTrades('funbags'));
     document.getElementById('funbags-monitoredRefreshBtn')?.addEventListener('click', () => refreshTrades('funbags'));
 
-    // Export functionality (placeholder)
     document.getElementById('bread-exportBtn')?.addEventListener('click', () => alert('Export functionality not implemented'));
     document.getElementById('moon-exportBtn')?.addEventListener('click', () => alert('Export functionality not implemented'));
     document.getElementById('funbags-exportBtn')?.addEventListener('click', () => alert('Export functionality not implemented'));
