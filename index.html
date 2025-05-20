@@ -14,373 +14,372 @@
 </head>
 <body class="flex items-center justify-center min-h-screen">
     <div class="container mx-auto p-6 max-w-7xl">
-        <div class="section-card">
-            <div class="flex justify-between items-center mb-6">
-                <h1 class="text-3xl sm:text-4xl text-navy">Rich 1 Day</h1>
-                <button id="sexyModeToggle" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                    <i class="fas fa-moon mr-2"></i> Sexy Mode
-                </button>
+    <div class="section-card">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl sm:text-4xl text-navy">Rich 1 Day</h1>
+            <button id="sexyModeToggle" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                <i class="fas fa-moon mr-2"></i> Sexy Mode
+            </button>
+        </div>
+        <div class="flex border-b border-gray-200 mb-6">
+            <div id="tab-bread" class="tab active">Bread and Butter Bot</div>
+            <div id="tab-moon" class="tab">Moon Bot</div>
+            <div id="tab-wax" class="tab">Wax Bot</div>
+            <div id="tab-funbags" class="tab">Fun Bags</div>
+        </div>
+        <div id="content-bread" class="tab-content active">
+            <div class="mb-6 section-card">
+                <h2 class="text-xl text-navy mb-2">Summary</h2>
+                <p class="text-gray-700">Total Completed Profit: <span id="bread-totalProfit" class="font-semibold text-navy">Calculating...</span></p>
             </div>
-            <div class="flex border-b border-gray-200 mb-6">
-                <div id="tab-bread" class="tab active">Bread and Butter Bot</div>
-                <div id="tab-moon" class="tab">Moon Bot</div>
-                <div id="tab-wax" class="tab">Wax Bot</div>
-                <div id="tab-funbags" class="tab">Fun Bags</div>
-            </div>
-            <div id="content-bread" class="tab-content active">
-                <div class="mb-6 section-card">
-                    <h2 class="text-xl text-navy mb-2">Summary</h2>
-                    <p class="text-gray-700">Total Completed Profit: <span id="bread-totalProfit" class="font-semibold text-navy">Calculating...</span></p>
-                </div>
-                <div class="mb-6 section-card">
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <h2 class="text-xl text-navy">Active Trades</h2>
-                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                            <button id="bread-topRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                                <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                            </button>
-                            <button id="bread-exportBtn" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
-                                <i class="fas fa-file-export mr-2"></i> Export Trades
-                            </button>
-                        </div>
-                    </div>
-                    <p id="bread-active-status" class="text-gray-700 text-sm mb-2 status">Loading active trades...</p>
-                    <input type="text" id="bread-activeFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
-                    <div class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="bread-activeTradesBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="bread-activeTradesCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <button id="bread-middleRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+            <div class="mb-6 section-card">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                    <h2 class="text-xl text-navy">Active Trades</h2>
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                        <button id="bread-topRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
                             <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
                         </button>
-                        <div class="flex items-center space-x-2">
-                            <span id="bread-activePrevPage" class="pagination-arrow disabled"></span>
-                            <span class="pagination-text text-gray-700">Page <span id="bread-activeCurrentPage">1</span></span>
-                            <span id="bread-activeNextPage" class="pagination-arrow disabled"></span>
-                        </div>
+                        <button id="bread-exportBtn" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
+                            <i class="fas fa-file-export mr-2"></i> Export Trades
+                        </button>
                     </div>
                 </div>
-                <div class="mb-6 section-card">
-                    <h2 class="text-xl text-navy mb-4">Completed Trades</h2>
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <p id="bread-completed-status" class="text-gray-700 text-sm mb-2 sm:mb-0 status">Loading completed trades...</p>
-                        <select id="bread-profitFilter" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                            <option value="all">All Trades</option>
-                            <option value="positive">Positive Profit</option>
-                            <option value="negative">Negative Profit</option>
-                        </select>
-                    </div>
-                    <input type="text" id="bread-completedFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
-                    <div id="bread-completedTableContainer" class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="sell_price_usd">Sell Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
-                                    <th data-sort="total_profit_usd">Total Profit (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
-                                    <th data-sort="sell_timestamp">Sell Time<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="bread-completedTradesBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="bread-completedTradesCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <div class="flex items-center space-x-2">
-                            <span id="bread-completedPrevPage" class="pagination-arrow disabled"></span>
-                            <span class="pagination-text text-gray-700">Page <span id="bread-completedCurrentPage">1</span></span>
-                            <span id="bread-completedNextPage" class="pagination-arrow disabled"></span>
-                        </div>
-                        <button id="bread-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                        </button>
+                <p id="bread-active-status" class="text-gray-700 text-sm mb-2 status">Loading active trades...</p>
+                <input type="text" id="bread-activeFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
+                <div class="table-container">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr>
+                                <th data-sort="token_name">Token<span class="sort-icon"></span></th>
+                                <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
+                                <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
+                                <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
+                                <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
+                                <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
+                                <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="bread-activeTradesBody"></tbody>
+                    </table>
+                </div>
+                <div class="card-container">
+                    <div id="bread-activeTradesCards"></div>
+                </div>
+                <div class="flex justify-between items-center mt-4">
+                    <button id="bread-middleRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                        <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
+                    </button>
+                    <div class="flex items-center space-x-2">
+                        <span id="bread-activePrevPage" class="pagination-arrow disabled"></span>
+                        <span class="pagination-text text-gray-700">Page <span id="bread-activeCurrentPage">1</span></span>
+                        <span id="bread-activeNextPage" class="pagination-arrow disabled"></span>
                     </div>
                 </div>
             </div>
-            <div id="content-moon" class="tab-content">
-                <div class="mb-6 section-card">
-                    <h2 class="text-xl text-navy mb-2">Summary</h2>
-                    <p class="text-gray-700">Total Completed Profit: <span id="moon-totalProfit" class="font-semibold text-navy">Calculating...</span></p>
+            <div class="mb-6 section-card">
+                <h2 class="text-xl text-navy mb-4">Completed Trades</h2>
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                    <p id="bread-completed-status" class="text-gray-700 text-sm mb-2 sm:mb-0 status">Loading completed trades...</p>
+                    <select id="bread-profitFilter" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        <option value="all">All Trades</option>
+                        <option value="positive">Positive Profit</option>
+                        <option value="negative">Negative Profit</option>
+                    </select>
                 </div>
-                <div class="mb-6 section-card">
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <h2 class="text-xl text-navy">Active Trades</h2>
-                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                            <button id="moon-topRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                                <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                            </button>
-                            <button id="moon-exportBtn" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
-                                <i class="fas fa-file-export mr-2"></i> Export Trades
-                            </button>
-                        </div>
+                <input type="text" id="bread-completedFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
+                <div id="bread-completedTableContainer" class="table-container">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr>
+                                <th data-sort="token_name">Token<span class="sort-icon"></span></th>
+                                <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
+                                <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
+                                <th data-sort="sell_price_usd">Sell Price (USD)<span class="sort-icon"></span></th>
+                                <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
+                                <th data-sort="total_profit_usd">Total Profit (USD)<span class="sort-icon"></span></th>
+                                <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
+                                <th data-sort="sell_timestamp">Sell Time<span class="sort-icon"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="bread-completedTradesBody"></tbody>
+                    </table>
+                </div>
+                <div class="card-container">
+                    <div id="bread-completedTradesCards"></div>
+                </div>
+                <div class="flex justify-between items-center mt-4">
+                    <div class="flex items-center space-x-2">
+                        <span id="bread-completedPrevPage" class="pagination-arrow disabled"></span>
+                        <span class="pagination-text text-gray-700">Page <span id="bread-completedCurrentPage">1</span></span>
+                        <span id="bread-completedNextPage" class="pagination-arrow disabled"></span>
                     </div>
-                    <p id="moon-active-status" class="text-gray-700 text-sm mb-2 status">Loading active trades...</p>
-                    <input type="text" id="moon-activeFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
-                    <div class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="moon-activeTradesBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="moon-activeTradesCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <button id="moon-middleRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                    <button id="bread-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                        <i class="fas faV <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="content-moon" class="tab-content">
+            <div class="mb-6 section-card">
+                <h2 class="text-xl text-navy mb-2">Summary</h2>
+                <p class="text-gray-700">Total Completed Profit: <span id="moon-totalProfit" class="font-semibold text-navy">Calculating...</span></p>
+            </div>
+            <div class="mb-6 section-card">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                    <h2 class="text-xl text-navy">Active Trades</h2>
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                        <button id="moon-topRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
                             <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
                         </button>
-                        <div class="flex items-center space-x-2">
-                            <span id="moon-activePrevPage" class="pagination-arrow disabled"></span>
-                            <span class="pagination-text text-gray-700">Page <span id="moon-activeCurrentPage">1</span></span>
-                            <span id="moon-activeNextPage" class="pagination-arrow disabled"></span>
-                        </div>
+                        <button id="moon-exportBtn" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
+                            <i class="fas fa-file-export mr-2"></i> Export Trades
+                        </button>
                     </div>
                 </div>
-                <div class="mb-6 section-card">
-                    <h2 class="text-xl text-navy mb-4">Completed Trades</h2>
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <p id="moon-completed-status" class="text-gray-700 text-sm mb-2 sm:mb-0 status">Loading completed trades...</p>
-                        <select id="moon-profitFilter" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                            <option value="all">All Trades</option>
-                            <option value="positive">Positive Profit</option>
-                            <option value="negative">Negative Profit</option>
-                        </select>
-                    </div>
-                    <input type="text" id="moon-completedFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
-                    <div id="moon-completedTableContainer" class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="sell_price_usd">Sell Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
-                                    <th data-sort="total_profit_usd">Total Profit (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
-                                    <th data-sort="sell_timestamp">Sell Time<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="moon-completedTradesBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="moon-completedTradesCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <div class="flex items-center space-x-2">
-                            <span id="moon-completedPrevPage" class="pagination-arrow disabled"></span>
-                            <span class="pagination-text text-gray-700">Page <span id="moon-completedCurrentPage">1</span></span>
-                            <span id="moon-completedNextPage" class="pagination-arrow disabled"></span>
-                        </div>
-                        <button id="moon-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                        </button>
+                <p id="moon-active-status" class="text-gray-700 text-sm mb-2 status">Loading active trades...</p>
+                <input type="text" id="moon-activeFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
+                <div class="table-container">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr>
+                                <th data-sort="token_name">Token<span class="sort-icon"></span></th>
+                                <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
+                                <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
+                                <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
+                                <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
+                                <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
+                                <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="moon-activeTradesBody"></tbody>
+                    </table>
+                </div>
+                <div class="card-container">
+                    <div id="moon-activeTradesCards"></div>
+                </div>
+                <div class="flex justify-between items-center mt-4">
+                    <button id="moon-middleRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                        <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
+                    </button>
+                    <div class="flex items-center space-x-2">
+                        <span id="moon-activePrevPage" class="pagination-arrow disabled"></span>
+                        <span class="pagination-text text-gray-700">Page <span id="moon-activeCurrentPage">1</span></span>
+                        <span id="moon-activeNextPage" class="pagination-arrow disabled"></span>
                     </div>
                 </div>
             </div>
-            <div id="content-wax" class="tab-content">
-                <div class="mb-6 section-card">
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <h2 class="text-xl text-navy">Trade Setups</h2>
-                        <button id="wax-refreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Setups
-                        </button>
+            <div class="mb-6 section-card">
+                <h2 class="text-xl text-navy mb-4">Completed Trades</h2>
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                    <p id="moon-completed-status" class="text-gray-700 text-sm mb-2 sm:mb-0 status">Loading completed trades...</p>
+                    <select id="moon-profitFilter" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        <option value="all">All Trades</option>
+                        <option value="positive">Positive Profit</option>
+                        <option value="negative">Negative Profit</option>
+                    </select>
+                </div>
+                <input type="text" id="moon-completedFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
+                <div id="moon-completedTableContainer" class="table-container">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr>
+                                <th data-sort="token_name">Token<span class="sort-icon"></span></th>
+                                <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
+                                <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
+                                <th data-sort="sell_price_usd">Sell Price (USD)<span class="sort-icon"></span></th>
+                                <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
+                                <th data-sort="total_profit_usd">Total Profit (USD)<span class="sort-icon"></span></th>
+                                <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
+                                <th data-sort="sell_timestamp">Sell Time<span class="sort-icon"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="moon-completedTradesBody"></tbody>
+                    </table>
+                </div>
+                <div class="card-container">
+                    <div id="moon-completedTradesCards"></div>
+                </div>
+                <div class="flex justify-between items-center mt-4">
+                    <div class="flex items-center space-x-2">
+                        <span id="moon-completedPrevPage" class="pagination-arrow disabled"></span>
+                        <span class="pagination-text text-gray-700">Page <span id="moon-completedCurrentPage">1</span></span>
+                        <span id="moon-completedNextPage" class="pagination-arrow disabled"></span>
                     </div>
-                    <p id="wax-status" class="text-gray-700 text-sm mb-2 status">Loading trade setups...</p>
-                    <input type="text" id="wax-filter" class="filter-input" placeholder="Filter by Symbol...">
-                    <div class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="symbol">Symbol<span class="sort-icon"></span></th>
-                                    <th data-sort="action">Action<span class="sort-icon"></span></th>
-                                    <th data-sort="popcandletime">Pop Candle Time<span class="sort-icon"></span></th>
-                                    <th data-sort="popcandlehigh">Pop Candle High (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="pullbackcount">Pullback Count<span class="sort-icon"></span></th>
-                                    <th data-sort="entryprice">Entry Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="stoploss">Stop Loss (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="profitpercent">Profit (%)<span class="sort-icon"></span></th>
-                                    <th data-sort="solprofit">Sol Profit<span class="sort-icon"></span></th>
-                                    <th data-sort="exit_reason">Exit Reason<span class="sort-icon"></span></th>
-                                    <th data-sort="timestamp">Timestamp<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="wax-setupsBody"></tbody>
-                        </table>
+                    <button id="moon-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                        <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="content-wax" class="tab-content">
+            <div class="mb-6 section-card">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                    <h2 class="text-xl text-navy">Trade Setups</h2>
+                    <button id="wax-refreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                        <i class="fas fa-sync-alt mr-2"></i> Refresh Setups
+                    </button>
+                </div>
+                <p id="wax-status" class="text-gray-700 text-sm mb-2 status">Loading trade setups...</p>
+                <input type="text" id="wax-filter" class="filter-input" placeholder="Filter by Symbol...">
+                <div class="table-container">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr>
+                                <th data-sort="symbol">Symbol<span class="sort-icon"></span></th>
+                                <th data-sort="action">Action<span class="sort-icon"></span></th>
+                                <th data-sort="popcandletime">Pop Candle Time<span class="sort-icon"></span></th>
+                                <th data-sort="popcandlehigh">Pop Candle High (USD)<span class="sort-icon"></span></th>
+                                <th data-sort="pullbackcount">Pullback Count<span class="sort-icon"></span></th>
+                                <th data-sort="entryprice">Entry Price (USD)<span class="sort-icon"></span></th>
+                                <th data-sort="stoploss">Stop Loss (USD)<span class="sort-icon"></span></th>
+                                <th data-sort="profitpercent">Profit (%)<span class="sort-icon"></span></th>
+                                <th data-sort="solprofit">Sol Profit<span class="sort-icon"></span></th>
+                                <th data-sort="exit_reason">Exit Reason<span class="sort-icon"></span></th>
+                                <th data-sort="timestamp">Timestamp<span class="sort-icon"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="wax-setupsBody"></tbody>
+                    </table>
+                </div>
+                <div class="card-container">
+                    <div id="wax-setupsCards"></div>
+                </div>
+                <div class="flex justify-between items-center mt-4">
+                    <div class="flex items-center space-x-2">
+                        <span id="wax-prevPage" class="pagination-arrow disabled"></span>
+                        <span class="pagination-text text-gray-700">Page <span id="wax-currentPage">1</span></span>
+                        <span id="wax-nextPage" class="pagination-arrow disabled"></span>
                     </div>
-                    <div class="card-container">
-                        <div id="wax-setupsCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <div class="flex items-center space-x-2">
-                            <span id="wax-prevPage" class="pagination-arrow disabled"></span>
-                            <span class="pagination-text text-gray-700">Page <span id="wax-currentPage">1</span></span>
-                            <span id="wax-nextPage" class="pagination-arrow disabled"></span>
-                        </div>
-                        <button id="wax-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Setups
-                        </button>
+                    <button id="wax-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                        <i class="fas fa-sync-alt mr-2"></i> Refresh Setups
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="content-funbags" class="tab-content">
+            <div class="mb-6 section-card">
+                <h2 class="text-xl text-navy mb-2">Summary</h2>
+                <p class="text-gray-700">Total Completed Profit: <span id="funbags-totalProfit" class="font-semibold text-navy">Calculating...</span></p>
+            </div>
+            <div class="mb-6 section-card">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                    <h2 class="text-xl text-navy">Monitored Coins</h2>
+                    <button id="funbags-monitoredRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                        <i class="fas fa-sync-alt mr-2"></i> Refresh Monitored
+                    </button>
+                </div>
+                <p id="funbags-monitored-status" class="text-gray-700 text-sm mb-2 status">Loading monitored coins...</p>
+                <input type="text" id="funbags-monitoredFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
+                <div class="table-container">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr>
+                                <th data-sort="token_name">Token<span class="sort-icon"></span></th>
+                                <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
+                                <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
+                                <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
+                                <th data-sort="lowest_market_cap">Lowest Market Cap (USD)<span class="sort-icon"></span></th>
+                                <th data-sort="timestamp">Monitoring Start<span class="sort-icon"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="funbags-monitoredBody"></tbody>
+                    </table>
+                </div>
+                <div class="card-container">
+                    <div id="funbags-monitoredCards"></div>
+                </div>
+                <div class="flex justify-between items-center mt-4">
+                    <div class="flex items-center space-x-2">
+                        <span id="funbags-monitoredPrevPage" class="pagination-arrow disabled"></span>
+                        <span class="pagination-text text-gray-700">Page <span id="funbags-monitoredCurrentPage">1</span></span>
+                        <span id="funbags-monitoredNextPage" class="pagination-arrow disabled"></span>
                     </div>
                 </div>
             </div>
-            <div id="content-funbags" class="tab-content">
-                <div class="mb-6 section-card">
-                    <h2 class="text-xl text-navy mb-2">Summary</h2>
-                    <p class="text-gray-700">Total Completed Profit: <span id="funbags-totalProfit" class="font-semibold text-navy">Calculating...</span></p>
-                </div>
-                <div class="mb-6 section-card">
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <h2 class="text-xl text-navy">Monitored Coins</h2>
-                        <button id="funbags-monitoredRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Monitored
-                        </button>
-                    </div>
-                    <p id="funbags-monitored-status" class="text-gray-700 text-sm mb-2 status">Loading monitored coins...</p>
-                    <input type="text" id="funbags-monitoredFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
-                    <div class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
-                                    <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="lowest_market_cap">Lowest Market Cap (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="timestamp">Monitoring Start<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="funbags-monitoredBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="funbags-monitoredCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <div class="flex items-center space-x-2">
-                            <span id="funbags-monitoredPrevPage" class="pagination-arrow disabled"></span>
-                            <span class="pagination-text text-gray-700">Page <span id="funbags-monitoredCurrentPage">1</span></span>
-                            <span id="funbags-monitoredNextPage" class="pagination-arrow disabled"></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="mb-6 section-card">
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <h2 class="text-xl text-navy">Active Trades</h2>
-                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                            <button id="funbags-topRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                                <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                            </button>
-                            <button id="funbags-exportBtn" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
-                                <i class="fas fa-file-export mr-2"></i> Export Trades
-                            </button>
-                        </div>
-                    </div>
-                    <p id="funbags-active-status" class="text-gray-700 text-sm mb-2 status">Loading active trades...</p>
-                    <input type="text" id="funbags-activeFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
-                    <div class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="funbags-activeTradesBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="funbags-activeTradesCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <button id="funbags-middleRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+            <div class="mb-6 section-card">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                    <h2 class="text-xl text-navy">Active Trades</h2>
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                        <button id="funbags-topRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
                             <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
                         </button>
-                        <div class="flex items-center space-x-2">
-                            <span id="funbags-activePrevPage" class="pagination-arrow disabled"></span>
-                            <span class="pagination-text text-gray-700">Page <span id="funbags-activeCurrentPage">1</span></span>
-                            <span id="funbags-activeNextPage" class="pagination-arrow disabled"></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="mb-6 section-card">
-                    <h2 class="text-xl text-navy mb-4">Completed Trades</h2>
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <p id="funbags-completed-status" class="text-gray-700 text-sm mb-2 sm:mb-0 status">Loading completed trades...</p>
-                        <select id="funbags-profitFilter" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                            <option value="all">All Trades</option>
-                            <option value="positive">Positive Profit</option>
-                            <option value="negative">Negative Profit</option>
-                        </select>
-                    </div>
-                    <input type="text" id="funbags-completedFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
-                    <div id="funbags-completedTableContainer" class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="sell_price_usd">Sell Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
-                                    <th data-sort="total_profit_usd">Total Profit (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
-                                    <th data-sort="sell_timestamp">Sell Time<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="funbags-completedTradesBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="funbags-completedTradesCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <div class="flex items-center space-x-2">
-                            <span id="funbags-completedPrevPage" class="pagination-arrow disabled"></span>
-                            <span class="pagination-text text-gray-700">Page <span id="funbags-completedCurrentPage">1</span></span>
-                            <span id="funbags-completedNextPage" class="pagination-arrow disabled"></span>
-                        </div>
-                        <button id="funbags-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
+                        <button id="funbags-exportBtn" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
+                            <i class="fas fa-file-export mr-2"></i> Export Trades
                         </button>
                     </div>
+                </div>
+                <p id="funbags-active-status" class="text-gray-700 text-sm mb-2 status">Loading active trades...</p>
+                <input type="text" id="funbags-activeFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
+                <div class="table-container">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr>
+                                <th data-sort="token_name">Token<span class="sort-icon"></span></th>
+                                <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
+                                <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
+                                <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
+                                <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
+                                <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
+                                <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="funbags-activeTradesBody"></tbody>
+                    </table>
+                </div>
+                <div class="card-container">
+                    <div id="funbags-activeTradesCards"></div>
+                </div>
+                <div class="flex justify-between items-center mt-4">
+                    <button id="funbags-middleRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                        <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
+                    </button>
+                    <div class="flex items-center space-x-2">
+                        <span id="funbags-activePrevPage" class="pagination-arrow disabled"></span>
+                        <span class="pagination-text text-gray-700">Page <span id="funbags-activeCurrentPage">1</span></span>
+                        <span id="funbags-activeNextPage" class="pagination-arrow disabled"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-6 section-card">
+                <h2 class="text-xl text-navy mb-4">Completed Trades</h2>
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                    <p id="funbags-completed-status" class="text-gray-700 text-sm mb-2 sm:mb-0 status">Loading completed trades...</p>
+                    <select id="funbags-profitFilter" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        <option value="all">All Trades</option>
+                        <option value="positive">Positive Profit</option>
+                        <option value="negative">Negative Profit</option>
+                    </select>
+                </div>
+                <input type="text" id="funbags-completedFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
+                <div id="funbags-completedTableContainer" class="table-container">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr>
+                                <th data-sort="token_name">Token<span class="sort-icon"></span></th>
+                                <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
+                                <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
+                                <th data-sort="sell_price_usd">Sell Price (USD)<span class="sort-icon"></span></th>
+                                <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
+                                <th data-sort="total_profit_usd">Total Profit (USD)<span class="sort-icon"></span></th>
+                                <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
+                                <th data-sort="sell_timestamp">Sell Time<span class="sort-icon"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="funbags-completedTradesBody"></tbody>
+                    </table>
+                </div>
+                <div class="card-container">
+                    <div id="funbags-completedTradesCards"></div>
+                </div>
+                <div class="flex justify-between items-center mt-4">
+                    <div class="flex items-center space-x-2">
+                        <span id="funbags-completedPrevPage" class="pagination-arrow disabled"></span>
+                        <span class="pagination-text text-gray-700">Page <span id="funbags-completedCurrentPage">1</span></span>
+                        <span id="funbags-completedNextPage" class="pagination-arrow disabled"></span>
+                    </div>
+                    <button id="funbags-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                        <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
+                    </button>
                 </div>
             </div>
         </div>
@@ -778,7 +777,117 @@
         try {
             supabase = window.supabase.createClient(
                 'https://bprfbjsxbkitrbqszqpz.supabase.co',
-                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcmZianN4YmtpdHJicXN6cXB6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NTg5NDMzOSwiZXhwIjoyMDYxNDcwMzM5fQ.wtFixniNTzbObmwjI1R8OuIusXB95w5waoXBN4DiiNw'
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcmZianN4YmtpdHJicXN6cXB6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4OTQzMzksImV4cCI6MjA2MTQ3MDMzOX0.7f0Y3Oms5vXzH_bNjs9T4L1bS5ZcIAU65i3ni2f_EoI' // MODIFIED: Replaced SUPABASE_SERVICE_KEY with SUPABASE_ANON_KEY
+            );
+            console.log('Supabase client initialized');
+        } catch (error) {
+            console.error('Error initializing Supabase:', error);
+            alert('Failed to initialize Supabase. Check console for details.');
+            return;
+        }
+
+        // Tab switching logic
+        let activeTab = 'bread';
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`content-${tab.id.split('-')[1]}`).classList.add('active');
+                activeTab = tab.id.split('-')[1];
+                console.log(`Switched to tab: ${tab.textContent}, activeTab: ${activeTab}`);
+                refreshTab(activeTab);
+            });
+        });
+
+        // Auto-refresh every 3 seconds for Bread, Moon, and Fun Bags
+        setInterval(() => {
+            if (activeTab === 'bread' || activeTab === 'moon' || activeTab === 'funbags') {
+                console.log(`Auto-refreshing for ${activeTab}`);
+                refreshTab(activeTab);
+            }
+        }, 3000);
+
+        // Sexy Mode Toggle
+        const sexyModeToggle = document.getElementById('sexyModeToggle');
+        if (sexyModeToggle) {
+            sexyModeToggle.addEventListener('click', () => {
+                console.log('Sexy Mode toggled');
+                const body = document.body;
+                const isSexy = body.classList.toggle('sexy');
+                sexyModeToggle.innerHTML = isSexy
+                    ? '<i class="fas fa-sun mr-2"></i> Not Sexy Mode'
+                    : '<i class="fas fa-moon mr-2"></i> Sexy Mode';
+            });
+        } else {
+            console.error('sexyModeToggle button not found');
+        }
+
+        // Sorting and Filtering States
+        const sortStates = {
+            bread: { active: {}, completed: {} },
+            moon: { active: {}, completed: {} },
+            wax: { setups: {} },
+            funbags: { active: {}, completed: {}, monitored: {} }
+        };
+
+        // Retry mechanism for Supabase queries
+        async function withRetry(fn, retries = 3, delay = 1000) {
+            for (let attempt = 1; attempt <= retries; attempt++) {
+                try {
+                    return await fn();
+                } catch (error) {
+                    if (attempt === retries) throw error;
+                    console.warn(`Attempt ${attempt} failed, retrying in ${delay}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+        }
+
+        async function fetchTokenData(tokenAddress) {
+            console.log(`Fetching token data for ${tokenAddress}`);
+            const url = `https://solana-gateway.moralis.io/token/mainnet/${tokenAddress}/metadata`;
+            const moralisOptions = {
+                method: 'GET',
+                headers: {
+                    accept: 'application/json',
+                    'X-API-Key': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjZhMjdlMWU0LWUwNGEtNGRiNC05ZjQ5LTU4MjFkNGU2MmEzMiIsIm9yZ0lkIjoiNDQ3NjY4IiwidXNlcklkIjoiNDYwNTkzIiwidHlwZUlkIjoiMGRjZmM0ZTctNzhkOC00YzRhLWE2YzgtYzc2OWRiMTdkMzk3IiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NDc1MjU1NjAsImV4cCI6NDkwMzI4NTU2MH0.2CVGa61MAN5zUvbh8yssfNZdNSTORl1GBYXXBs2nJbM'
+                }
+            };
+            try {
+                if (!tokenAddress || typeof tokenAddress !== 'string' || tokenAddress.length < 10) {
+                    throw new Error('Invalid token address');
+                }
+                const response = await fetch(url, moralisOptions);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}, Message: ${response.statusText}`);
+                }
+                const data = await response.json();
+                const marketCap = parseFloat(data.fullyDilutedValue) || 0;
+                const price = parseFloat(data.price) || 0;
+                const symbol = data.symbol || '-';
+                console.log(`Token data fetched: ${tokenAddress}`, { marketCap, price, symbol });
+                return { marketCap, price, symbol };
+            } catch (error) {
+                console.error(`Error fetching token data for ${tokenAddress}:`, error.message);
+                return { marketCap: 0, price: 0, symbol: '-' };
+            }
+        }
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    console.log('Script loaded');
+
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('DOM loaded');
+
+        // Initialize Supabase client
+        let supabase;
+        try {
+            supabase = window.supabase.createClient(
+                'https://bprfbjsxbkitrbqszqpz.supabase.co',
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcmZianN4YmtpdHJicXN6cXB6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4OTQzMzksImV4cCI6MjA2MTQ3MDMzOX0.7f0Y3Oms5vXzH_bNjs9T4L1bS5ZcIAU65i3ni2f_EoI' // MODIFIED: Replaced SUPABASE_SERVICE_KEY with SUPABASE_ANON_KEY
             );
             console.log('Supabase client initialized');
         } catch (error) {
@@ -877,15 +986,18 @@
             }
         }
 
+        // MODIFIED START: Updated fetchMonitoredCoins to use token_states directly
         async function fetchMonitoredCoins() {
             console.log('Fetching monitored coins from token_states');
             try {
                 const fetchCoins = async () => {
                     const { data: monitoredCoins, error } = await supabase
                         .from('token_states')
-                        .select('token_address, lowest_market_cap, within_range_start_time')
+                        .select('token_address, max_market_cap, lowest_market_cap, within_range_start_time, is_bonding')
                         .eq('monitoring', true)
-                        .eq('bought', false);
+                        .eq('bought', false)
+                        .order('within_range_start_time', { ascending: false })
+                        .limit(100); // Limit for performance
 
                     if (error) {
                         console.error('Supabase query error for token_states:', {
@@ -908,32 +1020,20 @@
                     return [];
                 }
 
-                const coinsWithData = await Promise.all(monitoredCoins.map(async (coin, index) => {
+                const coinsWithData = monitoredCoins.map((coin, index) => {
                     console.log(`Processing coin ${index}: ${coin.token_address}`);
-                    try {
-                        const { marketCap, price, symbol } = await fetchTokenData(coin.token_address);
-                        return {
-                            token_address: coin.token_address || '-',
-                            token_name: (coin.token_address || '-').slice(0, 8),
-                            symbol: symbol,
-                            market_cap: marketCap,
-                            current_price_usd: price,
-                            lowest_market_cap: parseFloat(coin.lowest_market_cap) || 999999999,
-                            timestamp: coin.within_range_start_time || new Date().toISOString()
-                        };
-                    } catch (error) {
-                        console.error(`Error processing token ${coin.token_address}:`, error.message);
-                        return {
-                            token_address: coin.token_address || '-',
-                            token_name: (coin.token_address || '-').slice(0, 8),
-                            symbol: '-',
-                            market_cap: 0,
-                            current_price_usd: 0,
-                            lowest_market_cap: parseFloat(coin.lowest_market_cap) || 999999999,
-                            timestamp: coin.within_range_start_time || new Date().toISOString()
-                        };
-                    }
-                }));
+                    const marketCap = parseFloat(coin.max_market_cap) || 0;
+                    const price = marketCap / 1_000_000_000; // PUMP_FUN_TOTAL_SUPPLY from funbags.js
+                    return {
+                        token_address: coin.token_address || '-',
+                        token_name: (coin.token_address || '-').slice(0, 8),
+                        symbol: '-', // No symbol in token_states
+                        market_cap: marketCap,
+                        current_price_usd: price,
+                        lowest_market_cap: parseFloat(coin.lowest_market_cap) || 999999999,
+                        timestamp: coin.within_range_start_time ? new Date(parseInt(coin.within_range_start_time)).toISOString() : new Date().toISOString()
+                    };
+                });
 
                 console.log('Processed coins with data:', coinsWithData);
                 return coinsWithData;
@@ -942,6 +1042,7 @@
                 throw error;
             }
         }
+        // MODIFIED END
 
         async function refreshMonitoredCoins() {
             console.log('Starting refreshMonitoredCoins');
@@ -1067,7 +1168,7 @@
                 await refreshTrades(bot);
             }
         }
-
+                // MODIFIED START: Updated refreshTrades for Fun Bags to handle multiple sells
         async function refreshTrades(bot) {
             console.log(`Starting refreshTrades for ${bot}`);
             const prefix = bot === 'bread' ? 'bread' : bot === 'moon' ? 'moon' : 'funbags';
@@ -1129,12 +1230,14 @@
                 if (bot === 'funbags') {
                     await refreshMonitoredCoins();
 
+                    // Fetch active trades
                     console.log('Fetching active trades from token_states for Fun Bags');
-                    let { data: tokenStates, error: tokenError } = await supabase
+                    let { data: tokenStates, error: tokenError } = await withRetry(async () => await supabase
                         .from('token_states')
-                        .select('token_address, purchase_price, amount, sold50')
+                        .select('token_address, purchase_price, amount, sold50, buy_market_cap')
                         .eq('bought', true)
-                        .gt('amount', 0);
+                        .gt('amount', 0)
+                        .limit(100));
 
                     if (tokenError) {
                         console.error('Token states fetch error for Fun Bags:', tokenError.message, tokenError.details, tokenError.hint);
@@ -1142,10 +1245,11 @@
                     }
                     console.log('Token states fetched for Fun Bags:', tokenStates);
 
-                    let { data: buyLogs, error: buyLogError } = await supabase
+                    let { data: buyLogs, error: buyLogError } = await withRetry(async () => await supabase
                         .from('bot_logs')
-                        .select('token_address, amount, timestamp')
-                        .eq('event_type', 'buy');
+                        .select('token_address, timestamp')
+                        .eq('event_type', 'buy')
+                        .limit(100));
 
                     if (buyLogError) {
                         console.error('Buy logs fetch error for Fun Bags:', buyLogError.message, buyLogError.details, buyLogError.hint);
@@ -1153,23 +1257,39 @@
                     }
                     console.log('Buy logs fetched for Fun Bags:', buyLogs);
 
+                    // Get latest usd_price for current_price_usd
+                    let { data: priceLogs, error: priceError } = await withRetry(async () => await supabase
+                        .from('bot_logs')
+                        .select('token_address, usd_price')
+                        .neq('usd_price', null)
+                        .order('timestamp', { ascending: false })
+                        .limit(100));
+
+                    if (priceError) {
+                        console.error('Price logs fetch error for Fun Bags:', priceError.message, priceError.details, priceError.hint);
+                        throw new Error(`Failed to fetch price logs: ${priceError.message}`);
+                    }
+                    console.log('Price logs fetched for Fun Bags:', priceLogs);
+
                     activeTrades = await Promise.all((tokenStates || []).map(async (state) => {
                         try {
                             const buyLog = buyLogs.find(log => log.token_address === state.token_address) || {};
-                            const { marketCap, price: currentPrice, symbol } = await fetchTokenData(state.token_address);
-                            const buyPrice = state.purchase_price || 0;
+                            const latestPriceLog = priceLogs.find(log => log.token_address === state.token_address) || {};
+                            const currentPrice = parseFloat(latestPriceLog.usd_price) || 0;
+                            const buyPrice = parseFloat(state.purchase_price) || 0;
+                            const marketCap = currentPrice * 1_000_000_000; // PUMP_FUN_TOTAL_SUPPLY
                             const profitPercent = buyPrice !== 0 && currentPrice !== 0 ? (((currentPrice - buyPrice) / buyPrice) * 100).toFixed(2) : '0';
                             return {
                                 token_address: state.token_address,
                                 token_name: state.token_address.slice(0, 8),
-                                token_symbol: symbol,
+                                token_symbol: '-', // No symbol in token_states
                                 buy_price_usd: buyPrice,
                                 current_price_usd: currentPrice,
                                 market_cap: marketCap,
                                 profit: profitPercent,
                                 buy_timestamp: buyLog.timestamp || null,
                                 status: state.sold50 ? 'partial_sold' : 'open',
-                                amount: state.amount
+                                amount: parseFloat(state.amount) || 0
                             };
                         } catch (error) {
                             console.error(`Error processing active trade for ${state.token_address}:`, error);
@@ -1177,22 +1297,26 @@
                                 token_address: state.token_address,
                                 token_name: state.token_address.slice(0, 8),
                                 token_symbol: '-',
-                                buy_price_usd: state.purchase_price || 0,
+                                buy_price_usd: parseFloat(state.purchase_price) || 0,
                                 current_price_usd: 0,
                                 market_cap: 0,
                                 profit: '0',
                                 buy_timestamp: null,
                                 status: state.sold50 ? 'partial_sold' : 'open',
-                                amount: state.amount
+                                amount: parseFloat(state.amount) || 0
                             };
                         }
                     }));
 
+                    // Fetch completed trades
                     console.log('Fetching completed trades from bot_logs for Fun Bags');
-                    let { data: sellLogs, error: sellLogError } = await supabase
+                    let { data: sellLogs, error: sellLogError } = await withRetry(async () => await supabase
                         .from('bot_logs')
-                        .select('token_address, amount, timestamp, event_type')
-                        .in('event_type', ['sell_50', 'trailing_stop', 'stop_loss']);
+                        .select('token_address, amount, timestamp, event_type, sell_price')
+                        .in('event_type', ['sell_50', 'trailing_stop', 'stop_loss'])
+                        .neq('sell_price', null)
+                        .order('timestamp', { ascending: false })
+                        .limit(100));
 
                     if (sellLogError) {
                         console.error('Sell logs fetch error for Fun Bags:', sellLogError.message, sellLogError.details, sellLogError.hint);
@@ -1200,31 +1324,65 @@
                     }
                     console.log('Sell logs fetched for Fun Bags:', sellLogs);
 
-                    completedTrades = await Promise.all((sellLogs || []).map(async (sell) => {
+                    // Group sell logs by token_address to handle multiple sells
+                    const sellGroups = sellLogs.reduce((acc, sell) => {
+                        if (!acc[sell.token_address]) {
+                            acc[sell.token_address] = [];
+                        }
+                        acc[sell.token_address].push(sell);
+                        return acc;
+                    }, {});
+
+                    completedTrades = await Promise.all(Object.entries(sellGroups).map(async ([tokenAddress, sells]) => {
                         try {
-                            const buyLog = buyLogs.find(log => log.token_address === sell.token_address);
+                            const buyLog = buyLogs.find(log => log.token_address === tokenAddress) || {};
                             if (!buyLog) {
-                                console.warn(`No buy log found for sell log ${sell.token_address}`);
+                                console.warn(`No buy log found for sell logs ${tokenAddress}`);
                                 return null;
                             }
-                            const { price: sellPrice, symbol } = await fetchTokenData(sell.token_address);
-                            const buyPrice = buyLog.amount ? (0.1 / buyLog.amount) : 0; // 0.1 SOL per buy
-                            const profitPercent = buyPrice !== 0 && sellPrice !== 0 ? (((sellPrice - buyPrice) / buyPrice) * 100).toFixed(2) : '0';
-                            const totalProfit = buyPrice !== 0 && sellPrice !== 0 ? (sellPrice - buyPrice) * sell.amount : 0;
+
+                            // Fetch buy purchase_price from token_states
+                            const { data: buyState, error: buyStateError } = await supabase
+                                .from('token_states')
+                                .select('purchase_price')
+                                .eq('token_address', tokenAddress)
+                                .single();
+
+                            if (buyStateError) {
+                                console.warn(`No token_state found for ${tokenAddress}:`, buyStateError.message);
+                            }
+
+                            const buyPrice = buyState?.purchase_price ? parseFloat(buyState.purchase_price) : 0;
+
+                            // Calculate weighted average sell price and total amount
+                            let totalAmount = 0;
+                            let weightedSellPrice = 0;
+                            sells.forEach(sell => {
+                                const amount = parseFloat(sell.amount) || 0;
+                                const sellPrice = parseFloat(sell.sell_price) || 0;
+                                totalAmount += amount;
+                                weightedSellPrice += amount * sellPrice;
+                            });
+                            const avgSellPrice = totalAmount !== 0 ? weightedSellPrice / totalAmount : 0;
+
+                            const profitPercent = buyPrice !== 0 && avgSellPrice !== 0 ? (((avgSellPrice - buyPrice) / buyPrice) * 100).toFixed(2) : '0';
+                            const totalProfit = buyPrice !== 0 && avgSellPrice !== 0 ? (avgSellPrice - buyPrice) * totalAmount : 0;
+
                             return {
-                                token_address: sell.token_address,
-                                token_name: sell.token_address.slice(0, 8),
-                                token_symbol: symbol,
+                                token_address: tokenAddress,
+                                token_name: tokenAddress.slice(0, 8),
+                                token_symbol: '-', // No symbol
                                 buy_price_usd: buyPrice,
-                                sell_price_usd: sellPrice,
+                                sell_price_usd: avgSellPrice,
                                 profit: profitPercent,
                                 total_profit_usd: totalProfit,
                                 buy_timestamp: buyLog.timestamp || null,
-                                sell_timestamp: sell.timestamp || null,
-                                status: 'closed'
+                                sell_timestamp: sells[0].timestamp || null, // Latest sell
+                                status: 'closed',
+                                total_amount: totalAmount
                             };
                         } catch (error) {
-                            console.error(`Error processing completed trade for ${sell.token_address}:`, error);
+                            console.error(`Error processing completed trade for ${tokenAddress}:`, error);
                             return null;
                         }
                     }));
@@ -1232,10 +1390,11 @@
                     completedTrades = completedTrades.filter(trade => trade !== null);
                 } else {
                     console.log(`Fetching active trades from ${tableName}`);
-                    let { data, error } = await supabase
+                    let { data, error } = await withRetry(async () => await supabase
                         .from(tableName)
                         .select('*')
-                        .in('status', ['open', 'partial_sold']);
+                        .in('status', ['open', 'partial_sold'])
+                        .limit(100));
 
                     if (error) {
                         console.error(`Active trades fetch error for ${bot}:`, error.message, error.details, error.hint);
@@ -1245,10 +1404,11 @@
                     console.log(`Active trades fetched for ${bot}:`, activeTrades);
 
                     console.log(`Fetching completed trades from ${tableName}`);
-                    let { data: completedData, error: completedError } = await supabase
+                    let { data: completedData, error: completedError } = await withRetry(async () => await supabase
                         .from(tableName)
                         .select('*')
-                        .eq('status', 'closed');
+                        .eq('status', 'closed')
+                        .limit(100));
 
                     if (completedError) {
                         console.error(`Completed trades fetch error for ${bot}:`, completedError.message, completedError.details, completedError.hint);
@@ -1440,6 +1600,7 @@
                 alert(`Failed to refresh trades for ${bot}: ${error.message}. Check console for details.`);
             }
         }
+        // MODIFIED END
 
         async function refreshWaxTrades() {
             console.log('Starting refreshWaxTrades');
