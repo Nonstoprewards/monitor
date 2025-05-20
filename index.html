@@ -774,18 +774,31 @@
                 const activeTotal = tokenCount || activeTrades.length;
 
                 console.log('Fetching completed trades for Fun Bags');
-                const { data: sellLogs, error: sellLogError, count: sellCount } = await withRetry(async () => await supabase
+                const { data: sellLogsRaw, error: sellLogError, count: sellCount } = await withRetry(async () => await supabase
                     .from('bot_logs')
                     .select('token_address, amount, timestamp, event_type, sell_price', { count: 'exact' })
                     .in('event_type', ['sell_50', 'trailing_stop', 'stop_loss'])
-                    .neq('sell_price', null)
+                    .not('sell_price', 'is', null)
+                    .neq('sell_price', 'null')
                     .order('timestamp', { ascending: false })
                     .range((completedPage - 1) * pageSize, completedPage * pageSize - 1)
                 );
                 if (sellLogError) throw new Error(`Failed to fetch sell logs: ${sellLogError.message}`);
-                console.log('Sell logs fetched:', sellLogs);
+                console.log('Raw sell logs fetched:', sellLogsRaw);
 
-                const sellGroups = (Array.isArray(sellLogs) ? sellLogs : []).reduce((acc, sell) => {
+                // Filter out invalid sell_price values
+                const sellLogs = (Array.isArray(sellLogsRaw) ? sellLogsRaw : []).filter(log => {
+                    if (!log.sell_price) return false;
+                    const sellPrice = parseFloat(log.sell_price);
+                    if (isNaN(sellPrice)) {
+                        console.warn(`Skipping sell log with invalid sell_price: ${log.sell_price} for token ${log.token_address}`);
+                        return false;
+                    }
+                    return true;
+                });
+                console.log('Filtered sell logs:', sellLogs);
+
+                const sellGroups = sellLogs.reduce((acc, sell) => {
                     if (!sell.token_address) {
                         console.warn('Skipping sell log with missing token_address');
                         return acc;
@@ -914,7 +927,9 @@
                             let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
                             if (column === 'profit') {
                                 aValue = parseFloat(aValue.replace('%', '')) || 0;
-                                bValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
+                                bValue = parseFloat(bValue.replace('%', '')) || 0;
+                            } else if (['buy_price_usd', 'current_price_usd', 'market_cap'].includes(column)) {
+                                aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
                                 bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
                             } else if (['buy_timestamp'].includes(column)) {
                                 aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
