@@ -779,7 +779,6 @@
                     .select('token_address, amount, timestamp, event_type, sell_price', { count: 'exact' })
                     .in('event_type', ['sell_50', 'trailing_stop', 'stop_loss'])
                     .not('sell_price', 'is', null)
-                    .neq('sell_price', 'null')
                     .order('timestamp', { ascending: false })
                     .range((completedPage - 1) * pageSize, completedPage * pageSize - 1)
                 );
