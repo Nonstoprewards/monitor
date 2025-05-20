@@ -1132,7 +1132,7 @@
                     console.log('Fetching active trades from token_states for Fun Bags');
                     let { data: tokenStates, error: tokenError } = await supabase
                         .from('token_states')
-                        .select('token_address, purchase_price, amount, sold50, buy_timestamp')
+                        .select('token_address, purchase_price, amount, sold50')
                         .eq('bought', true)
                         .gt('amount', 0);
 
@@ -1167,7 +1167,7 @@
                                 current_price_usd: currentPrice,
                                 market_cap: marketCap,
                                 profit: profitPercent,
-                                buy_timestamp: state.buy_timestamp || buyLog.timestamp || null,
+                                buy_timestamp: buyLog.timestamp || null,
                                 status: state.sold50 ? 'partial_sold' : 'open',
                                 amount: state.amount
                             };
