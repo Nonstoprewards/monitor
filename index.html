@@ -1168,7 +1168,7 @@
                 await refreshTrades(bot);
             }
         }
-               // MODIFIED START: Updated refreshTrades with simplified button listeners and debug logs
+              // MODIFIED START: Updated refreshTrades with simplified button listeners and debug logs
 async function refreshTrades(bot) {
     console.log(`Starting refreshTrades for ${bot}`);
     const prefix = bot === 'bread' ? 'bread' : bot === 'moon' ? 'moon' : 'funbags';
@@ -1882,4 +1882,5 @@ setupRefreshListeners('wax', ['wax-refreshBtn', 'wax-bottomRefreshBtn']);
 
 console.log('Initial refresh for bread');
 refreshTab('bread');
+// MODIFIED END
 </script>
