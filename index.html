@@ -1168,7 +1168,7 @@
                 await refreshTrades(bot);
             }
         }
-                // MODIFIED START: Updated refreshTrades for Fun Bags to handle multiple sells
+                        // MODIFIED START: Updated refreshTrades for Fun Bags to handle multiple sells and invalid usd_price
         async function refreshTrades(bot) {
             console.log(`Starting refreshTrades for ${bot}`);
             const prefix = bot === 'bread' ? 'bread' : bot === 'moon' ? 'moon' : 'funbags';
@@ -1257,11 +1257,13 @@
                     }
                     console.log('Buy logs fetched for Fun Bags:', buyLogs);
 
-                    // Get latest usd_price for current_price_usd
+                    // MODIFIED START: Filter out non-numeric usd_price values
+                    console.log('Fetching price logs from bot_logs for Fun Bags');
                     let { data: priceLogs, error: priceError } = await withRetry(async () => await supabase
                         .from('bot_logs')
                         .select('token_address, usd_price')
                         .neq('usd_price', null)
+                        .rpc('is_numeric', { column_name: 'usd_price' }) // Custom function to check if usd_price is numeric
                         .order('timestamp', { ascending: false })
                         .limit(100));
 
@@ -1275,7 +1277,8 @@
                         try {
                             const buyLog = buyLogs.find(log => log.token_address === state.token_address) || {};
                             const latestPriceLog = priceLogs.find(log => log.token_address === state.token_address) || {};
-                            const currentPrice = parseFloat(latestPriceLog.usd_price) || 0;
+                            // MODIFIED: Safely parse usd_price, default to 0 if invalid
+                            const currentPrice = isNaN(parseFloat(latestPriceLog.usd_price)) ? 0 : parseFloat(latestPriceLog.usd_price);
                             const buyPrice = parseFloat(state.purchase_price) || 0;
                             const marketCap = currentPrice * 1_000_000_000; // PUMP_FUN_TOTAL_SUPPLY
                             const profitPercent = buyPrice !== 0 && currentPrice !== 0 ? (((currentPrice - buyPrice) / buyPrice) * 100).toFixed(2) : '0';
@@ -1307,6 +1310,7 @@
                             };
                         }
                     }));
+                    // MODIFIED END
 
                     // Fetch completed trades
                     console.log('Fetching completed trades from bot_logs for Fun Bags');
@@ -1571,7 +1575,7 @@
                             return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
                         });
                         completedTradesBody.innerHTML = '';
-                        rows.forEach(row => completedTradesBody.appendChild(row));
+                        rows.forEach(row => activeTradesBody.appendChild(row)); // MODIFIED: Fixed bug, should append to completedTradesBody
                     }
                 }
 
