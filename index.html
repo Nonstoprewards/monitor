@@ -21,243 +21,6 @@
                     <i class="fas fa-moon mr-2"></i> Sexy Mode
                 </button>
             </div>
-            <div class="flex border-b border-gray-200 mb-6">
-                <div id="tab-bread" class="tab active">Bread and Butter Bot</div>
-                <div id="tab-moon" class="tab">Moon Bot</div>
-                <div id="tab-wax" class="tab">Wax Bot</div>
-                <div id="tab-funbags" class="tab">Fun Bags</div>
-            </div>
-            <div id="content-bread" class="tab-content active">
-                <div class="mb-6 section-card">
-                    <h2 class="text-xl text-navy mb-2">Summary</h2>
-                    <p class="text-gray-700">Total Completed Profit: <span id="bread-totalProfit" class="font-semibold text-navy">Calculating...</span></p>
-                </div>
-                <div class="mb-6 section-card">
- “
-
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <h2 class="text-xl text-navy">Active Trades</h2>
-                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                            <button id="bread-topRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                                <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                            </button>
-                            <button id="bread-exportBtn" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
-                                <i class="fas fa-file-export mr-2"></i> Export Trades
-                            </button>
-                        </div>
-                    </div>
-                    <p id="bread-active-status" class="text-gray-700 text-sm mb-2 status">Loading active trades...</p>
-                    <input type="text" id="bread-activeFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
-                    <div class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="bread-activeTradesBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="bread-activeTradesCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <button id="bread-middleRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                        </button>
-                        <div class="flex items-center space-x-2">
-                            <span id="bread-activePrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
-                            <span class="pagination-text text-gray-700">Page <span id="bread-activeCurrentPage">1</span></span>
-                            <span id="bread-activeNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="mb-6 section-card">
-                    <h2 class="text-xl text-navy mb-4">Completed Trades</h2>
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <p id="bread-completed-status" class="text-gray-700 text-sm mb-2 sm:mb-0 status">Loading completed trades...</p>
-                        <select id="bread-profitFilter" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                            <option value="all">All Trades</option>
-                            <option value="positive">Positive Profit</option>
-                            <option value="negative">Negative Profit</option>
-                        </select>
-                    </div>
-                    <input type="text" id="bread-completedFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
-                    <div id="bread-completedTableContainer" class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="sell_price_usd">Sell Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
-                                    <th data-sort="total_profit_usd">Total Profit (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
-                                    <th data-sort="sell_timestamp">Sell Time<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="bread-completedTradesBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="bread-completedTradesCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <div class="flex items-center space-x-2">
-                            <span id="bread-completedPrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
-                            <span class="pagination-text text-gray-700">Page <span id="bread-completedCurrentPage">1</span></span>
-                            <span id="bread-completedNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
-                        </div>
-                        <button id="bread-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div id="content-moon" class="tab-content">
-                <div class="mb-6 section-card">
-                    <h2 class="text-xl text-navy mb-2">Summary</h2>
-                    <p class="text-gray-700">Total Completed Profit: <span id="moon-totalProfit" class="font-semibold text-navy">Calculating...</span></p>
-                </div>
-                <div class="mb-6 section-card">
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <h2 class="text-xl text-navy">Active Trades</h2>
-                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                            <button id="moon-topRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                                <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                            </button>
-                            <button id="moon-exportBtn" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
-                                <i class="fas fa-file-export mr-2"></i> Export Trades
-                            </button>
-                        </div>
-                    </div>
-                    <p id="moon-active-status" class="text-gray-700 text-sm mb-2 status">Loading active trades...</p>
-                    <input type="text" id="moon-activeFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
-                    <div class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="moon-activeTradesBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="moon-activeTradesCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <button id="moon-middleRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                        </button>
-                        <div class="flex items-center space-x-2">
-                            <span id="moon-activePrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
-                            <span class="pagination-text text-gray-700">Page <span id="moon-activeCurrentPage">1</span></span>
-                            <span id="moon-activeNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="mb-6 section-card">
-                    <h2 class="text-xl text-navy mb-4">Completed Trades</h2>
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <p id="moon-completed-status" class="text-gray-700 text-sm mb-2 sm:mb-0 status">Loading completed trades...</p>
-                        <select id="moon-profitFilter" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                            <option value="all">All Trades</option>
-                            <option value="positive">Positive Profit</option>
-                            <option value="negative">Negative Profit</option>
-                        </select>
-                    </div>
-                    <input type="text" id="moon-completedFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
-                    <div id="moon-completedTableContainer" class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="sell_price_usd">Sell Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
-                                    <th data-sort="total_profit_usd">Total Profit (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
-                                    <th data-sort="sell_timestamp">Sell Time<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="moon-completedTradesBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="moon-completedTradesCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <div class="flex items-center space-x-2">
-                            <span id="moon-completedPrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
-                            <span class="pagination-text text-gray-700">Page <span id grounding="moon-completedCurrentPage">1</span></span>
-                            <span id="moon-completedNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
-                        </div>
-                        <button id="moon-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div id="content-wax" class="tab-content">
-                <div class="mb-6 section-card">
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <h2 class="text-xl text-navy">Trade Setups</h2>
-                        <button id="wax-refreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Setups
-                        </button>
-                    </div>
-                    <p id="wax-status" class="text-gray-700 text-sm mb-2 status">Loading trade setups...</p>
-                    <input type="text" id="wax-filter" class="filter-input" placeholder="Filter by Symbol...">
-                    <div class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="symbol">Symbol<span class="sort-icon"></span></th>
-                                    <th data-sort="action">Action<span class="sort-icon"></span></th>
-                                    <th data-sort="popcandletime">Pop Candle Time<span class="sort-icon"></span></th>
-                                    <th data-sort="popcandlehigh">Pop Candle High (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="pullbackcount">Pullback Count<span class="sort-icon"></span></th>
-                                    <th data-sort="entryprice">Entry Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="stoploss">Stop Loss (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="profitpercent">Profit (%)<span class="sort-icon"></span></th>
-                                    <th data-sort="solprofit">Sol Profit<span class="sort-icon"></span></th>
-                                    <th data-sort="exit_reason">Exit Reason<span class="sort-icon"></span></th>
-                                    <th data-sort="timestamp">Timestamp<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="wax-setupsBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="wax-setupsCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <div class="flex items-center space-x-2">
-                            <span id="wax-prevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
-                            <span class="pagination-text text-gray-700">Page <span id="wax-currentPage">1</span></span>
-                            <span id="wax-nextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
-                        </div>
-                        <button id="wax-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Setups
-                        </button>
-                    </div>
-                </div>
-            </div>
             <div id="content-funbags" class="tab-content">
                 <div class="mb-6 section-card">
                     <h2 class="text-xl text-navy mb-2">Summary</h2>
@@ -344,7 +107,8 @@
                 </div>
                 <div class="mb-6 section-card">
                     <h2 class="text-xl text-navy mb-4">Completed Trades</h2>
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb- }>                        <p id="funbags-completed-status" class="text-gray-700 text-sm mb-2 sm:mb-0 status">Loading completed trades...</p>
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                        <p id="funbags-completed-status" class="text-gray-700 text-sm mb-2 sm:mb-0 status">Loading completed trades...</p>
                         <select id="funbags-profitFilter" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
                             <option value="all">All Trades</option>
                             <option value="positive">Positive Profit</option>
@@ -584,33 +348,6 @@
         background: linear-gradient(145deg, #4b0082, #1a0033);
         box-shadow: 0 4px 20px rgba(255, 105, 180, 0.5);
     }
-    .tab {
-        padding: 10px 20px;
-        cursor: pointer;
-        font-weight: 600;
-        border-bottom: 2px solid transparent;
-        transition: border-color 0.3s, color 0.3s;
-    }
-    .tab.active {
-        border-bottom: 2px solid #2c7a7b;
-        color: #2c7a7b;
-    }
-    .sexy .tab.active {
-        border-bottom: 2px solid #ff69b4;
-        color: #ff69b4;
-    }
-    .tab:hover {
-        color: #2c7a7b;
-    }
-    .sexy .tab:hover {
-        color: #ff69b4;
-    }
-    .tab-content {
-        display: none;
-    }
-    .tab-content.active {
-        display: block;
-    }
     .filter-input {
         width: 100%;
         padding: 8px;
@@ -664,10 +401,6 @@
         }
         .card-container {
             display: block;
-        }
-        .tab {
-            padding: 8px 12px;
-            font-size: 0.875rem;
         }
         .filter-input {
             font-size: 0.8rem;
@@ -724,17 +457,11 @@
 
         // Sorting and Filtering States
         const sortStates = {
-            bread: { active: {}, completed: {} },
-            moon: { active: {}, completed: {} },
-            wax: { setups: {} },
             funbags: { active: {}, completed: {}, monitored: {} }
         };
 
         // Pagination States
         const pageStates = {
-            bread: { active: 1, completed: 1 },
-            moon: { active: 1, completed: 1 },
-            wax: { setups: 1 },
             funbags: { active: 1, completed: 1, monitored: 1 }
         };
         const pageSize = 10;
@@ -870,7 +597,7 @@
                     row.innerHTML = `
                         <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
                         <td>${coin.symbol || '-'}</td>
-                        <td> chines$${marketCap.toLocaleString()}</td>
+                        <td>$${marketCap.toLocaleString()}</td>
                         <td>$${currentPrice.toFixed(8)}</td>
                         <td>$${lowestMarketCap.toLocaleString()}</td>
                         <td>${timestamp}</td>
@@ -934,10 +661,9 @@
                 monitoredStatus.classList.remove('loading');
             }
         }
-                async function refreshTrades(bot, activePage = 1, completedPage = 1) {
-            console.log(`Starting refreshTrades for ${bot}, activePage: ${activePage}, completedPage: ${completedPage}`);
-            const prefix = bot === 'bread' ? 'bread' : bot === 'moon' ? 'moon' : 'funbags';
-            const tableName = bot === 'bread' ? 'trades' : bot === 'moon' ? 'trades_bot2' : 'token_states';
+                async function refreshTrades(activePage = 1, completedPage = 1) {
+            console.log(`Starting refreshTrades for funbags, activePage: ${activePage}, completedPage: ${completedPage}`);
+            const prefix = 'funbags';
             const activeStatus = document.getElementById(`${prefix}-active-status`);
             const completedStatus = document.getElementById(`${prefix}-completed-status`);
             const activeTradesBody = document.getElementById(`${prefix}-activeTradesBody`);
@@ -955,8 +681,8 @@
             const completedCurrentPage = document.getElementById(`${prefix}-completedCurrentPage`);
 
             if (!activeStatus || !completedStatus || !activeTradesBody || !activeTradesCards || !completedTradesBody || !completedTradesCards || !totalProfitElement || !activeTable || !completedTable || !activePrevPage || !activeNextPage || !completedPrevPage || !completedNextPage || !activeCurrentPage || !completedCurrentPage) {
-                console.error(`Missing DOM elements for ${bot}`);
-                alert(`Failed to load ${bot} dashboard. Check console for details.`);
+                console.error(`Missing DOM elements for funbags`);
+                alert(`Failed to load Fun Bags dashboard. Check console for details.`);
                 return;
             }
 
@@ -965,155 +691,129 @@
             activeStatus.classList.add('loading');
             completedStatus.classList.add('loading');
 
-            const activeSort = { ...sortStates[bot].active };
-            const completedSort = { ...sortStates[bot].completed };
+            const activeSort = { ...sortStates.funbags.active };
+            const completedSort = { ...sortStates.funbags.completed };
             const activeFilterValue = document.getElementById(`${prefix}-activeFilter`)?.value || '';
             const completedFilterValue = document.getElementById(`${prefix}-completedFilter`)?.value || '';
             const profitFilterValue = document.getElementById(`${prefix}-profitFilter`)?.value || 'all';
 
             try {
-                let activeTrades = [];
-                let completedTrades = [];
-                let activeTotal = 0;
-                let completedTotal = 0;
+                await refreshMonitoredCoins(pageStates.funbags.monitored);
 
-                if (bot === 'funbags') {
-                    await refreshMonitoredCoins(pageStates.funbags.monitored);
+                console.log('Fetching active trades for Fun Bags');
+                const { data: tokenStates, error: tokenError, count: tokenCount } = await withRetry(async () => await supabase
+                    .from('token_states')
+                    .select('token_address, purchase_price, amount, sold50, buy_market_cap', { count: 'exact' })
+                    .eq('bought', true)
+                    .gt('amount', 0)
+                    .range((activePage - 1) * pageSize, activePage * pageSize - 1)
+                );
+                if (tokenError) throw new Error(`Failed to fetch token states: ${tokenError.message}`);
 
-                    console.log('Fetching active trades for Fun Bags');
-                    const { data: tokenStates, error: tokenError, count: tokenCount } = await withRetry(async () => await supabase
-                        .from('token_states')
-                        .select('token_address, purchase_price, amount, sold50, buy_market_cap', { count: 'exact' })
-                        .eq('bought', true)
-                        .gt('amount', 0)
-                        .range((activePage - 1) * pageSize, activePage * pageSize - 1)
-                    );
-                    if (tokenError) throw new Error(`Failed to fetch token states: ${tokenError.message}`);
+                const { data: buyLogs, error: buyLogError } = await withRetry(async () => await supabase
+                    .from('bot_logs')
+                    .select('token_address, timestamp')
+                    .eq('event_type', 'buy')
+                );
+                if (buyLogError) throw new Error(`Failed to fetch buy logs: ${buyLogError.message}`);
 
-                    const { data: buyLogs, error: buyLogError } = await withRetry(async () => await supabase
-                        .from('bot_logs')
-                        .select('token_address, timestamp')
-                        .eq('event_type', 'buy')
-                    );
-                    if (buyLogError) throw new Error(`Failed to fetch buy logs: ${buyLogError.message}`);
+                const { data: priceLogs, error: priceError } = await withRetry(async () => await supabase
+                    .rpc('query_price_logs')
+                );
+                if (priceError) throw new Error(`Failed to fetch price logs: ${priceError.message}`);
+                console.log('Price logs fetched:', priceLogs);
 
-                    const { data: priceLogs, error: priceError } = await withRetry(async () => await supabase
-                        .rpc('query_price_logs')
-                    );
-                    if (priceError) throw new Error(`Failed to fetch price logs: ${priceError.message}`);
+                let activeTrades = await Promise.all((tokenStates || []).map(async state => {
+                    try {
+                        const buyLog = buyLogs.find(log => log.token_address === state.token_address) || {};
+                        const latestPriceLog = priceLogs.find(log => log.token_address === state.token_address) || {};
+                        const currentPrice = latestPriceLog.usd_price != null && !isNaN(parseFloat(latestPriceLog.usd_price)) ? parseFloat(latestPriceLog.usd_price) : (parseFloat(state.purchase_price) || 0);
+                        const buyPrice = parseFloat(state.purchase_price) || 0;
+                        const marketCap = currentPrice * 1_000_000_000;
+                        const profitPercent = buyPrice !== 0 && currentPrice !== 0 ? (((currentPrice - buyPrice) / buyPrice) * 100).toFixed(2) : '0';
+                        return {
+                            token_address: state.token_address,
+                            token_name: state.token_address.slice(0, 8),
+                            token_symbol: '-',
+                            buy_price_usd: buyPrice,
+                            current_price_usd: currentPrice,
+                            market_cap: marketCap,
+                            profit: profitPercent,
+                            buy_timestamp: buyLog.timestamp || null,
+                            status: state.sold50 ? 'partial_sold' : 'open',
+                            amount: parseFloat(state.amount) || 0
+                        };
+                    } catch (error) {
+                        console.error(`Error processing active trade for ${state.token_address}:`, error);
+                        return null;
+                    }
+                })).filter(trade => trade !== null);
+                const activeTotal = tokenCount || activeTrades.length;
 
-                    activeTrades = await Promise.all((tokenStates || []).map(async state => {
-                        try {
-                            const buyLog = buyLogs.find(log => log.token_address === state.token_address) || {};
-                            const latestPriceLog = priceLogs.find(log => log.token_address === state.token_address) || {};
-                            const currentPrice = latestPriceLog.usd_price != null && !isNaN(parseFloat(latestPriceLog.usd_price)) ? parseFloat(latestPriceLog.usd_price) : (parseFloat(state.purchase_price) || 0);
-                            const buyPrice = parseFloat(state.purchase_price) || 0;
-                            const marketCap = currentPrice * 1_000_000_000;
-                            const profitPercent = buyPrice !== 0 && currentPrice !== 0 ? (((currentPrice - buyPrice) / buyPrice) * 100).toFixed(2) : '0';
-                            return {
-                                token_address: state.token_address,
-                                token_name: state.token_address.slice(0, 8),
-                                token_symbol: '-',
-                                buy_price_usd: buyPrice,
-                                current_price_usd: currentPrice,
-                                market_cap: marketCap,
-                                profit: profitPercent,
-                                buy_timestamp: buyLog.timestamp || null,
-                                status: state.sold50 ? 'partial_sold' : 'open',
-                                amount: parseFloat(state.amount) || 0
-                            };
-                        } catch (error) {
-                            console.error(`Error processing active trade for ${state.token_address}:`, error);
+                console.log('Fetching completed trades for Fun Bags');
+                const { data: sellLogs, error: sellLogError, count: sellCount } = await withRetry(async () => await supabase
+                    .from('bot_logs')
+                    .select('token_address, amount, timestamp, event_type, sell_price', { count: 'exact' })
+                    .in('event_type', ['sell_50', 'trailing_stop', 'stop_loss'])
+                    .neq('sell_price', null)
+                    .order('timestamp', { ascending: false })
+                    .range((completedPage - 1) * pageSize, completedPage * pageSize - 1)
+                );
+                if (sellLogError) throw new Error(`Failed to fetch sell logs: ${sellLogError.message}`);
+
+                const sellGroups = sellLogs.reduce((acc, sell) => {
+                    if (!acc[sell.token_address]) acc[sell.token_address] = [];
+                    acc[sell.token_address].push(sell);
+                    return acc;
+                }, {});
+
+                let completedTrades = await Promise.all(Object.entries(sellGroups).map(async ([tokenAddress, sells]) => {
+                    try {
+                        const buyLog = buyLogs.find(log => log.token_address === tokenAddress);
+                        if (!buyLog) {
+                            console.warn(`No buy log for ${tokenAddress}`);
                             return null;
                         }
-                    })).filter(trade => trade !== null);
-                    activeTotal = tokenCount || activeTrades.length;
 
-                    console.log('Fetching completed trades for Fun Bags');
-                    const { data: sellLogs, error: sellLogError, count: sellCount } = await withRetry(async () => await supabase
-                        .from('bot_logs')
-                        .select('token_address, amount, timestamp, event_type, sell_price', { count: 'exact' })
-                        .in('event_type', ['sell_50', 'trailing_stop', 'stop_loss'])
-                        .neq('sell_price', null)
-                        .order('timestamp', { ascending: false })
-                        .range((completedPage - 1) * pageSize, completedPage * pageSize - 1)
-                    );
-                    if (sellLogError) throw new Error(`Failed to fetch sell logs: ${sellLogError.message}`);
+                        const { data: buyState, error: buyStateError } = await supabase
+                            .from('token_states')
+                            .select('purchase_price')
+                            .eq('token_address', tokenAddress)
+                            .single();
+                        if (buyStateError) console.warn(`No token_state for ${tokenAddress}:`, buyStateError);
 
-                    const sellGroups = sellLogs.reduce((acc, sell) => {
-                        if (!acc[sell.token_address]) acc[sell.token_address] = [];
-                        acc[sell.token_address].push(sell);
-                        return acc;
-                    }, {});
+                        const buyPrice = buyState?.purchase_price ? parseFloat(buyState.purchase_price) : 0;
+                        let totalAmount = 0;
+                        let weightedSellPrice = 0;
+                        sells.forEach(sell => {
+                            const amount = parseFloat(sell.amount) || 0;
+                            const sellPrice = parseFloat(sell.sell_price) || 0;
+                            totalAmount += amount;
+                            weightedSellPrice += amount * sellPrice;
+                        });
+                        const avgSellPrice = totalAmount !== 0 ? weightedSellPrice / totalAmount : 0;
+                        const profitPercent = buyPrice !== 0 && avgSellPrice !== 0 ? (((avgSellPrice - buyPrice) / buyPrice) * 100).toFixed(2) : '0';
+                        const totalProfit = buyPrice !== 0 && avgSellPrice !== 0 ? (avgSellPrice - buyPrice) * totalAmount : 0;
 
-                    completedTrades = await Promise.all(Object.entries(sellGroups).map(async ([tokenAddress, sells]) => {
-                        try {
-                            const buyLog = buyLogs.find(log => log.token_address === tokenAddress);
-                            if (!buyLog) {
-                                console.warn(`No buy log for ${tokenAddress}`);
-                                return null;
-                            }
-
-                            const { data: buyState, error: buyStateError } = await supabase
-                                .from('token_states')
-                                .select('purchase_price')
-                                .eq('token_address', tokenAddress)
-                                .single();
-                            if (buyStateError) console.warn(`No token_state for ${tokenAddress}:`, buyStateError);
-
-                            const buyPrice = buyState?.purchase_price ? parseFloat(buyState.purchase_price) : 0;
-                            let totalAmount = 0;
-                            let weightedSellPrice = 0;
-                            sells.forEach(sell => {
-                                const amount = parseFloat(sell.amount) || 0;
-                                const sellPrice = parseFloat(sell.sell_price) || 0;
-                                totalAmount += amount;
-                                weightedSellPrice += amount * sellPrice;
-                            });
-                            const avgSellPrice = totalAmount !== 0 ? weightedSellPrice / totalAmount : 0;
-                            const profitPercent = buyPrice !== 0 && avgSellPrice !== 0 ? (((avgSellPrice - buyPrice) / buyPrice) * 100).toFixed(2) : '0';
-                            const totalProfit = buyPrice !== 0 && avgSellPrice !== 0 ? (avgSellPrice - buyPrice) * totalAmount : 0;
-
-                            return {
-                                token_address: tokenAddress,
-                                token_name: tokenAddress.slice(0, 8),
-                                token_symbol: '-',
-                                buy_price_usd: buyPrice,
-                                sell_price_usd: avgSellPrice,
-                                profit: profitPercent,
-                                total_profit_usd: totalProfit,
-                                buy_timestamp: buyLog.timestamp || null,
-                                sell_timestamp: sells[0].timestamp || null,
-                                status: 'closed',
-                                total_amount: totalAmount
-                            };
-                        } catch (error) {
-                            console.error(`Error processing completed trade for ${tokenAddress}:`, error);
-                            return null;
-                        }
-                    })).filter(trade => trade !== null);
-                    completedTotal = sellCount || completedTrades.length;
-                } else {
-                    const { data, error, count } = await withRetry(async () => await supabase
-                        .from(tableName)
-                        .select('*', { count: 'exact' })
-                        .in('status', ['open', 'partial_sold'])
-                        .range((activePage - 1) * pageSize, activePage * pageSize - 1)
-                    );
-                    if (error) throw new Error(`Failed to fetch active trades: ${error.message}`);
-                    activeTrades = data || [];
-                    activeTotal = count || activeTrades.length;
-
-                    const { data: completedData, error: completedError, count: completedCount } = await withRetry(async () => await supabase
-                        .from(tableName)
-                        .select('*', { count: 'exact' })
-                        .eq('status', 'closed')
-                        .range((completedPage - 1) * pageSize, completedPage * pageSize - 1)
-                    );
-                    if (completedError) throw new Error(`Failed to fetch completed trades: ${completedError.message}`);
-                    completedTrades = completedData || [];
-                    completedTotal = completedCount || completedTrades.length;
-                }
+                        return {
+                            token_address: tokenAddress,
+                            token_name: tokenAddress.slice(0, 8),
+                            token_symbol: '-',
+                            buy_price_usd: buyPrice,
+                            sell_price_usd: avgSellPrice,
+                            profit: profitPercent,
+                            total_profit_usd: totalProfit,
+                            buy_timestamp: buyLog.timestamp || null,
+                            sell_timestamp: sells[0].timestamp || null,
+                            status: 'closed',
+                            total_amount: totalAmount
+                        };
+                    } catch (error) {
+                        console.error(`Error processing completed trade for ${tokenAddress}:`, error);
+                        return null;
+                    }
+                })).filter(trade => trade !== null);
+                const completedTotal = sellCount || completedTrades.length;
 
                 activeTradesBody.innerHTML = '';
                 activeTradesCards.innerHTML = '';
@@ -1290,7 +990,7 @@
                     document.getElementById(`${prefix}-completedFilter`).dispatchEvent(new Event('input'));
                 }
             } catch (error) {
-                console.error(`Error in refreshTrades for ${bot}:`, error);
+                console.error(`Error in refreshTrades for funbags:`, error);
                 activeStatus.textContent = `Error loading active trades: ${error.message}`;
                 completedStatus.textContent = `Error loading completed trades: ${error.message}`;
             } finally {
@@ -1299,137 +999,20 @@
             }
         }
 
-        async function refreshWaxTrades(page = 1) {
-            console.log(`Starting refreshWaxTrades, page ${page}`);
-            const statusElement = document.getElementById('wax-status');
-            const setupsBody = document.getElementById('wax-setupsBody');
-            const setupsCards = document.getElementById('wax-setupsCards');
-            const table = setupsBody?.closest('table');
-            const filterInput = document.getElementById('wax-filter');
-            const prevPage = document.getElementById('wax-prevPage');
-            const nextPage = document.getElementById('wax-nextPage');
-            const currentPageSpan = document.getElementById('wax-currentPage');
-
-            if (!statusElement || !setupsBody || !setupsCards || !table || !filterInput || !prevPage || !nextPage || !currentPageSpan) {
-                console.error('Missing DOM elements for Wax');
-                alert('Failed to load Wax dashboard. Check console for details.');
-                return;
-            }
-
-            statusElement.textContent = 'Loading trade setups...';
-            statusElement.classList.add('loading');
-            const sortState = { ...sortStates.wax.setups };
-            const filterValue = filterInput.value || '';
-
-            try {
-                const { data, error, count } = await withRetry(async () => await supabase
-                    .from('wax_trades')
-                    .select('*', { count: 'exact' })
-                    .range((page - 1) * pageSize, page * pageSize - 1)
-                );
-                if (error) throw new Error(`Failed to fetch wax trades: ${error.message}`);
-
-                setupsBody.innerHTML = '';
-                setupsCards.innerHTML = '';
-                const setups = data || [];
-                if (setups.length === 0) {
-                    setupsCards.innerHTML = '<p>No trade setups available.</p>';
-                }
-
-                setups.forEach(setup => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${setup.symbol || '-'}</td>
-                        <td>${setup.action || '-'}</td>
-                        <td>${setup.popcandletime ? new Date(setup.popcandletime).toLocaleString() : '-'}</td>
-                        <td>$${setup.popcandlehigh ? setup.popcandlehigh.toFixed(8) : '-'}</td>
-                        <td>${setup.pullbackcount || '-'}</td>
-                        <td>$${setup.entryprice ? setup.entryprice.toFixed(8) : '-'}</td>
-                        <td>$${setup.stoploss ? setup.stoploss.toFixed(8) : '-'}</td>
-                        <td class="${setup.profitpercent >= 0 ? 'profit-positive' : 'profit-negative'}">${setup.profitpercent != null ? setup.profitpercent.toFixed(2) : '0'}%</td>
-                        <td>${setup.solprofit ? setup.solprofit.toFixed(2) : '-'}</td>
-                        <td>${setup.exit_reason || '-'}</td>
-                        <td>${setup.timestamp ? new Date(setup.timestamp).toLocaleString() : '-'}</td>
-                    `;
-                    setupsBody.appendChild(row);
-
-                    const card = document.createElement('div');
-                    card.className = 'card';
-                    card.innerHTML = `
-                        <p><span class="card-label">Symbol:</span> ${setup.symbol || '-'}</p>
-                        <p><span class="card-label">Action:</span> ${setup.action || '-'}</p>
-                        <p><span class="card-label">Pop Candle Time:</span> ${setup.popcandletime ? new Date(setup.popcandletime).toLocaleString() : '-'}</p>
-                        <p><span class="card-label">Pop Candle High:</span> $${setup.popcandlehigh ? setup.popcandlehigh.toFixed(8) : '-'}</p>
-                        <p><span class="card-label">Pullback Count:</span> ${setup.pullbackcount || '-'}</p>
-                        <p><span class="card-label">Entry Price:</span> $${setup.entryprice ? setup.entryprice.toFixed(8) : '-'}</p>
-                        <p><span class="card-label">Stop Loss:</span> $${setup.stoploss ? setup.stoploss.toFixed(8) : '-'}</p>
-                        <p><span class="card-label">Profit:</span> <span class="${setup.profitpercent >= 0 ? 'profit-positive' : 'profit-negative'}">${setup.profitpercent != null ? setup.profitpercent.toFixed(2) : '0'}%</span></p>
-                        <p><span class="card-label">Sol Profit:</span> ${setup.solprofit ? setup.solprofit.toFixed(2) : '-'}</p>
-                        <p><span class="card-label">Exit Reason:</span> ${setup.exit_reason || '-'}</p>
-                        <p><span class="card-label">Timestamp:</span> ${setup.timestamp ? new Date(setup.timestamp).toLocaleString() : '-'}</p>
-                    `;
-                    setupsCards.appendChild(card);
-                });
-
-                statusElement.textContent = `Trade setups loaded (${setups.length})`;
-                currentPageSpan.textContent = page;
-                prevPage.classList.toggle('disabled', page === 1);
-                nextPage.classList.toggle('disabled', setups.length < pageSize || page * pageSize >= count);
-
-                if (sortState && Object.keys(sortState).length > 0) {
-                    const column = Object.keys(sortState)[0];
-                    const direction = sortState[column];
-                    const header = table.querySelector(`th[data-sort="${column}"]`);
-                    if (header) {
-                        header.classList.add(`sort-${direction}`);
-                        header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
-                        const rows = Array.from(setupsBody.querySelectorAll('tr'));
-                        rows.sort((a, b) => {
-                            let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                            let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                            if (['popcandlehigh', 'entryprice', 'stoploss', 'profitpercent', 'solprofit'].includes(column)) {
-                                aValue = parseFloat(aValue.replace('$', '').replace('%', '')) || 0;
-                                bValue = parseFloat(bValue.replace('$', '').replace('%', '')) || 0;
-                            } else if (['popcandletime', 'timestamp'].includes(column)) {
-                                aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
-                                bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
-                            } else {
-                                aValue = aValue.toLowerCase();
-                                bValue = bValue.toLowerCase();
-                            }
-                            return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
-                        });
-                        setupsBody.innerHTML = '';
-                        rows.forEach(row => setupsBody.appendChild(row));
-                    }
-                }
-
-                if (filterValue) {
-                    filterInput.value = filterValue;
-                    filterInput.dispatchEvent(new Event('input'));
-                }
-            } catch (error) {
-                console.error('Error in refreshWaxTrades:', error);
-                statusElement.textContent = `Error loading trade setups: ${error.message}`;
-            } finally {
-                statusElement.classList.remove('loading');
-            }
-        }
-
-        function setupSortListeners(bot, section, tableId, sortStateKey) {
-            console.log(`Setting up sort listeners for ${bot} ${section} at #${tableId}`);
+        function setupSortListeners(section, tableId, sortStateKey) {
+            console.log(`Setting up sort listeners for funbags ${section} at #${tableId}`);
             const table = document.querySelector(`#${tableId} table`);
             if (!table) {
-                console.error(`Table not found for ${bot} ${section} at #${tableId}`);
+                console.error(`Table not found for funbags ${section} at #${tableId}`);
                 return;
             }
 
             table.querySelectorAll('th[data-sort]').forEach(header => {
                 header.addEventListener('click', () => {
                     const column = header.getAttribute('data-sort');
-                    const currentDirection = sortStates[bot][sortStateKey][column];
+                    const currentDirection = sortStates.funbags[sortStateKey][column];
                     const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
-                    console.log(`Sorting ${bot} ${section} by ${column} ${newDirection}`);
+                    console.log(`Sorting funbags ${section} by ${column} ${newDirection}`);
 
                     table.querySelectorAll('th').forEach(h => {
                         h.classList.remove('sort-asc', 'sort-desc');
@@ -1441,17 +1024,17 @@
                     const icon = header.querySelector('.sort-icon');
                     if (icon) icon.innerHTML = newDirection === 'asc' ? '↑' : '↓';
 
-                    sortStates[bot][sortStateKey] = { [column]: newDirection };
+                    sortStates.funbags[sortStateKey] = { [column]: newDirection };
 
                     const body = table.querySelector('tbody');
                     const rows = Array.from(body.querySelectorAll('tr'));
                     rows.sort((a, b) => {
                         let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
                         let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                        if (['profit', 'total_profit_usd', 'buy_price_usd', 'sell_price_usd', 'current_price_usd', 'market_cap', 'lowest_market_cap', 'popcandlehigh', 'entryprice', 'stoploss', 'profitpercent', 'solprofit'].includes(column)) {
+                        if (['profit', 'total_profit_usd', 'buy_price_usd', 'sell_price_usd', 'current_price_usd', 'market_cap', 'lowest_market_cap'].includes(column)) {
                             aValue = parseFloat(aValue.replace('$', '').replace('%', '').replace(',', '')) || 0;
                             bValue = parseFloat(bValue.replace('$', '').replace('%', '').replace(',', '')) || 0;
-                        } else if (['buy_timestamp', 'sell_timestamp', 'timestamp', 'popcandletime'].includes(column)) {
+                        } else if (['buy_timestamp', 'sell_timestamp', 'timestamp'].includes(column)) {
                             aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
                             bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
                         } else {
@@ -1467,11 +1050,11 @@
             });
         }
 
-        function setupFilterListeners(bot, section, filterId, tableId, cardId) {
+        function setupFilterListeners(section, filterId, tableId, cardId) {
             const filterInput = document.getElementById(filterId);
-            console.log(`Setting up filter listener for ${bot} ${section} at #${filterId}`);
+            console.log(`Setting up filter listener for funbags ${section} at #${filterId}`);
             if (!filterInput) {
-                console.error(`Filter input not found for ${bot} ${section} at #${filterId}`);
+                console.error(`Filter input not found for funbags ${section} at #${filterId}`);
                 return;
             }
 
@@ -1479,7 +1062,7 @@
                 const filterValue = filterInput.value.toLowerCase();
                 const tableRows = document.querySelectorAll(`#${tableId} tbody tr`);
                 const cards = document.querySelectorAll(`#${cardId} .card`);
-                console.log(`Filtering ${bot} ${section} with value: ${filterValue}`);
+                console.log(`Filtering funbags ${section} with value: ${filterValue}`);
 
                 tableRows.forEach(row => {
                     const token = row.cells[0]?.textContent.toLowerCase() || '';
@@ -1495,112 +1078,88 @@
             });
         }
 
-        function setupPagination(bot, section, prevId, nextId, pageId) {
+        function setupPagination(section, prevId, nextId, pageId) {
             const prevButton = document.getElementById(prevId);
             const nextButton = document.getElementById(nextId);
             const pageSpan = document.getElementById(pageId);
-            console.log(`Setting up pagination for ${bot} ${section}: prev=${prevId}, next=${nextId}, page=${pageId}`);
+            console.log(`Setting up pagination for funbags ${section}: prev=${prevId}, next=${nextId}, page=${pageId}`);
 
             if (!prevButton || !nextButton || !pageSpan) {
-                console.error(`Pagination elements missing for ${bot} ${section}`);
+                console.error(`Pagination elements missing for funbags ${section}`);
                 return;
             }
 
             prevButton.addEventListener('click', () => {
-                if (pageStates[bot][section] > 1) {
-                    pageStates[bot][section]--;
-                    pageSpan.textContent = pageStates[bot][section];
-                    console.log(`Pagination prev clicked for ${bot} ${section}, page: ${pageStates[bot][section]}`);
-                    refreshTab(bot);
+                if (pageStates.funbags[section] > 1) {
+                    pageStates.funbags[section]--;
+                    pageSpan.textContent = pageStates.funbags[section];
+                    console.log(`Pagination prev clicked for funbags ${section}, page: ${pageStates.funbags[section]}`);
+                    refreshTab();
                 }
             });
 
             nextButton.addEventListener('click', () => {
-                pageStates[bot][section]++;
-                pageSpan.textContent = pageStates[bot][section];
-                console.log(`Pagination next clicked for ${bot} ${section}, page: ${pageStates[bot][section]}`);
-                refreshTab(bot);
+                pageStates.funbags[section]++;
+                pageSpan.textContent = pageStates.funbags[section];
+                console.log(`Pagination next clicked for funbags ${section}, page: ${pageStates.funbags[section]}`);
+                refreshTab();
             });
         }
 
-        function setupExportListener(bot, exportId) {
+        function setupExportListener(exportId) {
             const exportButton = document.getElementById(exportId);
-            console.log(`Setting up export listener for ${bot} at #${exportId}`);
+            console.log(`Setting up export listener for funbags at #${exportId}`);
             if (!exportButton) {
-                console.error(`Export button not found for ${bot} at #${exportId}`);
+                console.error(`Export button not found for funbags at #${exportId}`);
                 return;
             }
 
             exportButton.addEventListener('click', async () => {
-                console.log(`Exporting trades for ${bot}`);
-                const tableName = bot === 'bread' ? 'trades' : bot === 'moon' ? 'trades_bot2' : 'token_states';
+                console.log(`Exporting trades for funbags`);
                 try {
-                    const { data, error } = await supabase.from(tableName).select('*').csv();
+                    const { data, error } = await supabase.from('token_states').select('*').csv();
                     if (error) throw new Error(`Export failed: ${error.message}`);
                     const blob = new Blob([data], { type: 'text/csv' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `${bot}_trades.csv`;
+                    a.download = `funbags_trades.csv`;
                     a.click();
                     URL.revokeObjectURL(url);
                 } catch (error) {
-                    console.error(`Export failed for ${bot}:`, error);
+                    console.error(`Export failed for funbags:`, error);
                     alert(`Failed to export trades: ${error.message}`);
                 }
             });
         }
 
-        function setupRefreshListeners(bot, refreshIds) {
+        function setupRefreshListeners(refreshIds) {
             refreshIds.forEach(id => {
                 const button = document.getElementById(id);
-                console.log(`Setting up refresh listener for ${bot} at #${id}`);
+                console.log(`Setting up refresh listener for funbags at #${id}`);
                 if (button) {
                     button.replaceWith(button.cloneNode(true));
                     const newButton = document.getElementById(id);
                     newButton.addEventListener('click', debounce(() => {
-                        console.log(`Manual refresh triggered for ${bot} via #${id}`);
-                        refreshTab(bot);
+                        console.log(`Manual refresh triggered for funbags via #${id}`);
+                        refreshTab();
                     }, 300));
                 } else {
-                    console.error(`Refresh button #${id} not found for ${bot}`);
+                    console.error(`Refresh button #${id} not found for funbags`);
                 }
             });
         }
 
-        async function refreshTab(bot) {
-            console.log(`Refreshing tab: ${bot}`);
-            if (bot === 'wax') {
-                await refreshWaxTrades(pageStates.wax.setups);
-            } else {
-                await refreshTrades(bot, pageStates[bot].active, pageStates[bot].completed);
-            }
+        async function refreshTab() {
+            console.log(`Refreshing tab: funbags`);
+            await refreshTrades(pageStates.funbags.active, pageStates.funbags.completed);
         }
-
-        // Tab switching logic
-        let activeTab = 'bread';
-        const tabs = document.querySelectorAll('.tab');
-        const tabContents = document.querySelectorAll('.tab-content');
-        tabs.forEach(tab => {
-            tab.addEventListener('click', async () => {
-                tabs.forEach(t => t.classList.remove('active'));
-                tabContents.forEach(c => c.classList.remove('active'));
-                tab.classList.add('active');
-                const newTab = tab.id.split('-')[1];
-                document.getElementById(`content-${newTab}`).classList.add('active');
-                tab.style.pointerEvents = 'none';
-                await refreshTab(newTab);
-                activeTab = newTab;
-                tab.style.pointerEvents = 'auto';
-                console.log(`Switched to tab: ${tab.textContent}, activeTab: ${activeTab}`);
-            });
-        });
 
         // Auto-refresh every 10 seconds
         setInterval(() => {
-            if (document.visibilityState === 'visible' && ['bread', 'moon', 'funbags'].includes(activeTab)) {
-                console.log(`Auto-refreshing for ${activeTab}`);
-                refreshTab(activeTab);
+            if (document.visibilityState === 'visible') {
+                console.log(`Auto-refreshing for funbags`);
+                refreshTab();
             }
         }, 10000);
 
@@ -1620,29 +1179,25 @@
         }
 
         // Setup listeners
-        ['bread', 'moon', 'funbags'].forEach(bot => {
-            console.log(`Initializing listeners for ${bot}`);
-            setupSortListeners(bot, 'active', `${bot}-activeTradesBody`, 'active');
-            setupSortListeners(bot, 'completed', `${bot}-completedTableContainer`, 'completed');
-            setupFilterListeners(bot, 'active', `${bot}-activeFilter`, `${bot}-activeTradesBody`, `${bot}-activeTradesCards`);
-            setupFilterListeners(bot, 'completed', `${bot}-completedFilter`, `${bot}-completedTableContainer`, `${bot}-completedTradesCards`);
-            setupPagination(bot, 'active', `${bot}-activePrevPage`, `${bot}-activeNextPage`, `${bot}-activeCurrentPage`);
-            setupPagination(bot, 'completed', `${bot}-completedPrevPage`, `${bot}-completedNextPage`, `${bot}-completedCurrentPage`);
-            setupExportListener(bot, `${bot}-exportBtn`);
-            setupRefreshListeners(bot, [
-                `${bot}-topRefreshBtn`,
-                `${bot}-middleRefreshBtn`,
-                `${bot}-bottomRefreshBtn`,
-                bot === 'funbags' ? 'funbags-monitoredRefreshBtn' : null
-            ].filter(Boolean));
-        });
-
-        setupSortListeners('wax', 'setups', 'wax-setupsBody', 'setups');
-        setupFilterListeners('wax', 'setups', 'wax-filter', 'wax-setupsBody', 'wax-setupsCards');
-        setupPagination('wax', 'setups', 'wax-prevPage', 'wax-nextPage', 'wax-currentPage');
-        setupRefreshListeners('wax', ['wax-refreshBtn', 'wax-bottomRefreshBtn']);
+        console.log(`Initializing listeners for funbags`);
+        setupSortListeners('active', 'funbags-activeTradesBody', 'active');
+        setupSortListeners('completed', 'funbags-completedTableContainer', 'completed');
+        setupSortListeners('monitored', 'funbags-monitoredBody', 'monitored');
+        setupFilterListeners('active', 'funbags-activeFilter', 'funbags-activeTradesBody', 'funbags-activeTradesCards');
+        setupFilterListeners('completed', 'funbags-completedFilter', 'funbags-completedTableContainer', 'funbags-completedTradesCards');
+        setupFilterListeners('monitored', 'funbags-monitoredFilter', 'funbags-monitoredBody', 'funbags-monitoredCards');
+        setupPagination('active', 'funbags-activePrevPage', 'funbags-activeNextPage', 'funbags-activeCurrentPage');
+        setupPagination('completed', 'funbags-completedPrevPage', 'funbags-completedNextPage', 'funbags-completedCurrentPage');
+        setupPagination('monitored', 'funbags-monitoredPrevPage', 'funbags-monitoredNextPage', 'funbags-monitoredCurrentPage');
+        setupExportListener('funbags-exportBtn');
+        setupRefreshListeners([
+            'funbags-topRefreshBtn',
+            'funbags-middleRefreshBtn',
+            'funbags-bottomRefreshBtn',
+            'funbags-monitoredRefreshBtn'
+        ]);
 
         // Initial load
-        refreshTab('bread');
+        refreshTab();
     });
 </script>
