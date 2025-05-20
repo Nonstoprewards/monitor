@@ -1168,7 +1168,7 @@
                 await refreshTrades(bot);
             }
         }
-                           // MODIFIED START: Updated refreshTrades for Fun Bags to handle multiple sells and invalid usd_price
+                                  // MODIFIED START: Updated refreshTrades for Fun Bags to handle multiple sells and numeric usd_price
         async function refreshTrades(bot) {
             console.log(`Starting refreshTrades for ${bot}`);
             const prefix = bot === 'bread' ? 'bread' : bot === 'moon' ? 'moon' : 'funbags';
@@ -1257,14 +1257,12 @@
                     }
                     console.log('Buy logs fetched for Fun Bags:', buyLogs);
 
-                    // MODIFIED START: Filter out invalid usd_price values without .rpc()
+                    // MODIFIED START: Simplified price logs query for numeric usd_price
                     console.log('Fetching price logs from bot_logs for Fun Bags');
                     let { data: priceLogs, error: priceError } = await withRetry(async () => await supabase
                         .from('bot_logs')
                         .select('token_address, usd_price')
                         .neq('usd_price', null)
-                        .not('usd_price', 'ilike', 'null') // Exclude string "null"
-                        .not('usd_price', 'eq', '') // Exclude empty strings
                         .order('timestamp', { ascending: false })
                         .limit(100));
 
@@ -1576,7 +1574,7 @@
                             return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
                         });
                         completedTradesBody.innerHTML = '';
-                        rows.forEach(row => completedTradesBody.appendChild(row)); // Fixed from activeTradesBody
+                        rows.forEach(row => completedTradesBody.appendChild(row));
                     }
                 }
 
