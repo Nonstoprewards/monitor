@@ -1168,7 +1168,7 @@
                 await refreshTrades(bot);
             }
         }
-               // MODIFIED START: Updated refreshTrades for Fun Bags with custom SQL function for price logs
+               // MODIFIED START: Updated refreshTrades with debug logs for button listeners
 async function refreshTrades(bot) {
     console.log(`Starting refreshTrades for ${bot}`);
     const prefix = bot === 'bread' ? 'bread' : bot === 'moon' ? 'moon' : 'funbags';
@@ -1257,7 +1257,7 @@ async function refreshTrades(bot) {
             }
             console.log('Buy logs fetched for Fun Bags:', buyLogs);
 
-            // MODIFIED START: Use custom SQL function for price logs
+            // Fetch price logs using custom SQL function
             console.log('Fetching price logs using query_price_logs for Fun Bags');
             let { data: priceLogs, error: priceError } = await withRetry(async () => await supabase
                 .rpc('query_price_logs')
@@ -1273,7 +1273,6 @@ async function refreshTrades(bot) {
                 try {
                     const buyLog = buyLogs.find(log => log.token_address === state.token_address) || {};
                     const latestPriceLog = priceLogs.find(log => log.token_address === state.token_address) || {};
-                    // Safely parse usd_price, default to 0 if invalid or missing
                     const currentPrice = latestPriceLog.usd_price != null && !isNaN(parseFloat(latestPriceLog.usd_price)) ? parseFloat(latestPriceLog.usd_price) : 0;
                     const buyPrice = parseFloat(state.purchase_price) || 0;
                     const marketCap = currentPrice * 1_000_000_000; // PUMP_FUN_TOTAL_SUPPLY
@@ -1306,7 +1305,6 @@ async function refreshTrades(bot) {
                     };
                 }
             }));
-            // MODIFIED END
 
             // Fetch completed trades
             console.log('Fetching completed trades from bot_logs for Fun Bags');
@@ -1324,7 +1322,6 @@ async function refreshTrades(bot) {
             }
             console.log('Sell logs fetched for Fun Bags:', sellLogs);
 
-            // Group sell logs by token_address to handle multiple sells
             const sellGroups = sellLogs.reduce((acc, sell) => {
                 if (!acc[sell.token_address]) {
                     acc[sell.token_address] = [];
@@ -1341,7 +1338,6 @@ async function refreshTrades(bot) {
                         return null;
                     }
 
-                    // Fetch buy purchase_price from token_states
                     const { data: buyState, error: buyStateError } = await supabase
                         .from('token_states')
                         .select('purchase_price')
@@ -1354,7 +1350,6 @@ async function refreshTrades(bot) {
 
                     const buyPrice = buyState?.purchase_price ? parseFloat(buyState.purchase_price) : 0;
 
-                    // Calculate weighted average sell price and total amount
                     let totalAmount = 0;
                     let weightedSellPrice = 0;
                     sells.forEach(sell => {
@@ -1371,13 +1366,13 @@ async function refreshTrades(bot) {
                     return {
                         token_address: tokenAddress,
                         token_name: tokenAddress.slice(0, 8),
-                        token_symbol: '-', // No symbol
+                        token_symbol: '-',
                         buy_price_usd: buyPrice,
                         sell_price_usd: avgSellPrice,
                         profit: profitPercent,
                         total_profit_usd: totalProfit,
                         buy_timestamp: buyLog.timestamp || null,
-                        sell_timestamp: sells[0].timestamp || null, // Latest sell
+                        sell_timestamp: sells[0].timestamp || null,
                         status: 'closed',
                         total_amount: totalAmount
                     };
@@ -1411,7 +1406,7 @@ async function refreshTrades(bot) {
                 .limit(100));
 
             if (completedError) {
-                console.error(`Completed trades fetch error for ${bot}:`, error.message, error.details, error.hint);
+                console.error(`Completed trades fetch error for ${bot}:`, completedError.message, completedError.details, completedError.hint);
                 throw new Error(`Failed to fetch completed trades: ${completedError.message}`);
             }
             completedTrades = completedData || [];
@@ -1575,14 +1570,12 @@ async function refreshTrades(bot) {
             }
         }
 
-        // Calculate total profit
         const totalProfit = filteredTrades.reduce((sum, trade) => {
             const profit = trade.total_profit_usd || 0;
             return sum + parseFloat(profit);
         }, 0);
         totalProfitElement.textContent = `$${totalProfit.toFixed(2)}`;
 
-        // Reapply filters
         if (activeFilterValue) {
             document.getElementById(`${prefix}-activeFilter`).value = activeFilterValue;
             document.getElementById(`${prefix}-activeFilter`).dispatchEvent(new Event('input'));
@@ -1600,7 +1593,6 @@ async function refreshTrades(bot) {
         alert(`Failed to refresh trades for ${bot}: ${error.message}. Check console for details.`);
     }
 }
-// MODIFIED END
 
 async function refreshWaxTrades() {
     console.log('Starting refreshWaxTrades');
@@ -1721,19 +1713,21 @@ async function refreshWaxTrades() {
     }
 }
 
-// Sorting event listeners
 function setupSortListeners(bot, section, tableId, sortStateKey) {
+    console.log(`Setting up sort listeners for ${bot} ${section} at #${tableId}`);
     const table = document.querySelector(`#${tableId} table`);
     if (!table) {
-        console.error(`Table not found for ${bot} ${section}`);
+        console.error(`Table not found for ${bot} ${section} at #${tableId}`);
         return;
     }
 
     table.querySelectorAll('th[data-sort]').forEach(header => {
+        console.log(`Attaching sort listener to header ${header.getAttribute('data-sort')} for ${bot} ${section}`);
         header.addEventListener('click', () => {
             const column = header.getAttribute('data-sort');
             const currentDirection = sortStates[bot][sortStateKey][column];
             const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+            console.log(`Sorting ${bot} ${section} by ${column} ${newDirection}`);
 
             table.querySelectorAll('th').forEach(h => {
                 h.classList.remove('sort-asc', 'sort-desc');
@@ -1764,7 +1758,7 @@ function setupSortListeners(bot, section, tableId, sortStateKey) {
                     bValue = bValue.toLowerCase();
                 }
 
-                return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
+                return newDirection === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
             });
 
             body.innerHTML = '';
@@ -1773,11 +1767,11 @@ function setupSortListeners(bot, section, tableId, sortStateKey) {
     });
 }
 
-// Filter event listeners
 function setupFilterListeners(bot, section, filterId, tableId, cardId) {
     const filterInput = document.getElementById(filterId);
+    console.log(`Setting up filter listener for ${bot} ${section} at #${filterId}`);
     if (!filterInput) {
-        console.error(`Filter input not found for ${bot} ${section}`);
+        console.error(`Filter input not found for ${bot} ${section} at #${filterId}`);
         return;
     }
 
@@ -1785,6 +1779,7 @@ function setupFilterListeners(bot, section, filterId, tableId, cardId) {
         const filterValue = filterInput.value.toLowerCase();
         const tableRows = document.querySelectorAll(`#${tableId} tbody tr`);
         const cards = document.querySelectorAll(`#${cardId} .card`);
+        console.log(`Filtering ${bot} ${section} with value: ${filterValue}`);
 
         tableRows.forEach(row => {
             const token = row.cells[0]?.textContent.toLowerCase() || '';
@@ -1800,14 +1795,18 @@ function setupFilterListeners(bot, section, filterId, tableId, cardId) {
     });
 }
 
-// Pagination (simplified, as original lacked full implementation)
 function setupPagination(bot, section, prevId, nextId, pageId) {
     const prevButton = document.getElementById(prevId);
     const nextButton = document.getElementById(nextId);
     const pageSpan = document.getElementById(pageId);
+    console.log(`Setting up pagination for ${bot} ${section}: prev=${prevId}, next=${nextId}, page=${pageId}`);
 
     if (!prevButton || !nextButton || !pageSpan) {
-        console.error(`Pagination elements missing for ${bot} ${section}`);
+        console.error(`Pagination elements missing for ${bot} ${section}:`, {
+            prevButton: !!prevButton,
+            nextButton: !!nextButton,
+            pageSpan: !!pageSpan
+        });
         return;
     }
 
@@ -1816,6 +1815,7 @@ function setupPagination(bot, section, prevId, nextId, pageId) {
         if (currentPage > 1) {
             currentPage--;
             pageSpan.textContent = currentPage;
+            console.log(`Pagination prev clicked for ${bot} ${section}, page: ${currentPage}`);
             refreshTab(bot);
         }
     });
@@ -1823,15 +1823,16 @@ function setupPagination(bot, section, prevId, nextId, pageId) {
     nextButton.addEventListener('click', () => {
         currentPage++;
         pageSpan.textContent = currentPage;
+        console.log(`Pagination next clicked for ${bot} ${section}, page: ${currentPage}`);
         refreshTab(bot);
     });
 }
 
-// Export trades (placeholder, as original lacked implementation)
 function setupExportListener(bot, exportId) {
     const exportButton = document.getElementById(exportId);
+    console.log(`Setting up export listener for ${bot} at #${exportId}`);
     if (!exportButton) {
-        console.error(`Export button not found for ${bot}`);
+        console.error(`Export button not found for ${bot} at #${exportId}`);
         return;
     }
 
@@ -1841,23 +1842,23 @@ function setupExportListener(bot, exportId) {
     });
 }
 
-// Refresh button listeners
 function setupRefreshListeners(bot, refreshIds) {
     refreshIds.forEach(id => {
         const button = document.getElementById(id);
+        console.log(`Setting up refresh listener for ${bot} at #${id}`);
         if (button) {
             button.addEventListener('click', () => {
-                console.log(`Manual refresh triggered for ${bot}`);
+                console.log(`Manual refresh triggered for ${bot} via #${id}`);
                 refreshTab(bot);
             });
         } else {
-            console.error(`Refresh button ${id} not found for ${bot}`);
+            console.error(`Refresh button #${id} not found for ${bot}`);
         }
     });
 }
 
-// Setup listeners for each bot
 ['bread', 'moon', 'funbags'].forEach(bot => {
+    console.log(`Initializing listeners for ${bot}`);
     setupSortListeners(bot, 'active', `${bot}-activeTradesBody`, 'active');
     setupSortListeners(bot, 'completed', `${bot}-completedTableContainer`, 'completed');
     setupFilterListeners(bot, 'active', `${bot}-activeFilter`, `${bot}-activeTradesBody`, `${bot}-activeTradesCards`);
@@ -1878,6 +1879,5 @@ setupFilterListeners('wax', 'setups', 'wax-filter', 'wax-setupsBody', 'wax-setup
 setupPagination('wax', 'setups', 'wax-prevPage', 'wax-nextPage', 'wax-currentPage');
 setupRefreshListeners('wax', ['wax-refreshBtn', 'wax-bottomRefreshBtn']);
 
-// Initial refresh
 refreshTab('bread');
 </script>
