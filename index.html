@@ -34,13 +34,12 @@
                         </button>
                     </div>
                     <p id="funbags-monitored-status" class="text-gray-700 text-sm mb-2 status">Loading monitored coins...</p>
-                    <input type="text" id="funbags-monitoredFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
+                    <input type="text" id="funbags-monitoredFilter" class="filter-input" placeholder="Filter by Token...">
                     <div class="table-container">
                         <table class="min-w-full">
                             <thead>
                                 <tr>
                                     <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
                                     <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
                                     <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
                                     <th data-sort="lowest_market_cap">Lowest Market Cap (USD)<span class="sort-icon"></span></th>
@@ -74,13 +73,12 @@
                         </div>
                     </div>
                     <p id="funbags-active-status" class="text-gray-700 text-sm mb-2 status">Loading active trades...</p>
-                    <input type="text" id="funbags-activeFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
+                    <input type="text" id="funbags-activeFilter" class="filter-input" placeholder="Filter by Token...">
                     <div class="table-container">
                         <table class="min-w-full">
                             <thead>
                                 <tr>
                                     <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
                                     <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
                                     <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
                                     <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
@@ -115,13 +113,12 @@
                             <option value="negative">Negative Profit</option>
                         </select>
                     </div>
-                    <input type="text" id="funbags-completedFilter" class="filter-input" placeholder="Filter by Token or Symbol...">
+                    <input type="text" id="funbags-completedFilter" class="filter-input" placeholder="Filter by Token...">
                     <div id="funbags-completedTableContainer" class="table-container">
                         <table class="min-w-full">
                             <thead>
                                 <tr>
                                     <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="token_symbol">Symbol<span class="sort-icon"></span></th>
                                     <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
                                     <th data-sort="sell_price_usd">Sell Price (USD)<span class="sort-icon"></span></th>
                                     <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
@@ -466,6 +463,9 @@
         };
         const pageSize = 10;
 
+        // Cache for token names
+        const tokenNameCache = new Map();
+
         // Retry mechanism for Supabase queries
         async function withRetry(fn, retries = 3, delay = 1000) {
             for (let attempt = 1; attempt <= retries; attempt++) {
@@ -490,6 +490,12 @@
 
         async function fetchTokenData(tokenAddress) {
             console.log(`Fetching token data for ${tokenAddress}`);
+            // Check cache first
+            if (tokenNameCache.has(tokenAddress)) {
+                console.log(`Cache hit for ${tokenAddress}`);
+                return tokenNameCache.get(tokenAddress);
+            }
+
             const url = `https://solana-gateway.moralis.io/token/mainnet/${tokenAddress}/metadata`;
             const moralisOptions = {
                 method: 'GET',
@@ -509,12 +515,16 @@
                 const data = await response.json();
                 const marketCap = parseFloat(data.fullyDilutedValue) || 0;
                 const price = parseFloat(data.price) || 0;
-                const symbol = data.symbol || '-';
-                console.log(`Token data fetched: ${tokenAddress}`, { marketCap, price, symbol });
-                return { marketCap, price, symbol };
+                const name = data.name || data.symbol || tokenAddress.slice(0, 8);
+                console.log(`Token data fetched: ${tokenAddress}`, { marketCap, price, name });
+                const result = { marketCap, price, name };
+                tokenNameCache.set(tokenAddress, result);
+                return result;
             } catch (error) {
                 console.error(`Error fetching token data for ${tokenAddress}:`, error.message);
-                return { marketCap: 0, price: 0, symbol: '-' };
+                const fallback = { marketCap: 0, price: 0, name: tokenAddress.slice(0, 8) };
+                tokenNameCache.set(tokenAddress, fallback);
+                return fallback;
             }
         }
 
@@ -532,19 +542,19 @@
                 if (error) throw new Error(`Failed to fetch monitored coins: ${error.message}`);
                 console.log('Monitored coins fetched:', monitoredCoins || 'No coins');
 
-                const coinsWithData = (monitoredCoins || []).map(coin => {
+                const coinsWithData = await Promise.all((monitoredCoins || []).map(async coin => {
+                    const tokenData = await fetchTokenData(coin.token_address);
                     const marketCap = parseFloat(coin.max_market_cap) || 0;
                     const price = marketCap / 1_000_000_000;
                     return {
                         token_address: coin.token_address || '-',
-                        token_name: (coin.token_address || '-').slice(0, 8),
-                        symbol: '-',
+                        token_name: tokenData.name,
                         market_cap: marketCap,
                         current_price_usd: price,
                         lowest_market_cap: parseFloat(coin.lowest_market_cap) || 999999999,
                         timestamp: coin.within_range_start_time ? new Date(parseInt(coin.within_range_start_time)).toISOString() : new Date().toISOString()
                     };
-                });
+                }));
 
                 return { coins: coinsWithData, total: count || coinsWithData.length };
             } catch (error) {
@@ -596,7 +606,6 @@
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
-                        <td>${coin.symbol || '-'}</td>
                         <td>$${marketCap.toLocaleString()}</td>
                         <td>$${currentPrice.toFixed(8)}</td>
                         <td>$${lowestMarketCap.toLocaleString()}</td>
@@ -608,7 +617,6 @@
                     card.className = 'card';
                     card.innerHTML = `
                         <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></p>
-                        <p><span class="card-label">Symbol:</span> ${coin.symbol || '-'}</p>
                         <p><span class="card-label">Market Cap:</span> $${marketCap.toLocaleString()}</p>
                         <p><span class="card-label">Current Price:</span> $${currentPrice.toFixed(8)}</p>
                         <p><span class="card-label">Lowest Market Cap:</span> $${lowestMarketCap.toLocaleString()}</p>
@@ -725,6 +733,7 @@
 
                 let activeTrades = await Promise.all((tokenStates || []).map(async state => {
                     try {
+                        const tokenData = await fetchTokenData(state.token_address);
                         const buyLog = buyLogs.find(log => log.token_address === state.token_address) || {};
                         const latestPriceLog = priceLogs.find(log => log.token_address === state.token_address) || {};
                         const currentPrice = latestPriceLog.usd_price != null && !isNaN(parseFloat(latestPriceLog.usd_price)) ? parseFloat(latestPriceLog.usd_price) : (parseFloat(state.purchase_price) || 0);
@@ -733,8 +742,7 @@
                         const profitPercent = buyPrice !== 0 && currentPrice !== 0 ? (((currentPrice - buyPrice) / buyPrice) * 100).toFixed(2) : '0';
                         return {
                             token_address: state.token_address,
-                            token_name: state.token_address.slice(0, 8),
-                            token_symbol: '-',
+                            token_name: tokenData.name,
                             buy_price_usd: buyPrice,
                             current_price_usd: currentPrice,
                             market_cap: marketCap,
@@ -769,6 +777,7 @@
 
                 let completedTrades = await Promise.all(Object.entries(sellGroups).map(async ([tokenAddress, sells]) => {
                     try {
+                        const tokenData = await fetchTokenData(tokenAddress);
                         const buyLog = buyLogs.find(log => log.token_address === tokenAddress);
                         if (!buyLog) {
                             console.warn(`No buy log for ${tokenAddress}`);
@@ -797,8 +806,7 @@
 
                         return {
                             token_address: tokenAddress,
-                            token_name: tokenAddress.slice(0, 8),
-                            token_symbol: '-',
+                            token_name: tokenData.name,
                             buy_price_usd: buyPrice,
                             sell_price_usd: avgSellPrice,
                             profit: profitPercent,
@@ -826,14 +834,13 @@
                     const profitPercent = trade.profit && trade.profit !== 'N/A' ? trade.profit : (buyPrice !== 0 && currentPrice !== 0 ? (((currentPrice - buyPrice) / buyPrice) * 100).toFixed(2) : '0');
                     const profitClass = profitPercent !== '0' && parseFloat(profitPercent) >= 0 ? 'profit-positive' : 'profit-negative';
                     const tokenAddress = trade.token_address || '-';
-                    const tokenName = trade.token_name || (trade.token_address?.slice(0, 8) || '-');
+                    const tokenName = trade.token_name || '-';
                     const status = trade.status || 'open';
                     const buyTime = trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-';
 
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
-                        <td>${trade.token_symbol || '-'}</td>
                         <td>$${buyPrice.toFixed(8)}</td>
                         <td>$${currentPrice.toFixed(8)}</td>
                         <td>$${trade.market_cap ? trade.market_cap.toLocaleString() : '-'}</td>
@@ -846,7 +853,6 @@
                     card.className = 'card';
                     card.innerHTML = `
                         <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName} (${status})</a></p>
-                        <p><span class="card-label">Symbol:</span> ${trade.token_symbol || '-'}</p>
                         <p><span class="card-label">Buy Price:</span> $${buyPrice.toFixed(8)}</p>
                         <p><span class="card-label">Current Price:</span> $${currentPrice.toFixed(8)}</p>
                         <p><span class="card-label">Market Cap:</span> $${trade.market_cap ? trade.market_cap.toLocaleString() : '-'}</p>
@@ -912,12 +918,11 @@
                     const profitPercent = trade.profit && trade.profit !== 'N/A' ? trade.profit : (buyPrice !== 0 && sellPrice !== 0 ? ((sellPrice - buyPrice) / buyPrice * 100).toFixed(2) : '0');
                     const profitClass = profitPercent !== '0' && parseFloat(profitPercent) >= 0 ? 'profit-positive' : 'profit-negative';
                     const tokenAddress = trade.token_address || '-';
-                    const tokenName = trade.token_name || (trade.token_address?.slice(0, 8) || '-');
+                    const tokenName = trade.token_name || '-';
 
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
-                        <td>${trade.token_symbol || '-'}</td>
                         <td>$${buyPrice.toFixed(8)}</td>
                         <td>$${sellPrice.toFixed(8)}</td>
                         <td class="${profitClass}">${profitPercent}%</td>
@@ -931,7 +936,6 @@
                     card.className = 'card';
                     card.innerHTML = `
                         <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></p>
-                        <p><span class="card-label">Symbol:</span> ${trade.token_symbol || '-'}</p>
                         <p><span class="card-label">Buy Price:</span> $${buyPrice.toFixed(8)}</p>
                         <p><span class="card-label">Sell Price:</span> $${sellPrice.toFixed(8)}</p>
                         <p><span class="card-label">Profit:</span> <span class="${profitClass}">${profitPercent}%</span></p>
@@ -1066,14 +1070,12 @@
 
                 tableRows.forEach(row => {
                     const token = row.cells[0]?.textContent.toLowerCase() || '';
-                    const symbol = row.cells[1]?.textContent.toLowerCase() || '';
-                    row.style.display = token.includes(filterValue) || symbol.includes(filterValue) ? '' : 'none';
+                    row.style.display = token.includes(filterValue) ? '' : 'none';
                 });
 
                 cards.forEach(card => {
                     const token = card.querySelector('p:nth-child(1)')?.textContent.toLowerCase() || '';
-                    const symbol = card.querySelector('p:nth-child(2)')?.textContent.toLowerCase() || '';
-                    card.style.display = token.includes(filterValue) || symbol.includes(filterValue) ? '' : 'none';
+                    card.style.display = token.includes(filterValue) ? '' : 'none';
                 });
             });
         }
