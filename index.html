@@ -1168,7 +1168,7 @@
                 await refreshTrades(bot);
             }
         }
-                        // MODIFIED START: Updated refreshTrades for Fun Bags to handle multiple sells and invalid usd_price
+                           // MODIFIED START: Updated refreshTrades for Fun Bags to handle multiple sells and invalid usd_price
         async function refreshTrades(bot) {
             console.log(`Starting refreshTrades for ${bot}`);
             const prefix = bot === 'bread' ? 'bread' : bot === 'moon' ? 'moon' : 'funbags';
@@ -1257,13 +1257,14 @@
                     }
                     console.log('Buy logs fetched for Fun Bags:', buyLogs);
 
-                    // MODIFIED START: Filter out non-numeric usd_price values
+                    // MODIFIED START: Filter out invalid usd_price values without .rpc()
                     console.log('Fetching price logs from bot_logs for Fun Bags');
                     let { data: priceLogs, error: priceError } = await withRetry(async () => await supabase
                         .from('bot_logs')
                         .select('token_address, usd_price')
                         .neq('usd_price', null)
-                        .rpc('is_numeric', { column_name: 'usd_price' }) // Custom function to check if usd_price is numeric
+                        .not('usd_price', 'ilike', 'null') // Exclude string "null"
+                        .not('usd_price', 'eq', '') // Exclude empty strings
                         .order('timestamp', { ascending: false })
                         .limit(100));
 
@@ -1277,7 +1278,7 @@
                         try {
                             const buyLog = buyLogs.find(log => log.token_address === state.token_address) || {};
                             const latestPriceLog = priceLogs.find(log => log.token_address === state.token_address) || {};
-                            // MODIFIED: Safely parse usd_price, default to 0 if invalid
+                            // Safely parse usd_price, default to 0 if invalid
                             const currentPrice = isNaN(parseFloat(latestPriceLog.usd_price)) ? 0 : parseFloat(latestPriceLog.usd_price);
                             const buyPrice = parseFloat(state.purchase_price) || 0;
                             const marketCap = currentPrice * 1_000_000_000; // PUMP_FUN_TOTAL_SUPPLY
@@ -1575,7 +1576,7 @@
                             return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
                         });
                         completedTradesBody.innerHTML = '';
-                        rows.forEach(row => activeTradesBody.appendChild(row)); // MODIFIED: Fixed bug, should append to completedTradesBody
+                        rows.forEach(row => completedTradesBody.appendChild(row)); // Fixed from activeTradesBody
                     }
                 }
 
