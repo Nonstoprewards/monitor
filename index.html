@@ -1168,720 +1168,716 @@
                 await refreshTrades(bot);
             }
         }
-                                  // MODIFIED START: Updated refreshTrades for Fun Bags to handle multiple sells and numeric usd_price
-        async function refreshTrades(bot) {
-            console.log(`Starting refreshTrades for ${bot}`);
-            const prefix = bot === 'bread' ? 'bread' : bot === 'moon' ? 'moon' : 'funbags';
-            const tableName = bot === 'bread' ? 'trades' : bot === 'moon' ? 'trades_bot2' : 'token_states';
-            const activeStatus = document.getElementById(`${prefix}-active-status`);
-            const completedStatus = document.getElementById(`${prefix}-completed-status`);
-            const activeTradesBody = document.getElementById(`${prefix}-activeTradesBody`);
-            const activeTradesCards = document.getElementById(`${prefix}-activeTradesCards`);
-            const completedTradesBody = document.getElementById(`${prefix}-completedTradesBody`);
-            const completedTradesCards = document.getElementById(`${prefix}-completedTradesCards`);
-            const totalProfitElement = document.getElementById(`${prefix}-totalProfit`);
-            const activeTable = activeTradesBody?.closest('table');
-            const completedTable = completedTradesBody?.closest('table');
+               // MODIFIED START: Updated refreshTrades for Fun Bags with custom SQL function for price logs
+async function refreshTrades(bot) {
+    console.log(`Starting refreshTrades for ${bot}`);
+    const prefix = bot === 'bread' ? 'bread' : bot === 'moon' ? 'moon' : 'funbags';
+    const tableName = bot === 'bread' ? 'trades' : bot === 'moon' ? 'trades_bot2' : 'token_states';
+    const activeStatus = document.getElementById(`${prefix}-active-status`);
+    const completedStatus = document.getElementById(`${prefix}-completed-status`);
+    const activeTradesBody = document.getElementById(`${prefix}-activeTradesBody`);
+    const activeTradesCards = document.getElementById(`${prefix}-activeTradesCards`);
+    const completedTradesBody = document.getElementById(`${prefix}-completedTradesBody`);
+    const completedTradesCards = document.getElementById(`${prefix}-completedTradesCards`);
+    const totalProfitElement = document.getElementById(`${prefix}-totalProfit`);
+    const activeTable = activeTradesBody?.closest('table');
+    const completedTable = completedTradesBody?.closest('table');
 
-            let monitoredStatus, monitoredBody, monitoredCards, monitoredTable, monitoredFilterInput;
-            if (bot === 'funbags') {
-                monitoredStatus = document.getElementById('funbags-monitored-status');
-                monitoredBody = document.getElementById('funbags-monitoredBody');
-                monitoredCards = document.getElementById('funbags-monitoredCards');
-                monitoredTable = monitoredBody?.closest('table');
-                monitoredFilterInput = document.getElementById('funbags-monitoredFilter');
+    let monitoredStatus, monitoredBody, monitoredCards, monitoredTable, monitoredFilterInput;
+    if (bot === 'funbags') {
+        monitoredStatus = document.getElementById('funbags-monitored-status');
+        monitoredBody = document.getElementById('funbags-monitoredBody');
+        monitoredCards = document.getElementById('funbags-monitoredCards');
+        monitoredTable = monitoredBody?.closest('table');
+        monitoredFilterInput = document.getElementById('funbags-monitoredFilter');
+    }
+
+    if (!activeStatus || !completedStatus || !activeTradesBody || !activeTradesCards || !completedTradesBody || !completedTradesCards || !totalProfitElement || !activeTable || !completedTable ||
+        (bot === 'funbags' && (!monitoredStatus || !monitoredBody || !monitoredCards || !monitoredTable || !monitoredFilterInput))) {
+        console.error(`Missing DOM elements for ${bot}:`, {
+            activeStatus: !!activeStatus,
+            completedStatus: !!completedStatus,
+            activeTradesBody: !!activeTradesBody,
+            activeTradesCards: !!activeTradesCards,
+            completedTradesBody: !!completedTradesBody,
+            completedTradesCards: !!completedTradesCards,
+            totalProfitElement: !!totalProfitElement,
+            activeTable: !!activeTable,
+            completedTable: !!completedTable,
+            monitoredStatus: bot === 'funbags' ? !!monitoredStatus : true,
+            monitoredBody: bot === 'funbags' ? !!monitoredBody : true,
+            monitoredCards: bot === 'funbags' ? !!monitoredCards : true,
+            monitoredTable: bot === 'funbags' ? !!monitoredTable : true,
+            monitoredFilterInput: bot === 'funbags' ? !!monitoredFilterInput : true
+        });
+        alert(`Failed to load ${bot} dashboard. Check console for details.`);
+        return;
+    }
+
+    const activeSort = { ...sortStates[bot].active };
+    const completedSort = { ...sortStates[bot].completed };
+    const activeFilterValue = document.getElementById(`${prefix}-activeFilter`)?.value || '';
+    const completedFilterValue = document.getElementById(`${prefix}-completedFilter`)?.value || '';
+    const profitFilterValue = document.getElementById(`${prefix}-profitFilter`)?.value || 'all';
+    const monitoredSort = bot === 'funbags' ? { ...sortStates.funbags.monitored } : {};
+    const monitoredFilterValue = bot === 'funbags' ? document.getElementById('funbags-monitoredFilter')?.value || '' : '';
+    console.log(`Preserved sort states for ${bot}:`, { activeSort, completedSort, monitoredSort });
+
+    try {
+        let activeTrades = [];
+        let completedTrades = [];
+
+        if (bot === 'funbags') {
+            await refreshMonitoredCoins();
+
+            // Fetch active trades
+            console.log('Fetching active trades from token_states for Fun Bags');
+            let { data: tokenStates, error: tokenError } = await withRetry(async () => await supabase
+                .from('token_states')
+                .select('token_address, purchase_price, amount, sold50, buy_market_cap')
+                .eq('bought', true)
+                .gt('amount', 0)
+                .limit(100));
+
+            if (tokenError) {
+                console.error('Token states fetch error for Fun Bags:', tokenError.message, tokenError.details, tokenError.hint);
+                throw new Error(`Failed to fetch token states: ${tokenError.message}`);
             }
+            console.log('Token states fetched for Fun Bags:', tokenStates);
 
-            if (!activeStatus || !completedStatus || !activeTradesBody || !activeTradesCards || !completedTradesBody || !completedTradesCards || !totalProfitElement || !activeTable || !completedTable ||
-                (bot === 'funbags' && (!monitoredStatus || !monitoredBody || !monitoredCards || !monitoredTable || !monitoredFilterInput))) {
-                console.error(`Missing DOM elements for ${bot}:`, {
-                    activeStatus: !!activeStatus,
-                    completedStatus: !!completedStatus,
-                    activeTradesBody: !!activeTradesBody,
-                    activeTradesCards: !!activeTradesCards,
-                    completedTradesBody: !!completedTradesBody,
-                    completedTradesCards: !!completedTradesCards,
-                    totalProfitElement: !!totalProfitElement,
-                    activeTable: !!activeTable,
-                    completedTable: !!completedTable,
-                    monitoredStatus: bot === 'funbags' ? !!monitoredStatus : true,
-                    monitoredBody: bot === 'funbags' ? !!monitoredBody : true,
-                    monitoredCards: bot === 'funbags' ? !!monitoredCards : true,
-                    monitoredTable: bot === 'funbags' ? !!monitoredTable : true,
-                    monitoredFilterInput: bot === 'funbags' ? !!monitoredFilterInput : true
-                });
-                alert(`Failed to load ${bot} dashboard. Check console for details.`);
-                return;
+            let { data: buyLogs, error: buyLogError } = await withRetry(async () => await supabase
+                .from('bot_logs')
+                .select('token_address, timestamp')
+                .eq('event_type', 'buy')
+                .limit(100));
+
+            if (buyLogError) {
+                console.error('Buy logs fetch error for Fun Bags:', buyLogError.message, buyLogError.details, buyLogError.hint);
+                throw new Error(`Failed to fetch buy logs: ${buyLogError.message}`);
             }
+            console.log('Buy logs fetched for Fun Bags:', buyLogs);
 
-            const activeSort = { ...sortStates[bot].active };
-            const completedSort = { ...sortStates[bot].completed };
-            const activeFilterValue = document.getElementById(`${prefix}-activeFilter`)?.value || '';
-            const completedFilterValue = document.getElementById(`${prefix}-completedFilter`)?.value || '';
-            const profitFilterValue = document.getElementById(`${prefix}-profitFilter`)?.value || 'all';
-            const monitoredSort = bot === 'funbags' ? { ...sortStates.funbags.monitored } : {};
-            const monitoredFilterValue = bot === 'funbags' ? document.getElementById('funbags-monitoredFilter')?.value || '' : '';
-            console.log(`Preserved sort states for ${bot}:`, { activeSort, completedSort, monitoredSort });
+            // MODIFIED START: Use custom SQL function for price logs
+            console.log('Fetching price logs using query_price_logs for Fun Bags');
+            let { data: priceLogs, error: priceError } = await withRetry(async () => await supabase
+                .rpc('query_price_logs')
+            );
 
-            try {
-                let activeTrades = [];
-                let completedTrades = [];
+            if (priceError) {
+                console.error('Price logs fetch error for Fun Bags:', priceError.message, priceError.details, priceError.hint);
+                throw new Error(`Failed to fetch price logs: ${priceError.message}`);
+            }
+            console.log('Price logs fetched for Fun Bags:', priceLogs);
 
-                if (bot === 'funbags') {
-                    await refreshMonitoredCoins();
+            activeTrades = await Promise.all((tokenStates || []).map(async (state) => {
+                try {
+                    const buyLog = buyLogs.find(log => log.token_address === state.token_address) || {};
+                    const latestPriceLog = priceLogs.find(log => log.token_address === state.token_address) || {};
+                    // Safely parse usd_price, default to 0 if invalid or missing
+                    const currentPrice = latestPriceLog.usd_price != null && !isNaN(parseFloat(latestPriceLog.usd_price)) ? parseFloat(latestPriceLog.usd_price) : 0;
+                    const buyPrice = parseFloat(state.purchase_price) || 0;
+                    const marketCap = currentPrice * 1_000_000_000; // PUMP_FUN_TOTAL_SUPPLY
+                    const profitPercent = buyPrice !== 0 && currentPrice !== 0 ? (((currentPrice - buyPrice) / buyPrice) * 100).toFixed(2) : '0';
+                    return {
+                        token_address: state.token_address,
+                        token_name: state.token_address.slice(0, 8),
+                        token_symbol: '-', // No symbol in token_states
+                        buy_price_usd: buyPrice,
+                        current_price_usd: currentPrice,
+                        market_cap: marketCap,
+                        profit: profitPercent,
+                        buy_timestamp: buyLog.timestamp || null,
+                        status: state.sold50 ? 'partial_sold' : 'open',
+                        amount: parseFloat(state.amount) || 0
+                    };
+                } catch (error) {
+                    console.error(`Error processing active trade for ${state.token_address}:`, error);
+                    return {
+                        token_address: state.token_address,
+                        token_name: state.token_address.slice(0, 8),
+                        token_symbol: '-',
+                        buy_price_usd: parseFloat(state.purchase_price) || 0,
+                        current_price_usd: 0,
+                        market_cap: 0,
+                        profit: '0',
+                        buy_timestamp: null,
+                        status: state.sold50 ? 'partial_sold' : 'open',
+                        amount: parseFloat(state.amount) || 0
+                    };
+                }
+            }));
+            // MODIFIED END
 
-                    // Fetch active trades
-                    console.log('Fetching active trades from token_states for Fun Bags');
-                    let { data: tokenStates, error: tokenError } = await withRetry(async () => await supabase
+            // Fetch completed trades
+            console.log('Fetching completed trades from bot_logs for Fun Bags');
+            let { data: sellLogs, error: sellLogError } = await withRetry(async () => await supabase
+                .from('bot_logs')
+                .select('token_address, amount, timestamp, event_type, sell_price')
+                .in('event_type', ['sell_50', 'trailing_stop', 'stop_loss'])
+                .neq('sell_price', null)
+                .order('timestamp', { ascending: false })
+                .limit(100));
+
+            if (sellLogError) {
+                console.error('Sell logs fetch error for Fun Bags:', sellLogError.message, sellLogError.details, sellLogError.hint);
+                throw new Error(`Failed to fetch sell logs: ${sellLogError.message}`);
+            }
+            console.log('Sell logs fetched for Fun Bags:', sellLogs);
+
+            // Group sell logs by token_address to handle multiple sells
+            const sellGroups = sellLogs.reduce((acc, sell) => {
+                if (!acc[sell.token_address]) {
+                    acc[sell.token_address] = [];
+                }
+                acc[sell.token_address].push(sell);
+                return acc;
+            }, {});
+
+            completedTrades = await Promise.all(Object.entries(sellGroups).map(async ([tokenAddress, sells]) => {
+                try {
+                    const buyLog = buyLogs.find(log => log.token_address === tokenAddress) || {};
+                    if (!buyLog) {
+                        console.warn(`No buy log found for sell logs ${tokenAddress}`);
+                        return null;
+                    }
+
+                    // Fetch buy purchase_price from token_states
+                    const { data: buyState, error: buyStateError } = await supabase
                         .from('token_states')
-                        .select('token_address, purchase_price, amount, sold50, buy_market_cap')
-                        .eq('bought', true)
-                        .gt('amount', 0)
-                        .limit(100));
+                        .select('purchase_price')
+                        .eq('token_address', tokenAddress)
+                        .single();
 
-                    if (tokenError) {
-                        console.error('Token states fetch error for Fun Bags:', tokenError.message, tokenError.details, tokenError.hint);
-                        throw new Error(`Failed to fetch token states: ${tokenError.message}`);
+                    if (buyStateError) {
+                        console.warn(`No token_state found for ${tokenAddress}:`, buyStateError.message);
                     }
-                    console.log('Token states fetched for Fun Bags:', tokenStates);
 
-                    let { data: buyLogs, error: buyLogError } = await withRetry(async () => await supabase
-                        .from('bot_logs')
-                        .select('token_address, timestamp')
-                        .eq('event_type', 'buy')
-                        .limit(100));
+                    const buyPrice = buyState?.purchase_price ? parseFloat(buyState.purchase_price) : 0;
 
-                    if (buyLogError) {
-                        console.error('Buy logs fetch error for Fun Bags:', buyLogError.message, buyLogError.details, buyLogError.hint);
-                        throw new Error(`Failed to fetch buy logs: ${buyLogError.message}`);
-                    }
-                    console.log('Buy logs fetched for Fun Bags:', buyLogs);
-
-                    // MODIFIED START: Simplified price logs query for numeric usd_price
-                    console.log('Fetching price logs from bot_logs for Fun Bags');
-                    let { data: priceLogs, error: priceError } = await withRetry(async () => await supabase
-                        .from('bot_logs')
-                        .select('token_address, usd_price')
-                        .neq('usd_price', null)
-                        .order('timestamp', { ascending: false })
-                        .limit(100));
-
-                    if (priceError) {
-                        console.error('Price logs fetch error for Fun Bags:', priceError.message, priceError.details, priceError.hint);
-                        throw new Error(`Failed to fetch price logs: ${priceError.message}`);
-                    }
-                    console.log('Price logs fetched for Fun Bags:', priceLogs);
-
-                    activeTrades = await Promise.all((tokenStates || []).map(async (state) => {
-                        try {
-                            const buyLog = buyLogs.find(log => log.token_address === state.token_address) || {};
-                            const latestPriceLog = priceLogs.find(log => log.token_address === state.token_address) || {};
-                            // Safely parse usd_price, default to 0 if invalid
-                            const currentPrice = isNaN(parseFloat(latestPriceLog.usd_price)) ? 0 : parseFloat(latestPriceLog.usd_price);
-                            const buyPrice = parseFloat(state.purchase_price) || 0;
-                            const marketCap = currentPrice * 1_000_000_000; // PUMP_FUN_TOTAL_SUPPLY
-                            const profitPercent = buyPrice !== 0 && currentPrice !== 0 ? (((currentPrice - buyPrice) / buyPrice) * 100).toFixed(2) : '0';
-                            return {
-                                token_address: state.token_address,
-                                token_name: state.token_address.slice(0, 8),
-                                token_symbol: '-', // No symbol in token_states
-                                buy_price_usd: buyPrice,
-                                current_price_usd: currentPrice,
-                                market_cap: marketCap,
-                                profit: profitPercent,
-                                buy_timestamp: buyLog.timestamp || null,
-                                status: state.sold50 ? 'partial_sold' : 'open',
-                                amount: parseFloat(state.amount) || 0
-                            };
-                        } catch (error) {
-                            console.error(`Error processing active trade for ${state.token_address}:`, error);
-                            return {
-                                token_address: state.token_address,
-                                token_name: state.token_address.slice(0, 8),
-                                token_symbol: '-',
-                                buy_price_usd: parseFloat(state.purchase_price) || 0,
-                                current_price_usd: 0,
-                                market_cap: 0,
-                                profit: '0',
-                                buy_timestamp: null,
-                                status: state.sold50 ? 'partial_sold' : 'open',
-                                amount: parseFloat(state.amount) || 0
-                            };
-                        }
-                    }));
-                    // MODIFIED END
-
-                    // Fetch completed trades
-                    console.log('Fetching completed trades from bot_logs for Fun Bags');
-                    let { data: sellLogs, error: sellLogError } = await withRetry(async () => await supabase
-                        .from('bot_logs')
-                        .select('token_address, amount, timestamp, event_type, sell_price')
-                        .in('event_type', ['sell_50', 'trailing_stop', 'stop_loss'])
-                        .neq('sell_price', null)
-                        .order('timestamp', { ascending: false })
-                        .limit(100));
-
-                    if (sellLogError) {
-                        console.error('Sell logs fetch error for Fun Bags:', sellLogError.message, sellLogError.details, sellLogError.hint);
-                        throw new Error(`Failed to fetch sell logs: ${sellLogError.message}`);
-                    }
-                    console.log('Sell logs fetched for Fun Bags:', sellLogs);
-
-                    // Group sell logs by token_address to handle multiple sells
-                    const sellGroups = sellLogs.reduce((acc, sell) => {
-                        if (!acc[sell.token_address]) {
-                            acc[sell.token_address] = [];
-                        }
-                        acc[sell.token_address].push(sell);
-                        return acc;
-                    }, {});
-
-                    completedTrades = await Promise.all(Object.entries(sellGroups).map(async ([tokenAddress, sells]) => {
-                        try {
-                            const buyLog = buyLogs.find(log => log.token_address === tokenAddress) || {};
-                            if (!buyLog) {
-                                console.warn(`No buy log found for sell logs ${tokenAddress}`);
-                                return null;
-                            }
-
-                            // Fetch buy purchase_price from token_states
-                            const { data: buyState, error: buyStateError } = await supabase
-                                .from('token_states')
-                                .select('purchase_price')
-                                .eq('token_address', tokenAddress)
-                                .single();
-
-                            if (buyStateError) {
-                                console.warn(`No token_state found for ${tokenAddress}:`, buyStateError.message);
-                            }
-
-                            const buyPrice = buyState?.purchase_price ? parseFloat(buyState.purchase_price) : 0;
-
-                            // Calculate weighted average sell price and total amount
-                            let totalAmount = 0;
-                            let weightedSellPrice = 0;
-                            sells.forEach(sell => {
-                                const amount = parseFloat(sell.amount) || 0;
-                                const sellPrice = parseFloat(sell.sell_price) || 0;
-                                totalAmount += amount;
-                                weightedSellPrice += amount * sellPrice;
-                            });
-                            const avgSellPrice = totalAmount !== 0 ? weightedSellPrice / totalAmount : 0;
-
-                            const profitPercent = buyPrice !== 0 && avgSellPrice !== 0 ? (((avgSellPrice - buyPrice) / buyPrice) * 100).toFixed(2) : '0';
-                            const totalProfit = buyPrice !== 0 && avgSellPrice !== 0 ? (avgSellPrice - buyPrice) * totalAmount : 0;
-
-                            return {
-                                token_address: tokenAddress,
-                                token_name: tokenAddress.slice(0, 8),
-                                token_symbol: '-', // No symbol
-                                buy_price_usd: buyPrice,
-                                sell_price_usd: avgSellPrice,
-                                profit: profitPercent,
-                                total_profit_usd: totalProfit,
-                                buy_timestamp: buyLog.timestamp || null,
-                                sell_timestamp: sells[0].timestamp || null, // Latest sell
-                                status: 'closed',
-                                total_amount: totalAmount
-                            };
-                        } catch (error) {
-                            console.error(`Error processing completed trade for ${tokenAddress}:`, error);
-                            return null;
-                        }
-                    }));
-
-                    completedTrades = completedTrades.filter(trade => trade !== null);
-                } else {
-                    console.log(`Fetching active trades from ${tableName}`);
-                    let { data, error } = await withRetry(async () => await supabase
-                        .from(tableName)
-                        .select('*')
-                        .in('status', ['open', 'partial_sold'])
-                        .limit(100));
-
-                    if (error) {
-                        console.error(`Active trades fetch error for ${bot}:`, error.message, error.details, error.hint);
-                        throw new Error(`Failed to fetch active trades: ${error.message}`);
-                    }
-                    activeTrades = data || [];
-                    console.log(`Active trades fetched for ${bot}:`, activeTrades);
-
-                    console.log(`Fetching completed trades from ${tableName}`);
-                    let { data: completedData, error: completedError } = await withRetry(async () => await supabase
-                        .from(tableName)
-                        .select('*')
-                        .eq('status', 'closed')
-                        .limit(100));
-
-                    if (completedError) {
-                        console.error(`Completed trades fetch error for ${bot}:`, completedError.message, completedError.details, completedError.hint);
-                        throw new Error(`Failed to fetch completed trades: ${completedError.message}`);
-                    }
-                    completedTrades = completedData || [];
-                    console.log(`Completed trades fetched for ${bot}:`, completedTrades);
-                }
-
-                activeTradesBody.innerHTML = '';
-                activeTradesCards.innerHTML = '';
-                activeTrades.forEach((trade, index) => {
-                    console.log(`Processing active trade ${index} for ${bot}:`, trade);
-                    const buyPrice = trade.buy_price_usd || 0;
-                    const currentPrice = trade.current_price_usd || 0;
-                    const profitPercent = trade.profit && trade.profit !== 'N/A' ? trade.profit : (buyPrice !== 0 && currentPrice !== 0 ? (((currentPrice - buyPrice) / buyPrice) * 100).toFixed(2) : '0');
-                    const profitClass = profitPercent !== '0' && parseFloat(profitPercent) >= 0 ? 'profit-positive' : 'profit-negative';
-                    const tokenAddress = trade.token_address || '-';
-                    const tokenName = trade.token_name || '-';
-                    const status = trade.status || 'open';
-                    const buyTime = trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-';
-
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
-                        <td>${trade.token_symbol || '-'}</td>
-                        <td>$${buyPrice.toFixed(8)}</td>
-                        <td>$${currentPrice.toFixed(8)}</td>
-                        <td>$${trade.market_cap ? trade.market_cap.toLocaleString() : '-'}</td>
-                        <td class="${profitClass}">${profitPercent}%</td>
-                        <td>${buyTime}</td>
-                    `;
-                    activeTradesBody.appendChild(row);
-
-                    const card = document.createElement('div');
-                    card.className = 'card';
-                    card.innerHTML = `
-                        <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName} (${status})</a></p>
-                        <p><span class="card-label">Symbol:</span> ${trade.token_symbol || '-'}</p>
-                        <p><span class="card-label">Buy Price:</span> $${buyPrice.toFixed(8)}</p>
-                        <p><span class="card-label">Current Price:</span> $${currentPrice.toFixed(8)}</p>
-                        <p><span class="card-label">Market Cap:</span> $${trade.market_cap ? trade.market_cap.toLocaleString() : '-'}</p>
-                        <p><span class="card-label">Profit:</span> <span class="${profitClass}">${profitPercent}%</span></p>
-                        <p><span class="card-label">Buy Time:</span> ${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</p>
-                    `;
-                    activeTradesCards.appendChild(card);
-                });
-
-                activeStatus.textContent = `Active trades loaded (${activeTrades.length})`;
-
-                if (activeSort && Object.keys(activeSort).length > 0) {
-                    const column = Object.keys(activeSort)[0];
-                    const direction = activeSort[column];
-                    const header = activeTable.querySelector(`th[data-sort="${column}"]`);
-                    if (header) {
-                        header.classList.add(`sort-${direction}`);
-                        header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
-                        const rows = Array.from(activeTradesBody.querySelectorAll('tr'));
-                        rows.sort((a, b) => {
-                            let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                            let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-
-                            if (column === 'profit') {
-                                aValue = parseFloat(aValue.replace('%', '')) || 0;
-                                bValue = parseFloat(bValue.replace('%', '')) || 0;
-                            } else if (['buy_price_usd', 'current_price_usd', 'market_cap'].includes(column)) {
-                                aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
-                                bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
-                            } else if (['buy_timestamp'].includes(column)) {
-                                aValue = aValue === '-' ? 0 : new Date(aValue.includes(':') && !aValue.includes('/') ? `1970-01-01T${aValue}:00Z` : aValue).getTime();
-                                bValue = bValue === '-' ? 0 : new Date(bValue.includes(':') && !bValue.includes('/') ? `1970-01-01T${bValue}:00Z` : bValue).getTime();
-                            } else {
-                                aValue = aValue.toLowerCase();
-                                bValue = bValue.toLowerCase();
-                            }
-
-                            return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
-                        });
-                        activeTradesBody.innerHTML = '';
-                        rows.forEach(row => activeTradesBody.appendChild(row));
-                    }
-                }
-
-                completedTradesBody.innerHTML = '';
-                completedTradesCards.innerHTML = '';
-                const filteredTrades = completedTrades.filter(trade => {
-                    const buyPrice = trade.buy_price_usd || 0;
-                    const sellPrice = trade.sell_price_usd || 0;
-                    const profitPercent = trade.profit && trade.profit !== 'N/A' ? trade.profit : (buyPrice !== 0 && sellPrice !== 0 ? ((sellPrice - buyPrice) / buyPrice * 100).toFixed(2) : '0');
-                    if (profitFilterValue === 'positive') return parseFloat(profitPercent) >= 0;
-                    if (profitFilterValue === 'negative') return parseFloat(profitPercent) < 0;
-                    return true;
-                });
-
-                filteredTrades.forEach((trade, index) => {
-                    console.log(`Processing completed trade ${index} for ${bot}:`, trade);
-                    const buyPrice = trade.buy_price_usd || 0;
-                    const sellPrice = trade.sell_price_usd || 0;
-                    const profitPercent = trade.profit && trade.profit !== 'N/A' ? trade.profit : (buyPrice !== 0 && sellPrice !== 0 ? ((sellPrice - buyPrice) / buyPrice * 100).toFixed(2) : '0');
-                    const profitClass = profitPercent !== '0' && parseFloat(profitPercent) >= 0 ? 'profit-positive' : 'profit-negative';
-                    const tokenAddress = trade.token_address || '-';
-                    const tokenName = trade.token_name || '-';
-
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
-                        <td>${trade.token_symbol || '-'}</td>
-                        <td>$${buyPrice.toFixed(8)}</td>
-                        <td>$${sellPrice.toFixed(8)}</td>
-                        <td class="${profitClass}">${profitPercent}%</td>
-                        <td class="${profitClass}">$${trade.total_profit_usd ? trade.total_profit_usd.toFixed(2) : '0'}</td>
-                        <td>${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</td>
-                        <td>${trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-'}</td>
-                    `;
-                    completedTradesBody.appendChild(row);
-
-                    const card = document.createElement('div');
-                    card.className = 'card';
-                    card.innerHTML = `
-                        <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></p>
-                        <p><span class="card-label">Symbol:</span> ${trade.token_symbol || '-'}</p>
-                        <p><span class="card-label">Buy Price:</span> $${buyPrice.toFixed(8)}</p>
-                        <p><span class="card-label">Sell Price:</span> $${sellPrice.toFixed(8)}</p>
-                        <p><span class="card-label">Profit:</span> <span class="${profitClass}">${profitPercent}%</span></p>
-                        <p><span class="card-label">Total Profit:</span> <span class="${profitClass}">$${trade.total_profit_usd ? trade.total_profit_usd.toFixed(2) : '0'}</span></p>
-                        <p><span class="card-label">Buy Time:</span> ${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</p>
-                        <p><span class="card-label">Sell Time:</span> ${trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-'}</p>
-                    `;
-                    completedTradesCards.appendChild(card);
-                });
-
-                completedStatus.textContent = `Completed trades loaded (${filteredTrades.length})`;
-
-                if (completedSort && Object.keys(completedSort).length > 0) {
-                    const column = Object.keys(completedSort)[0];
-                    const direction = completedSort[column];
-                    const header = completedTable.querySelector(`th[data-sort="${column}"]`);
-                    if (header) {
-                        header.classList.add(`sort-${direction}`);
-                        header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
-                        const rows = Array.from(completedTradesBody.querySelectorAll('tr'));
-                        rows.sort((a, b) => {
-                            let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                            let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-
-                            if (['profit', 'total_profit_usd'].includes(column)) {
-                                aValue = parseFloat(aValue.replace('$', '').replace('%', '').replace(',', '')) || 0;
-                                bValue = parseFloat(bValue.replace('$', '').replace('%', '').replace(',', '')) || 0;
-                            } else if (['buy_price_usd', 'sell_price_usd'].includes(column)) {
-                                aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
-                                bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
-                            } else if (['buy_timestamp', 'sell_timestamp'].includes(column)) {
-                                aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
-                                bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
-                            } else {
-                                aValue = aValue.toLowerCase();
-                                bValue = bValue.toLowerCase();
-                            }
-
-                            return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
-                        });
-                        completedTradesBody.innerHTML = '';
-                        rows.forEach(row => completedTradesBody.appendChild(row));
-                    }
-                }
-
-                // Calculate total profit
-                const totalProfit = filteredTrades.reduce((sum, trade) => {
-                    const profit = trade.total_profit_usd || 0;
-                    return sum + parseFloat(profit);
-                }, 0);
-                totalProfitElement.textContent = `$${totalProfit.toFixed(2)}`;
-
-                // Reapply filters
-                if (activeFilterValue) {
-                    document.getElementById(`${prefix}-activeFilter`).value = activeFilterValue;
-                    document.getElementById(`${prefix}-activeFilter`).dispatchEvent(new Event('input'));
-                }
-                if (completedFilterValue) {
-                    document.getElementById(`${prefix}-completedFilter`).value = completedFilterValue;
-                    document.getElementById(`${prefix}-completedFilter`).dispatchEvent(new Event('input'));
-                }
-
-                console.log(`refreshTrades completed for ${bot}`);
-            } catch (error) {
-                console.error(`Error in refreshTrades for ${bot}:`, error.message, error.stack);
-                activeStatus.textContent = `Error loading active trades: ${error.message}`;
-                completedStatus.textContent = `Error loading completed trades: ${error.message}`;
-                alert(`Failed to refresh trades for ${bot}: ${error.message}. Check console for details.`);
-            }
-        }
-        // MODIFIED END
-
-        async function refreshWaxTrades() {
-            console.log('Starting refreshWaxTrades');
-            const statusElement = document.getElementById('wax-status');
-            const setupsBody = document.getElementById('wax-setupsBody');
-            const setupsCards = document.getElementById('wax-setupsCards');
-            const table = setupsBody?.closest('table');
-            const filterInput = document.getElementById('wax-filter');
-
-            if (!statusElement || !setupsBody || !setupsCards || !table || !filterInput) {
-                console.error('Missing DOM elements for Wax:', {
-                    statusElement: !!statusElement,
-                    setupsBody: !!setupsBody,
-                    setupsCards: !!setupsCards,
-                    table: !!table,
-                    filterInput: !!filterInput
-                });
-                alert('Failed to load Wax dashboard. Check console for details.');
-                return;
-            }
-
-            statusElement.textContent = 'Loading trade setups...';
-            const sortState = { ...sortStates.wax.setups };
-            const filterValue = filterInput.value || '';
-
-            try {
-                const { data, error } = await supabase
-                    .from('wax_trades')
-                    .select('*');
-
-                if (error) {
-                    console.error('Wax trades fetch error:', error.message, error.details, error.hint);
-                    throw new Error(`Failed to fetch wax trades: ${error.message}`);
-                }
-
-                setupsBody.innerHTML = '';
-                setupsCards.innerHTML = '';
-                const setups = data || [];
-
-                setups.forEach((setup, index) => {
-                    console.log(`Processing wax setup ${index}:`, setup);
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${setup.symbol || '-'}</td>
-                        <td>${setup.action || '-'}</td>
-                        <td>${setup.popcandletime ? new Date(setup.popcandletime).toLocaleString() : '-'}</td>
-                        <td>$${setup.popcandlehigh ? setup.popcandlehigh.toFixed(8) : '-'}</td>
-                        <td>${setup.pullbackcount || '-'}</td>
-                        <td>$${setup.entryprice ? setup.entryprice.toFixed(8) : '-'}</td>
-                        <td>$${setup.stoploss ? setup.stoploss.toFixed(8) : '-'}</td>
-                        <td class="${setup.profitpercent >= 0 ? 'profit-positive' : 'profit-negative'}">${setup.profitpercent ? setup.profitpercent.toFixed(2) : '0'}%</td>
-                        <td>${setup.solprofit ? setup.solprofit.toFixed(2) : '-'}</td>
-                        <td>${setup.exit_reason || '-'}</td>
-                        <td>${setup.timestamp ? new Date(setup.timestamp).toLocaleString() : '-'}</td>
-                    `;
-                    setupsBody.appendChild(row);
-
-                    const card = document.createElement('div');
-                    card.className = 'card';
-                    card.innerHTML = `
-                        <p><span class="card-label">Symbol:</span> ${setup.symbol || '-'}</p>
-                        <p><span class="card-label">Action:</span> ${setup.action || '-'}</p>
-                        <p><span class="card-label">Pop Candle Time:</span> ${setup.popcandletime ? new Date(setup.popcandletime).toLocaleString() : '-'}</p>
-                        <p><span class="card-label">Pop Candle High:</span> $${setup.popcandlehigh ? setup.popcandlehigh.toFixed(8) : '-'}</p>
-                        <p><span class="card-label">Pullback Count:</span> ${setup.pullbackcount || '-'}</p>
-                        <p><span class="card-label">Entry Price:</span> $${setup.entryprice ? setup.entryprice.toFixed(8) : '-'}</p>
-                        <p><span class="card-label">Stop Loss:</span> $${setup.stoploss ? setup.stoploss.toFixed(8) : '-'}</p>
-                        <p><span class="card-label">Profit:</span> <span class="${setup.profitpercent >= 0 ? 'profit-positive' : 'profit-negative'}">${setup.profitpercent ? setup.profitpercent.toFixed(2) : '0'}%</span></p>
-                        <p><span class="card-label">Sol Profit:</span> ${setup.solprofit ? setup.solprofit.toFixed(2) : '-'}</p>
-                        <p><span class="card-label">Exit Reason:</span> ${setup.exit_reason || '-'}</p>
-                        <p><span class="card-label">Timestamp:</span> ${setup.timestamp ? new Date(setup.timestamp).toLocaleString() : '-'}</p>
-                    `;
-                    setupsCards.appendChild(card);
-                });
-
-                statusElement.textContent = `Trade setups loaded (${setups.length})`;
-
-                if (sortState && Object.keys(sortState).length > 0) {
-                    const column = Object.keys(sortState)[0];
-                    const direction = sortState[column];
-                    const header = table.querySelector(`th[data-sort="${column}"]`);
-                    if (header) {
-                        header.classList.add(`sort-${direction}`);
-                        header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
-                        const rows = Array.from(setupsBody.querySelectorAll('tr'));
-                        rows.sort((a, b) => {
-                            let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                            let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-
-                            if (['popcandlehigh', 'entryprice', 'stoploss', 'profitpercent', 'solprofit'].includes(column)) {
-                                aValue = parseFloat(aValue.replace('$', '').replace('%', '')) || 0;
-                                bValue = parseFloat(bValue.replace('$', '').replace('%', '')) || 0;
-                            } else if (['popcandletime', 'timestamp'].includes(column)) {
-                                aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
-                                bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
-                            } else {
-                                aValue = aValue.toLowerCase();
-                                bValue = bValue.toLowerCase();
-                            }
-
-                            return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
-                        });
-                        setupsBody.innerHTML = '';
-                        rows.forEach(row => setupsBody.appendChild(row));
-                    }
-                }
-
-                if (filterValue) {
-                    filterInput.value = filterValue;
-                    filterInput.dispatchEvent(new Event('input'));
-                }
-
-                console.log('refreshWaxTrades completed');
-            } catch (error) {
-                console.error('Error in refreshWaxTrades:', error.message, error.stack);
-                statusElement.textContent = `Error loading trade setups: ${error.message}`;
-                alert(`Failed to refresh wax trades: ${error.message}. Check console for details.`);
-            }
-        }
-
-        // Sorting event listeners
-        function setupSortListeners(bot, section, tableId, sortStateKey) {
-            const table = document.querySelector(`#${tableId} table`);
-            if (!table) {
-                console.error(`Table not found for ${bot} ${section}`);
-                return;
-            }
-
-            table.querySelectorAll('th[data-sort]').forEach(header => {
-                header.addEventListener('click', () => {
-                    const column = header.getAttribute('data-sort');
-                    const currentDirection = sortStates[bot][sortStateKey][column];
-                    const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
-
-                    table.querySelectorAll('th').forEach(h => {
-                        h.classList.remove('sort-asc', 'sort-desc');
-                        const icon = h.querySelector('.sort-icon');
-                        if (icon) icon.innerHTML = '↕';
+                    // Calculate weighted average sell price and total amount
+                    let totalAmount = 0;
+                    let weightedSellPrice = 0;
+                    sells.forEach(sell => {
+                        const amount = parseFloat(sell.amount) || 0;
+                        const sellPrice = parseFloat(sell.sell_price) || 0;
+                        totalAmount += amount;
+                        weightedSellPrice += amount * sellPrice;
                     });
+                    const avgSellPrice = totalAmount !== 0 ? weightedSellPrice / totalAmount : 0;
 
-                    header.classList.add(`sort-${newDirection}`);
-                    const icon = header.querySelector('.sort-icon');
-                    if (icon) icon.innerHTML = newDirection === 'asc' ? '↑' : '↓';
+                    const profitPercent = buyPrice !== 0 && avgSellPrice !== 0 ? (((avgSellPrice - buyPrice) / buyPrice) * 100).toFixed(2) : '0';
+                    const totalProfit = buyPrice !== 0 && avgSellPrice !== 0 ? (avgSellPrice - buyPrice) * totalAmount : 0;
 
-                    sortStates[bot][sortStateKey] = { [column]: newDirection };
-
-                    const body = table.querySelector('tbody');
-                    const rows = Array.from(body.querySelectorAll('tr'));
-                    rows.sort((a, b) => {
-                        let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                        let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-
-                        if (['profit', 'total_profit_usd', 'buy_price_usd', 'sell_price_usd', 'current_price_usd', 'market_cap', 'lowest_market_cap', 'popcandlehigh', 'entryprice', 'stoploss', 'profitpercent', 'solprofit'].includes(column)) {
-                            aValue = parseFloat(aValue.replace('$', '').replace('%', '').replace(',', '')) || 0;
-                            bValue = parseFloat(bValue.replace('$', '').replace('%', '').replace(',', '')) || 0;
-                        } else if (['buy_timestamp', 'sell_timestamp', 'timestamp', 'popcandletime'].includes(column)) {
-                            aValue = aValue === '-' ? 0 : new Date(aValue.includes(':') && !aValue.includes('/') ? `1970-01-01T${aValue}:00Z` : aValue).getTime();
-                            bValue = bValue === '-' ? 0 : new Date(bValue.includes(':') && !bValue.includes('/') ? `1970-01-01T${bValue}:00Z` : bValue).getTime();
-                        } else {
-                            aValue = aValue.toLowerCase();
-                            bValue = bValue.toLowerCase();
-                        }
-
-                        return newDirection === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
-                    });
-
-                    body.innerHTML = '';
-                    rows.forEach(row => body.appendChild(row));
-                });
-            });
-        }
-
-        // Filter event listeners
-        function setupFilterListeners(bot, section, filterId, tableId, cardId) {
-            const filterInput = document.getElementById(filterId);
-            if (!filterInput) {
-                console.error(`Filter input not found for ${bot} ${section}`);
-                return;
-            }
-
-            filterInput.addEventListener('input', () => {
-                const filterValue = filterInput.value.toLowerCase();
-                const tableRows = document.querySelectorAll(`#${tableId} tbody tr`);
-                const cards = document.querySelectorAll(`#${cardId} .card`);
-
-                tableRows.forEach(row => {
-                    const token = row.cells[0]?.textContent.toLowerCase() || '';
-                    const symbol = row.cells[1]?.textContent.toLowerCase() || '';
-                    row.style.display = token.includes(filterValue) || symbol.includes(filterValue) ? '' : 'none';
-                });
-
-                cards.forEach(card => {
-                    const token = card.querySelector('p:nth-child(1)')?.textContent.toLowerCase() || '';
-                    const symbol = card.querySelector('p:nth-child(2)')?.textContent.toLowerCase() || '';
-                    card.style.display = token.includes(filterValue) || symbol.includes(filterValue) ? '' : 'none';
-                });
-            });
-        }
-
-        // Pagination (simplified, as original lacked full implementation)
-        function setupPagination(bot, section, prevId, nextId, pageId) {
-            const prevButton = document.getElementById(prevId);
-            const nextButton = document.getElementById(nextId);
-            const pageSpan = document.getElementById(pageId);
-
-            if (!prevButton || !nextButton || !pageSpan) {
-                console.error(`Pagination elements missing for ${bot} ${section}`);
-                return;
-            }
-
-            let currentPage = 1;
-            prevButton.addEventListener('click', () => {
-                if (currentPage > 1) {
-                    currentPage--;
-                    pageSpan.textContent = currentPage;
-                    refreshTab(bot);
+                    return {
+                        token_address: tokenAddress,
+                        token_name: tokenAddress.slice(0, 8),
+                        token_symbol: '-', // No symbol
+                        buy_price_usd: buyPrice,
+                        sell_price_usd: avgSellPrice,
+                        profit: profitPercent,
+                        total_profit_usd: totalProfit,
+                        buy_timestamp: buyLog.timestamp || null,
+                        sell_timestamp: sells[0].timestamp || null, // Latest sell
+                        status: 'closed',
+                        total_amount: totalAmount
+                    };
+                } catch (error) {
+                    console.error(`Error processing completed trade for ${tokenAddress}:`, error);
+                    return null;
                 }
-            });
+            }));
 
-            nextButton.addEventListener('click', () => {
-                currentPage++;
-                pageSpan.textContent = currentPage;
-                refreshTab(bot);
-            });
-        }
+            completedTrades = completedTrades.filter(trade => trade !== null);
+        } else {
+            console.log(`Fetching active trades from ${tableName}`);
+            let { data, error } = await withRetry(async () => await supabase
+                .from(tableName)
+                .select('*')
+                .in('status', ['open', 'partial_sold'])
+                .limit(100));
 
-        // Export trades (placeholder, as original lacked implementation)
-        function setupExportListener(bot, exportId) {
-            const exportButton = document.getElementById(exportId);
-            if (!exportButton) {
-                console.error(`Export button not found for ${bot}`);
-                return;
+            if (error) {
+                console.error(`Active trades fetch error for ${bot}:`, error.message, error.details, error.hint);
+                throw new Error(`Failed to fetch active trades: ${error.message}`);
             }
+            activeTrades = data || [];
+            console.log(`Active trades fetched for ${bot}:`, activeTrades);
 
-            exportButton.addEventListener('click', () => {
-                console.log(`Exporting trades for ${bot}`);
-                alert('Export functionality not implemented in this version.');
-            });
+            console.log(`Fetching completed trades from ${tableName}`);
+            let { data: completedData, error: completedError } = await withRetry(async () => await supabase
+                .from(tableName)
+                .select('*')
+                .eq('status', 'closed')
+                .limit(100));
+
+            if (completedError) {
+                console.error(`Completed trades fetch error for ${bot}:`, error.message, error.details, error.hint);
+                throw new Error(`Failed to fetch completed trades: ${completedError.message}`);
+            }
+            completedTrades = completedData || [];
+            console.log(`Completed trades fetched for ${bot}:`, completedTrades);
         }
 
-        // Refresh button listeners
-        function setupRefreshListeners(bot, refreshIds) {
-            refreshIds.forEach(id => {
-                const button = document.getElementById(id);
-                if (button) {
-                    button.addEventListener('click', () => {
-                        console.log(`Manual refresh triggered for ${bot}`);
-                        refreshTab(bot);
-                    });
-                } else {
-                    console.error(`Refresh button ${id} not found for ${bot}`);
-                }
-            });
-        }
+        activeTradesBody.innerHTML = '';
+        activeTradesCards.innerHTML = '';
+        activeTrades.forEach((trade, index) => {
+            console.log(`Processing active trade ${index} for ${bot}:`, trade);
+            const buyPrice = trade.buy_price_usd || 0;
+            const currentPrice = trade.current_price_usd || 0;
+            const profitPercent = trade.profit && trade.profit !== 'N/A' ? trade.profit : (buyPrice !== 0 && currentPrice !== 0 ? (((currentPrice - buyPrice) / buyPrice) * 100).toFixed(2) : '0');
+            const profitClass = profitPercent !== '0' && parseFloat(profitPercent) >= 0 ? 'profit-positive' : 'profit-negative';
+            const tokenAddress = trade.token_address || '-';
+            const tokenName = trade.token_name || '-';
+            const status = trade.status || 'open';
+            const buyTime = trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-';
 
-        // Setup listeners for each bot
-        ['bread', 'moon', 'funbags'].forEach(bot => {
-            setupSortListeners(bot, 'active', `${bot}-activeTradesBody`, 'active');
-            setupSortListeners(bot, 'completed', `${bot}-completedTableContainer`, 'completed');
-            setupFilterListeners(bot, 'active', `${bot}-activeFilter`, `${bot}-activeTradesBody`, `${bot}-activeTradesCards`);
-            setupFilterListeners(bot, 'completed', `${bot}-completedFilter`, `${bot}-completedTableContainer`, `${bot}-completedTradesCards`);
-            setupPagination(bot, 'active', `${bot}-activePrevPage`, `${bot}-activeNextPage`, `${bot}-activeCurrentPage`);
-            setupPagination(bot, 'completed', `${bot}-completedPrevPage`, `${bot}-completedNextPage`, `${bot}-completedCurrentPage`);
-            setupExportListener(bot, `${bot}-exportBtn`);
-            setupRefreshListeners(bot, [
-                `${bot}-topRefreshBtn`,
-                `${bot}-middleRefreshBtn`,
-                `${bot}-bottomRefreshBtn`,
-                bot === 'funbags' ? 'funbags-monitoredRefreshBtn' : null
-            ].filter(Boolean));
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
+                <td>${trade.token_symbol || '-'}</td>
+                <td>$${buyPrice.toFixed(8)}</td>
+                <td>$${currentPrice.toFixed(8)}</td>
+                <td>$${trade.market_cap ? trade.market_cap.toLocaleString() : '-'}</td>
+                <td class="${profitClass}">${profitPercent}%</td>
+                <td>${buyTime}</td>
+            `;
+            activeTradesBody.appendChild(row);
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName} (${status})</a></p>
+                <p><span class="card-label">Symbol:</span> ${trade.token_symbol || '-'}</p>
+                <p><span class="card-label">Buy Price:</span> $${buyPrice.toFixed(8)}</p>
+                <p><span class="card-label">Current Price:</span> $${currentPrice.toFixed(8)}</p>
+                <p><span class="card-label">Market Cap:</span> $${trade.market_cap ? trade.market_cap.toLocaleString() : '-'}</p>
+                <p><span class="card-label">Profit:</span> <span class="${profitClass}">${profitPercent}%</span></p>
+                <p><span class="card-label">Buy Time:</span> ${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</p>
+            `;
+            activeTradesCards.appendChild(card);
         });
 
-        setupSortListeners('wax', 'setups', 'wax-setupsBody', 'setups');
-        setupFilterListeners('wax', 'setups', 'wax-filter', 'wax-setupsBody', 'wax-setupsCards');
-        setupPagination('wax', 'setups', 'wax-prevPage', 'wax-nextPage', 'wax-currentPage');
-        setupRefreshListeners('wax', ['wax-refreshBtn', 'wax-bottomRefreshBtn']);
+        activeStatus.textContent = `Active trades loaded (${activeTrades.length})`;
 
-        // Initial refresh
-        refreshTab('bread');
+        if (activeSort && Object.keys(activeSort).length > 0) {
+            const column = Object.keys(activeSort)[0];
+            const direction = activeSort[column];
+            const header = activeTable.querySelector(`th[data-sort="${column}"]`);
+            if (header) {
+                header.classList.add(`sort-${direction}`);
+                header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
+                const rows = Array.from(activeTradesBody.querySelectorAll('tr'));
+                rows.sort((a, b) => {
+                    let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
+                    let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
+
+                    if (column === 'profit') {
+                        aValue = parseFloat(aValue.replace('%', '')) || 0;
+                        bValue = parseFloat(bValue.replace('%', '')) || 0;
+                    } else if (['buy_price_usd', 'current_price_usd', 'market_cap'].includes(column)) {
+                        aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
+                        bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
+                    } else if (['buy_timestamp'].includes(column)) {
+                        aValue = aValue === '-' ? 0 : new Date(aValue.includes(':') && !aValue.includes('/') ? `1970-01-01T${aValue}:00Z` : aValue).getTime();
+                        bValue = bValue === '-' ? 0 : new Date(bValue.includes(':') && !bValue.includes('/') ? `1970-01-01T${bValue}:00Z` : bValue).getTime();
+                    } else {
+                        aValue = aValue.toLowerCase();
+                        bValue = bValue.toLowerCase();
+                    }
+
+                    return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
+                });
+                activeTradesBody.innerHTML = '';
+                rows.forEach(row => activeTradesBody.appendChild(row));
+            }
+        }
+
+        completedTradesBody.innerHTML = '';
+        completedTradesCards.innerHTML = '';
+        const filteredTrades = completedTrades.filter(trade => {
+            const buyPrice = trade.buy_price_usd || 0;
+            const sellPrice = trade.sell_price_usd || 0;
+            const profitPercent = trade.profit && trade.profit !== 'N/A' ? trade.profit : (buyPrice !== 0 && sellPrice !== 0 ? ((sellPrice - buyPrice) / buyPrice * 100).toFixed(2) : '0');
+            if (profitFilterValue === 'positive') return parseFloat(profitPercent) >= 0;
+            if (profitFilterValue === 'negative') return parseFloat(profitPercent) < 0;
+            return true;
+        });
+
+        filteredTrades.forEach((trade, index) => {
+            console.log(`Processing completed trade ${index} for ${bot}:`, trade);
+            const buyPrice = trade.buy_price_usd || 0;
+            const sellPrice = trade.sell_price_usd || 0;
+            const profitPercent = trade.profit && trade.profit !== 'N/A' ? trade.profit : (buyPrice !== 0 && sellPrice !== 0 ? ((sellPrice - buyPrice) / buyPrice * 100).toFixed(2) : '0');
+            const profitClass = profitPercent !== '0' && parseFloat(profitPercent) >= 0 ? 'profit-positive' : 'profit-negative';
+            const tokenAddress = trade.token_address || '-';
+            const tokenName = trade.token_name || '-';
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
+                <td>${trade.token_symbol || '-'}</td>
+                <td>$${buyPrice.toFixed(8)}</td>
+                <td>$${sellPrice.toFixed(8)}</td>
+                <td class="${profitClass}">${profitPercent}%</td>
+                <td class="${profitClass}">$${trade.total_profit_usd ? trade.total_profit_usd.toFixed(2) : '0'}</td>
+                <td>${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</td>
+                <td>${trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-'}</td>
+            `;
+            completedTradesBody.appendChild(row);
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></p>
+                <p><span class="card-label">Symbol:</span> ${trade.token_symbol || '-'}</p>
+                <p><span class="card-label">Buy Price:</span> $${buyPrice.toFixed(8)}</p>
+                <p><span class="card-label">Sell Price:</span> $${sellPrice.toFixed(8)}</p>
+                <p><span class="card-label">Profit:</span> <span class="${profitClass}">${profitPercent}%</span></p>
+                <p><span class="card-label">Total Profit:</span> <span class="${profitClass}">$${trade.total_profit_usd ? trade.total_profit_usd.toFixed(2) : '0'}</span></p>
+                <p><span class="card-label">Buy Time:</span> ${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</p>
+                <p><span class="card-label">Sell Time:</span> ${trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-'}</p>
+            `;
+            completedTradesCards.appendChild(card);
+        });
+
+        completedStatus.textContent = `Completed trades loaded (${filteredTrades.length})`;
+
+        if (completedSort && Object.keys(completedSort).length > 0) {
+            const column = Object.keys(completedSort)[0];
+            const direction = completedSort[column];
+            const header = completedTable.querySelector(`th[data-sort="${column}"]`);
+            if (header) {
+                header.classList.add(`sort-${direction}`);
+                header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
+                const rows = Array.from(completedTradesBody.querySelectorAll('tr'));
+                rows.sort((a, b) => {
+                    let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
+                    let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
+
+                    if (['profit', 'total_profit_usd'].includes(column)) {
+                        aValue = parseFloat(aValue.replace('$', '').replace('%', '').replace(',', '')) || 0;
+                        bValue = parseFloat(bValue.replace('$', '').replace('%', '').replace(',', '')) || 0;
+                    } else if (['buy_price_usd', 'sell_price_usd'].includes(column)) {
+                        aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
+                        bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
+                    } else if (['buy_timestamp', 'sell_timestamp'].includes(column)) {
+                        aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
+                        bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
+                    } else {
+                        aValue = aValue.toLowerCase();
+                        bValue = bValue.toLowerCase();
+                    }
+
+                    return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
+                });
+                completedTradesBody.innerHTML = '';
+                rows.forEach(row => completedTradesBody.appendChild(row));
+            }
+        }
+
+        // Calculate total profit
+        const totalProfit = filteredTrades.reduce((sum, trade) => {
+            const profit = trade.total_profit_usd || 0;
+            return sum + parseFloat(profit);
+        }, 0);
+        totalProfitElement.textContent = `$${totalProfit.toFixed(2)}`;
+
+        // Reapply filters
+        if (activeFilterValue) {
+            document.getElementById(`${prefix}-activeFilter`).value = activeFilterValue;
+            document.getElementById(`${prefix}-activeFilter`).dispatchEvent(new Event('input'));
+        }
+        if (completedFilterValue) {
+            document.getElementById(`${prefix}-completedFilter`).value = completedFilterValue;
+            document.getElementById(`${prefix}-completedFilter`).dispatchEvent(new Event('input'));
+        }
+
+        console.log(`refreshTrades completed for ${bot}`);
+    } catch (error) {
+        console.error(`Error in refreshTrades for ${bot}:`, error.message, error.stack);
+        activeStatus.textContent = `Error loading active trades: ${error.message}`;
+        completedStatus.textContent = `Error loading completed trades: ${error.message}`;
+        alert(`Failed to refresh trades for ${bot}: ${error.message}. Check console for details.`);
+    }
+}
+// MODIFIED END
+
+async function refreshWaxTrades() {
+    console.log('Starting refreshWaxTrades');
+    const statusElement = document.getElementById('wax-status');
+    const setupsBody = document.getElementById('wax-setupsBody');
+    const setupsCards = document.getElementById('wax-setupsCards');
+    const table = setupsBody?.closest('table');
+    const filterInput = document.getElementById('wax-filter');
+
+    if (!statusElement || !setupsBody || !setupsCards || !table || !filterInput) {
+        console.error('Missing DOM elements for Wax:', {
+            statusElement: !!statusElement,
+            setupsBody: !!setupsBody,
+            setupsCards: !!setupsCards,
+            table: !!table,
+            filterInput: !!filterInput
+        });
+        alert('Failed to load Wax dashboard. Check console for details.');
+        return;
+    }
+
+    statusElement.textContent = 'Loading trade setups...';
+    const sortState = { ...sortStates.wax.setups };
+    const filterValue = filterInput.value || '';
+
+    try {
+        const { data, error } = await supabase
+            .from('wax_trades')
+            .select('*');
+
+        if (error) {
+            console.error('Wax trades fetch error:', error.message, error.details, error.hint);
+            throw new Error(`Failed to fetch wax trades: ${error.message}`);
+        }
+
+        setupsBody.innerHTML = '';
+        setupsCards.innerHTML = '';
+        const setups = data || [];
+
+        setups.forEach((setup, index) => {
+            console.log(`Processing wax setup ${index}:`, setup);
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${setup.symbol || '-'}</td>
+                <td>${setup.action || '-'}</td>
+                <td>${setup.popcandletime ? new Date(setup.popcandletime).toLocaleString() : '-'}</td>
+                <td>$${setup.popcandlehigh ? setup.popcandlehigh.toFixed(8) : '-'}</td>
+                <td>${setup.pullbackcount || '-'}</td>
+                <td>$${setup.entryprice ? setup.entryprice.toFixed(8) : '-'}</td>
+                <td>$${setup.stoploss ? setup.stoploss.toFixed(8) : '-'}</td>
+                <td class="${setup.profitpercent >= 0 ? 'profit-positive' : 'profit-negative'}">${setup.profitpercent ? setup.profitpercent.toFixed(2) : '0'}%</td>
+                <td>${setup.solprofit ? setup.solprofit.toFixed(2) : '-'}</td>
+                <td>${setup.exit_reason || '-'}</td>
+                <td>${setup.timestamp ? new Date(setup.timestamp).toLocaleString() : '-'}</td>
+            `;
+            setupsBody.appendChild(row);
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <p><span class="card-label">Symbol:</span> ${setup.symbol || '-'}</p>
+                <p><span class="card-label">Action:</span> ${setup.action || '-'}</p>
+                <p><span class="card-label">Pop Candle Time:</span> ${setup.popcandletime ? new Date(setup.popcandletime).toLocaleString() : '-'}</p>
+                <p><span class="card-label">Pop Candle High:</span> $${setup.popcandlehigh ? setup.popcandlehigh.toFixed(8) : '-'}</p>
+                <p><span class="card-label">Pullback Count:</span> ${setup.pullbackcount || '-'}</p>
+                <p><span class="card-label">Entry Price:</span> $${setup.entryprice ? setup.entryprice.toFixed(8) : '-'}</p>
+                <p><span class="card-label">Stop Loss:</span> $${setup.stoploss ? setup.stoploss.toFixed(8) : '-'}</p>
+                <p><span class="card-label">Profit:</span> <span class="${setup.profitpercent >= 0 ? 'profit-positive' : 'profit-negative'}">${setup.profitpercent ? setup.profitpercent.toFixed(2) : '0'}%</span></p>
+                <p><span class="card-label">Sol Profit:</span> ${setup.solprofit ? setup.solprofit.toFixed(2) : '-'}</p>
+                <p><span class="card-label">Exit Reason:</span> ${setup.exit_reason || '-'}</p>
+                <p><span class="card-label">Timestamp:</span> ${setup.timestamp ? new Date(setup.timestamp).toLocaleString() : '-'}</p>
+            `;
+            setupsCards.appendChild(card);
+        });
+
+        statusElement.textContent = `Trade setups loaded (${setups.length})`;
+
+        if (sortState && Object.keys(sortState).length > 0) {
+            const column = Object.keys(sortState)[0];
+            const direction = sortState[column];
+            const header = table.querySelector(`th[data-sort="${column}"]`);
+            if (header) {
+                header.classList.add(`sort-${direction}`);
+                header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
+                const rows = Array.from(setupsBody.querySelectorAll('tr'));
+                rows.sort((a, b) => {
+                    let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
+                    let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
+
+                    if (['popcandlehigh', 'entryprice', 'stoploss', 'profitpercent', 'solprofit'].includes(column)) {
+                        aValue = parseFloat(aValue.replace('$', '').replace('%', '')) || 0;
+                        bValue = parseFloat(bValue.replace('$', '').replace('%', '')) || 0;
+                    } else if (['popcandletime', 'timestamp'].includes(column)) {
+                        aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
+                        bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
+                    } else {
+                        aValue = aValue.toLowerCase();
+                        bValue = bValue.toLowerCase();
+                    }
+
+                    return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
+                });
+                setupsBody.innerHTML = '';
+                rows.forEach(row => setupsBody.appendChild(row));
+            }
+        }
+
+        if (filterValue) {
+            filterInput.value = filterValue;
+            filterInput.dispatchEvent(new Event('input'));
+        }
+
+        console.log('refreshWaxTrades completed');
+    } catch (error) {
+        console.error('Error in refreshWaxTrades:', error.message, error.stack);
+        statusElement.textContent = `Error loading trade setups: ${error.message}`;
+        alert(`Failed to refresh wax trades: ${error.message}. Check console for details.`);
+    }
+}
+
+// Sorting event listeners
+function setupSortListeners(bot, section, tableId, sortStateKey) {
+    const table = document.querySelector(`#${tableId} table`);
+    if (!table) {
+        console.error(`Table not found for ${bot} ${section}`);
+        return;
+    }
+
+    table.querySelectorAll('th[data-sort]').forEach(header => {
+        header.addEventListener('click', () => {
+            const column = header.getAttribute('data-sort');
+            const currentDirection = sortStates[bot][sortStateKey][column];
+            const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+
+            table.querySelectorAll('th').forEach(h => {
+                h.classList.remove('sort-asc', 'sort-desc');
+                const icon = h.querySelector('.sort-icon');
+                if (icon) icon.innerHTML = '↕';
+            });
+
+            header.classList.add(`sort-${newDirection}`);
+            const icon = header.querySelector('.sort-icon');
+            if (icon) icon.innerHTML = newDirection === 'asc' ? '↑' : '↓';
+
+            sortStates[bot][sortStateKey] = { [column]: newDirection };
+
+            const body = table.querySelector('tbody');
+            const rows = Array.from(body.querySelectorAll('tr'));
+            rows.sort((a, b) => {
+                let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
+                let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
+
+                if (['profit', 'total_profit_usd', 'buy_price_usd', 'sell_price_usd', 'current_price_usd', 'market_cap', 'lowest_market_cap', 'popcandlehigh', 'entryprice', 'stoploss', 'profitpercent', 'solprofit'].includes(column)) {
+                    aValue = parseFloat(aValue.replace('$', '').replace('%', '').replace(',', '')) || 0;
+                    bValue = parseFloat(bValue.replace('$', '').replace('%', '').replace(',', '')) || 0;
+                } else if (['buy_timestamp', 'sell_timestamp', 'timestamp', 'popcandletime'].includes(column)) {
+                    aValue = aValue === '-' ? 0 : new Date(aValue.includes(':') && !aValue.includes('/') ? `1970-01-01T${aValue}:00Z` : aValue).getTime();
+                    bValue = bValue === '-' ? 0 : new Date(bValue.includes(':') && !bValue.includes('/') ? `1970-01-01T${bValue}:00Z` : bValue).getTime();
+                } else {
+                    aValue = aValue.toLowerCase();
+                    bValue = bValue.toLowerCase();
+                }
+
+                return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
+            });
+
+            body.innerHTML = '';
+            rows.forEach(row => body.appendChild(row));
+        });
     });
+}
+
+// Filter event listeners
+function setupFilterListeners(bot, section, filterId, tableId, cardId) {
+    const filterInput = document.getElementById(filterId);
+    if (!filterInput) {
+        console.error(`Filter input not found for ${bot} ${section}`);
+        return;
+    }
+
+    filterInput.addEventListener('input', () => {
+        const filterValue = filterInput.value.toLowerCase();
+        const tableRows = document.querySelectorAll(`#${tableId} tbody tr`);
+        const cards = document.querySelectorAll(`#${cardId} .card`);
+
+        tableRows.forEach(row => {
+            const token = row.cells[0]?.textContent.toLowerCase() || '';
+            const symbol = row.cells[1]?.textContent.toLowerCase() || '';
+            row.style.display = token.includes(filterValue) || symbol.includes(filterValue) ? '' : 'none';
+        });
+
+        cards.forEach(card => {
+            const token = card.querySelector('p:nth-child(1)')?.textContent.toLowerCase() || '';
+            const symbol = card.querySelector('p:nth-child(2)')?.textContent.toLowerCase() || '';
+            card.style.display = token.includes(filterValue) || symbol.includes(filterValue) ? '' : 'none';
+        });
+    });
+}
+
+// Pagination (simplified, as original lacked full implementation)
+function setupPagination(bot, section, prevId, nextId, pageId) {
+    const prevButton = document.getElementById(prevId);
+    const nextButton = document.getElementById(nextId);
+    const pageSpan = document.getElementById(pageId);
+
+    if (!prevButton || !nextButton || !pageSpan) {
+        console.error(`Pagination elements missing for ${bot} ${section}`);
+        return;
+    }
+
+    let currentPage = 1;
+    prevButton.addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            pageSpan.textContent = currentPage;
+            refreshTab(bot);
+        }
+    });
+
+    nextButton.addEventListener('click', () => {
+        currentPage++;
+        pageSpan.textContent = currentPage;
+        refreshTab(bot);
+    });
+}
+
+// Export trades (placeholder, as original lacked implementation)
+function setupExportListener(bot, exportId) {
+    const exportButton = document.getElementById(exportId);
+    if (!exportButton) {
+        console.error(`Export button not found for ${bot}`);
+        return;
+    }
+
+    exportButton.addEventListener('click', () => {
+        console.log(`Exporting trades for ${bot}`);
+        alert('Export functionality not implemented in this version.');
+    });
+}
+
+// Refresh button listeners
+function setupRefreshListeners(bot, refreshIds) {
+    refreshIds.forEach(id => {
+        const button = document.getElementById(id);
+        if (button) {
+            button.addEventListener('click', () => {
+                console.log(`Manual refresh triggered for ${bot}`);
+                refreshTab(bot);
+            });
+        } else {
+            console.error(`Refresh button ${id} not found for ${bot}`);
+        }
+    });
+}
+
+// Setup listeners for each bot
+['bread', 'moon', 'funbags'].forEach(bot => {
+    setupSortListeners(bot, 'active', `${bot}-activeTradesBody`, 'active');
+    setupSortListeners(bot, 'completed', `${bot}-completedTableContainer`, 'completed');
+    setupFilterListeners(bot, 'active', `${bot}-activeFilter`, `${bot}-activeTradesBody`, `${bot}-activeTradesCards`);
+    setupFilterListeners(bot, 'completed', `${bot}-completedFilter`, `${bot}-completedTableContainer`, `${bot}-completedTradesCards`);
+    setupPagination(bot, 'active', `${bot}-activePrevPage`, `${bot}-activeNextPage`, `${bot}-activeCurrentPage`);
+    setupPagination(bot, 'completed', `${bot}-completedPrevPage`, `${bot}-completedNextPage`, `${bot}-completedCurrentPage`);
+    setupExportListener(bot, `${bot}-exportBtn`);
+    setupRefreshListeners(bot, [
+        `${bot}-topRefreshBtn`,
+        `${bot}-middleRefreshBtn`,
+        `${bot}-bottomRefreshBtn`,
+        bot === 'funbags' ? 'funbags-monitoredRefreshBtn' : null
+    ].filter(Boolean));
+});
+
+setupSortListeners('wax', 'setups', 'wax-setupsBody', 'setups');
+setupFilterListeners('wax', 'setups', 'wax-filter', 'wax-setupsBody', 'wax-setupsCards');
+setupPagination('wax', 'setups', 'wax-prevPage', 'wax-nextPage', 'wax-currentPage');
+setupRefreshListeners('wax', ['wax-refreshBtn', 'wax-bottomRefreshBtn']);
+
+// Initial refresh
+refreshTab('bread');
 </script>
