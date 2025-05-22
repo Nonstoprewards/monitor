@@ -1050,72 +1050,75 @@
         }
 
         function setupSortListeners(section, tableId, sortStateKey) {
-            console.log(`Setting up sort listeners for funbags ${section} at #${tableId}`);
-            const table = document.querySelector(`#${tableId} table`);
-            if (!table) {
-                console.error(`Table not found for funbags ${section} at #${tableId}`);
+    console.log(`Setting up sort listeners for funbags ${section} at #${tableId}`);
+    const tableContainer = document.querySelector(`#${tableId}`);
+    const table = tableContainer.tagName === 'TBODY' 
+        ? tableContainer.closest('table') 
+        : tableContainer.querySelector('table');
+    if (!table) {
+        console.error(`Table not found for funbags ${section} at #${tableId}`);
+        return;
+    }
+
+    table.querySelectorAll('th[data-sort]').forEach(header => {
+        header.addEventListener('click', () => {
+            const column = header.getAttribute('data-sort');
+            const currentDirection = sortStates.funbags[sortStateKey][column] || 'none';
+            const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+            console.log(`Sorting funbags ${section} by ${column} ${newDirection}`);
+
+            // Reset all headers
+            table.querySelectorAll('th').forEach(h => {
+                h.classList.remove('sort-asc', 'sort-desc');
+                const icon = h.querySelector('.sort-icon');
+                if (icon) icon.innerHTML = '↕';
+            });
+
+            // Set new sort state
+            header.classList.add(`sort-${newDirection}`);
+            const icon = header.querySelector('.sort-icon');
+            if (icon) icon.innerHTML = newDirection === 'asc' ? '↑' : '↓';
+            sortStates.funbags[sortStateKey] = { [column]: newDirection };
+
+            // Sort rows
+            const body = table.querySelector('tbody');
+            const rows = Array.from(body.children); // Use children to avoid text nodes
+            if (rows.length === 0) {
+                console.log(`No rows to sort for funbags ${section}`);
                 return;
             }
 
-            table.querySelectorAll('th[data-sort]').forEach(header => {
-                header.addEventListener('click', () => {
-                    const column = header.getAttribute('data-sort');
-                    const currentDirection = sortStates.funbags[sortStateKey][column] || 'none';
-                    const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
-                    console.log(`Sorting funbags ${section} by ${column} ${newDirection}`);
+            rows.sort((a, b) => {
+                const cellIndex = Array.from(header.parentNode.children).indexOf(header) + 1;
+                let aValue = a.querySelector(`td:nth-child(${cellIndex})`)?.textContent || '';
+                let bValue = b.querySelector(`td:nth-child(${cellIndex})`)?.textContent || '';
 
-                    // Reset all headers
-                    table.querySelectorAll('th').forEach(h => {
-                        h.classList.remove('sort-asc', 'sort-desc');
-                        const icon = h.querySelector('.sort-icon');
-                        if (icon) icon.innerHTML = '↕';
-                    });
+                // Handle different data types
+                if (['profit', 'total_profit_usd', 'buy_price_usd', 'sell_price_usd', 'current_price_usd', 'market_cap', 'lowest_market_cap'].includes(column)) {
+                    aValue = parseFloat(aValue.replace('$', '').replace('%', '').replace(',', '')) || 0;
+                    bValue = parseFloat(bValue.replace('$', '').replace('%', '').replace(',', '')) || 0;
+                } else if (['buy_timestamp', 'sell_timestamp', 'timestamp'].includes(column)) {
+                    aValue = aValue === '-' ? 0 : new Date(aValue).getTime() || 0;
+                    bValue = bValue === '-' ? 0 : new Date(bValue).getTime() || 0;
+                } else {
+                    aValue = aValue.toLowerCase();
+                    bValue = bValue.toLowerCase();
+                }
 
-                    // Set new sort state
-                    header.classList.add(`sort-${newDirection}`);
-                    const icon = header.querySelector('.sort-icon');
-                    if (icon) icon.innerHTML = newDirection === 'asc' ? '↑' : '↓';
-                    sortStates.funbags[sortStateKey] = { [column]: newDirection };
-
-                    // Sort rows
-                    const body = table.querySelector('tbody');
-                    const rows = Array.from(body.children); // Use children to avoid text nodes
-                    if (rows.length === 0) {
-                        console.log(`No rows to sort for funbags ${section}`);
-                        return;
-                    }
-
-                    rows.sort((a, b) => {
-                        const cellIndex = Array.from(header.parentNode.children).indexOf(header) + 1;
-                        let aValue = a.querySelector(`td:nth-child(${cellIndex})`)?.textContent || '';
-                        let bValue = b.querySelector(`td:nth-child(${cellIndex})`)?.textContent || '';
-
-                        // Handle different data types
-                        if (['profit', 'total_profit_usd', 'buy_price_usd', 'sell_price_usd', 'current_price_usd', 'market_cap', 'lowest_market_cap'].includes(column)) {
-                            aValue = parseFloat(aValue.replace('$', '').replace('%', '').replace(',', '')) || 0;
-                            bValue = parseFloat(bValue.replace('$', '').replace('%', '').replace(',', '')) || 0;
-                        } else if (['buy_timestamp', 'sell_timestamp', 'timestamp'].includes(column)) {
-                            aValue = aValue === '-' ? 0 : new Date(aValue).getTime() || 0;
-                            bValue = bValue === '-' ? 0 : new Date(bValue).getTime() || 0;
-                        } else {
-                            aValue = aValue.toLowerCase();
-                            bValue = bValue.toLowerCase();
-                        }
-
-                        // Handle comparison
-                        if (aValue === bValue) return 0;
-                        return newDirection === 'asc'
-                            ? (aValue > bValue ? 1 : -1)
-                            : (aValue < bValue ? 1 : -1);
-                    });
-
-                    // Update DOM efficiently
-                    const fragment = document.createDocumentFragment();
-                    rows.forEach(row => fragment.appendChild(row));
-                    body.appendChild(fragment);
-                });
+                // Handle comparison
+                if (aValue === bValue) return 0;
+                return newDirection === 'asc'
+                    ? (aValue > bValue ? 1 : -1)
+                    : (aValue < bValue ? 1 : -1);
             });
-        }
+
+            // Update DOM efficiently
+            const fragment = document.createDocumentFragment();
+            rows.forEach(row => fragment.appendChild(row));
+            body.appendChild(fragment);
+        });
+    });
+}
                 function setupFilterListeners(section, filterId, tableId, cardId) {
             const filterInput = document.getElementById(filterId);
             console.log(`Setting up filter listener for funbags ${section} at #${filterId}`);
