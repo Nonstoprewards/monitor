@@ -642,16 +642,19 @@
         const { coins: fetchedCoins, total } = await fetchMonitoredCoins(page);
         console.log('Fetched coins:', fetchedCoins, 'Total:', total);
 
-        // Validate and update cache
+        // Validate and update cache with minimal requirements
         dataCache.funbags.monitored = fetchedCoins.filter(coin => {
-            const isValid = coin.token_address && coin.token_name && 
-                           coin.max_market_cap !== undefined && 
-                           coin.current_price_usd !== undefined && 
-                           coin.lowest_market_cap !== undefined && 
-                           coin.within_range_start_time;
-            if (!isValid) console.warn('Invalid coin data:', coin);
-            return isValid;
-        });
+            const hasRequired = coin.token_address && coin.token_name;
+            if (!hasRequired) console.warn('Coin missing required fields:', coin);
+            return hasRequired;
+        }).map(coin => ({
+            token_address: coin.token_address,
+            token_name: coin.token_name,
+            market_cap: coin.max_market_cap ?? coin.market_cap ?? 0,
+            current_price_usd: coin.current_price_usd ?? 0,
+            lowest_market_cap: coin.lowest_market_cap ?? 999999999,
+            timestamp: coin.within_range_start_time ?? coin.timestamp ?? null
+        }));
         console.log('Updated dataCache.funbags.monitored:', dataCache.funbags.monitored);
 
         if (dataCache.funbags.monitored.length === 0) {
@@ -706,10 +709,10 @@
         displayCoins.forEach(coin => {
             const tokenAddress = coin.token_address || '-';
             const tokenName = coin.token_name || '-';
-            const marketCap = coin.max_market_cap || 0; // Use max_market_cap as per fetchMonitoredCoins
+            const marketCap = coin.market_cap || 0;
             const currentPrice = coin.current_price_usd || 0;
             const lowestMarketCap = coin.lowest_market_cap || 999999999;
-            const timestamp = coin.within_range_start_time ? new Date(coin.within_range_start_time).toLocaleString() : '-';
+            const timestamp = coin.timestamp ? new Date(coin.timestamp).toLocaleString() : '-';
 
             const row = document.createElement('tr');
             row.innerHTML = `
