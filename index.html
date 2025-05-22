@@ -62,9 +62,9 @@
                     </div>
                     <div class="flex justify-between items-center mt-4">
                         <div class="flex items-center space-x-2">
-                            <span id="funbags-monitoredPrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></span>
+                            <span id="funbags-monitoredPrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
                             <span class="pagination-text text-gray-700">Page <span id="funbags-monitoredCurrentPage">1</span></span>
-                            <span id="funbags-monitoredNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></span>
+                            <span id="funbags-monitoredNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
                         </div>
                     </div>
                 </div>
@@ -114,9 +114,9 @@
                             <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
                         </button>
                         <div class="flex items-center space-x-2">
-                            <span id="funbags-activePrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></span>
+                            <span id="funbags-activePrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
                             <span class="pagination-text text-gray-700">Page <span id="funbags-activeCurrentPage">1</span></span>
-                            <span id="funbags-activeNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></span>
+                            <span id="funbags-activeNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
                         </div>
                     </div>
                 </div>
@@ -161,9 +161,9 @@
                     </div>
                     <div class="flex justify-between items-center mt-4">
                         <div class="flex items-center space-x-2">
-                            <span id="funbags-completedPrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></span>
+                            <span id="funbags-completedPrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
                             <span class="pagination-text text-gray-700">Page <span id="funbags-completedCurrentPage">1</span></span>
-                            <span id="funbags-completedNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></span>
+                            <span id="funbags-completedNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
                         </div>
                         <button id="funbags-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
                             <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
@@ -187,6 +187,10 @@
         font-family: 'Poppins', sans-serif;
         font-weight: 600;
     }
+    select {
+        font-family: 'Open Sans', sans-serif;
+        font-size: 0.875rem;
+    }
     .sexy {
         background-color: #1a0033;
         color: #f8d1e9;
@@ -196,6 +200,11 @@
     }
     .sexy .text-gray-700 {
         color: #f8d1e9;
+    }
+    .sexy select {
+        background-color: #4b0082;
+        color: #f8d1e9;
+        border-color: #ff69b4;
     }
     .sexy .bg-teal-600 {
         background: linear-gradient(145deg, #ff69b4, #c71585);
