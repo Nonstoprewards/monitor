@@ -621,7 +621,16 @@
     const currentPageSpan = document.getElementById('funbags-monitoredCurrentPage');
 
     if (!monitoredStatus || !monitoredBody || !monitoredCards || !monitoredTable || !monitoredFilterInput || !prevPage || !nextPage || !currentPageSpan) {
-        console.error('Missing DOM elements for monitored coins');
+        console.error('Missing DOM elements for monitored coins:', {
+            monitoredStatus: !!monitoredStatus,
+            monitoredBody: !!monitoredBody,
+            monitoredCards: !!monitoredCards,
+            monitoredTable: !!monitoredTable,
+            monitoredFilterInput: !!monitoredFilterInput,
+            prevPage: !!prevPage,
+            nextPage: !!nextPage,
+            currentPageSpan: !!currentPageSpan
+        });
         monitoredStatus.textContent = 'Error: Missing DOM elements';
         return;
     }
@@ -633,23 +642,38 @@
         const { coins: fetchedCoins, total } = await fetchMonitoredCoins(page);
         console.log('Fetched coins:', fetchedCoins, 'Total:', total);
 
-        // Clear and update cache
-        dataCache.funbags.monitored = [];
-        fetchedCoins.forEach(coin => {
-            if (!dataCache.funbags.monitored.some(c => c.token_address === coin.token_address)) {
-                dataCache.funbags.monitored.push(coin);
-            }
+        // Validate and update cache
+        dataCache.funbags.monitored = fetchedCoins.filter(coin => {
+            const isValid = coin.token_address && coin.token_name && 
+                           coin.max_market_cap !== undefined && 
+                           coin.current_price_usd !== undefined && 
+                           coin.lowest_market_cap !== undefined && 
+                           coin.within_range_start_time;
+            if (!isValid) console.warn('Invalid coin data:', coin);
+            return isValid;
         });
         console.log('Updated dataCache.funbags.monitored:', dataCache.funbags.monitored);
+
+        if (dataCache.funbags.monitored.length === 0) {
+            console.warn('No valid coins in cache after filtering');
+            monitoredStatus.textContent = 'No monitored coins found';
+            monitoredBody.innerHTML = '';
+            monitoredCards.innerHTML = '<p>No monitored coins available.</p>';
+            currentPageSpan.textContent = page;
+            prevPage.classList.toggle('disabled', page === 1);
+            nextPage.classList.add('disabled');
+            return;
+        }
 
         // Apply sorting
         let displayCoins = [...dataCache.funbags.monitored];
         const monitoredSort = { ...sortStates.funbags.monitored };
-        console.log('Applying sort state:', monitoredSort);
+        console.log('Current sort state:', monitoredSort);
 
         if (Object.keys(monitoredSort).length > 0) {
             const column = Object.keys(monitoredSort)[0];
             const direction = monitoredSort[column];
+            console.log(`Sorting monitored coins by ${column} ${direction}`);
             displayCoins.sort((a, b) => {
                 let aValue = a[column];
                 let bValue = b[column];
@@ -663,8 +687,10 @@
                     aValue = aValue ? aValue.toString().toLowerCase() : '';
                     bValue = bValue ? bValue.toString().toLowerCase() : '';
                 }
-                return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
+                const comparison = aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+                return direction === 'asc' ? comparison : -comparison;
             });
+            console.log('Sorted coins:', displayCoins);
         }
 
         // Apply pagination
@@ -673,22 +699,17 @@
         displayCoins = displayCoins.slice(start, end);
         console.log('Paginated coins:', displayCoins);
 
+        // Clear and render table
         monitoredBody.innerHTML = '';
         monitoredCards.innerHTML = '';
-
-        if (!displayCoins || displayCoins.length === 0) {
-            monitoredStatus.textContent = 'No monitored coins found';
-            monitoredCards.innerHTML = '<p>No monitored coins available.</p>';
-            return;
-        }
 
         displayCoins.forEach(coin => {
             const tokenAddress = coin.token_address || '-';
             const tokenName = coin.token_name || '-';
-            const marketCap = coin.market_cap || 0;
+            const marketCap = coin.max_market_cap || 0; // Use max_market_cap as per fetchMonitoredCoins
             const currentPrice = coin.current_price_usd || 0;
             const lowestMarketCap = coin.lowest_market_cap || 999999999;
-            const timestamp = coin.timestamp ? new Date(coin.timestamp).toLocaleString() : '-';
+            const timestamp = coin.within_range_start_time ? new Date(coin.within_range_start_time).toLocaleString() : '-';
 
             const row = document.createElement('tr');
             row.innerHTML = `
@@ -718,7 +739,8 @@
         nextPage.classList.toggle('disabled', displayCoins.length < pageSizes.funbags.monitored || page * pageSizes.funbags.monitored >= total);
 
         // Update sort indicators
-        monitoredTable.querySelectorAll('th[data-sort]').forEach(header => {
+        const headers = monitoredTable.querySelectorAll('th[data-sort]');
+        headers.forEach(header => {
             header.classList.remove('sort-asc', 'sort-desc');
             const icon = header.querySelector('.sort-icon');
             if (icon) icon.innerHTML = '↕';
@@ -729,13 +751,18 @@
             const header = monitoredTable.querySelector(`th[data-sort="${column}"]`);
             if (header) {
                 header.classList.add(`sort-${direction}`);
-                header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
+                const icon = header.querySelector('.sort-icon');
+                if (icon) icon.innerHTML = direction === 'asc' ? '↑' : '↓';
+                console.log(`Updated sort indicator for ${column} ${direction}`);
+            } else {
+                console.warn(`Header not found for sort column ${column}`);
             }
         }
 
         // Reapply filter
         const monitoredFilterValue = monitoredFilterInput.value || '';
         if (monitoredFilterValue) {
+            console.log(`Reapplying filter: ${monitoredFilterValue}`);
             monitoredFilterInput.value = monitoredFilterValue;
             monitoredFilterInput.dispatchEvent(new Event('input'));
         }
@@ -1173,9 +1200,16 @@
         return;
     }
 
-    table.querySelectorAll('th[data-sort]').forEach(header => {
+    const headers = table.querySelectorAll('th[data-sort]');
+    if (headers.length === 0) {
+        console.error(`No sortable headers found for ${section} at #${tableId}`);
+        return;
+    }
+
+    headers.forEach(header => {
         header.addEventListener('click', () => {
             const column = header.getAttribute('data-sort');
+            console.log(`Sort button clicked for ${section} on column ${column}`);
             const currentDirection = sortStates.funbags[sortStateKey][column];
             const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
             console.log(`Sorting ${section} by ${column} ${newDirection}`);
@@ -1186,7 +1220,7 @@
             console.log(`Updated sortStates.funbags.${sortStateKey}:`, sortStates.funbags[sortStateKey]);
 
             // Reset all header indicators
-            table.querySelectorAll('th[data-sort]').forEach(h => {
+            headers.forEach(h => {
                 h.classList.remove('sort-asc', 'sort-desc');
                 const icon = h.querySelector('.sort-icon');
                 if (icon) icon.innerHTML = '↕';
@@ -1201,8 +1235,10 @@
             pageStates.funbags[sortStateKey] = 1;
             const pageSpan = document.getElementById(`funbags-${sortStateKey}CurrentPage`);
             if (pageSpan) pageSpan.textContent = '1';
+            else console.warn(`Page span not found for funbags-${sortStateKey}CurrentPage`);
 
             // Refresh the tab
+            console.log(`Triggering refreshTab for ${section} sort`);
             refreshTab();
         });
     });
