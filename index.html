@@ -633,9 +633,8 @@
         const { coins: fetchedCoins, total } = await fetchMonitoredCoins(page);
         console.log('Fetched coins:', fetchedCoins, 'Total:', total);
 
-        // Clear existing cache to avoid stale data
+        // Clear and update cache
         dataCache.funbags.monitored = [];
-        // Merge fetched coins into cache, avoiding duplicates
         fetchedCoins.forEach(coin => {
             if (!dataCache.funbags.monitored.some(c => c.token_address === coin.token_address)) {
                 dataCache.funbags.monitored.push(coin);
@@ -643,15 +642,14 @@
         });
         console.log('Updated dataCache.funbags.monitored:', dataCache.funbags.monitored);
 
-        // Apply sorting to the full dataCache
+        // Apply sorting
         let displayCoins = [...dataCache.funbags.monitored];
         const monitoredSort = { ...sortStates.funbags.monitored };
-        console.log('Current sort state:', monitoredSort);
+        console.log('Applying sort state:', monitoredSort);
 
         if (Object.keys(monitoredSort).length > 0) {
             const column = Object.keys(monitoredSort)[0];
             const direction = monitoredSort[column];
-            console.log(`Applying sort: ${column} ${direction}`);
             displayCoins.sort((a, b) => {
                 let aValue = a[column];
                 let bValue = b[column];
@@ -735,7 +733,7 @@
             }
         }
 
-        // Reapply filter if present
+        // Reapply filter
         const monitoredFilterValue = monitoredFilterInput.value || '';
         if (monitoredFilterValue) {
             monitoredFilterInput.value = monitoredFilterValue;
@@ -767,7 +765,7 @@
     const activeCurrentPage = document.getElementById(`${prefix}-activeCurrentPage`);
     const completedCurrentPage = document.getElementById(`${prefix}-completedCurrentPage`);
 
-    if (!activeStatus || !completedStatus || !activeTradesBody || !activeTradesCards || !completedTradesBody || !completedTradesCards || !totalProfitElement || !activeTable || !completedNextPage || !completedTable || !activePrevPage || !activeNextPage || !completedPrevPage || !activeCurrentPage || !completedCurrentPage) {
+    if (!activeStatus || !completedStatus || !activeTradesBody || !activeTradesCards || !completedTradesBody || !completedTradesCards || !totalProfitElement || !activeTable || !completedTable || !activePrevPage || !activeNextPage || !completedPrevPage || !completedNextPage || !activeCurrentPage || !completedCurrentPage) {
         console.error(`Missing DOM elements for funbags`);
         alert(`Failed to load Fun Bags dashboard. Check console for details.`);
         return;
@@ -777,12 +775,6 @@
     completedStatus.textContent = 'Loading completed trades...';
     activeStatus.classList.add('loading');
     completedStatus.classList.add('loading');
-
-    const activeSort = { ...sortStates.funbags.active };
-    const completedSort = { ...sortStates.funbags.completed };
-    const activeFilterValue = document.getElementById(`${prefix}-activeFilter`)?.value || '';
-    const completedFilterValue = document.getElementById(`${prefix}-completedFilter`)?.value || '';
-    const profitFilterValue = document.getElementById(`${prefix}-profitFilter`)?.value || 'all';
 
     try {
         await refreshMonitoredCoins(pageStates.funbags.monitored);
@@ -850,10 +842,12 @@
             .filter(trade => trade !== null && trade !== undefined);
         console.log('Processed active trades:', activeTrades);
 
-        // Merge into dataCache, avoiding duplicates
+        // Clear and update cache
+        dataCache.funbags.active = [];
         activeTrades.forEach(trade => {
-            const existing = dataCache.funbags.active.find(t => t.token_address === trade.token_address);
-            if (!existing) dataCache.funbags.active.push(trade);
+            if (!dataCache.funbags.active.some(t => t.token_address === trade.token_address)) {
+                dataCache.funbags.active.push(trade);
+            }
         });
         const activeTotal = tokenCount || activeTrades.length;
 
@@ -951,18 +945,22 @@
             .filter(trade => trade !== null && trade !== undefined);
         console.log('Processed completed trades:', completedTrades);
 
-        // Merge into dataCache, avoiding duplicates
+        // Clear and update cache
+        dataCache.funbags.completed = [];
         completedTrades.forEach(trade => {
-            const existing = dataCache.funbags.completed.find(t => t.token_address === trade.token_address);
-            if (!existing) dataCache.funbags.completed.push(trade);
+            if (!dataCache.funbags.completed.some(t => t.token_address === trade.token_address)) {
+                dataCache.funbags.completed.push(trade);
+            }
         });
         const completedTotal = sellCount || completedTrades.length;
 
         // Apply sorting to Active Trades
         let displayActiveTrades = [...dataCache.funbags.active];
+        const activeSort = { ...sortStates.funbags.active };
         if (Object.keys(activeSort).length > 0) {
             const column = Object.keys(activeSort)[0];
             const direction = activeSort[column];
+            console.log(`Applying sort to active trades: ${column} ${direction}`);
             displayActiveTrades.sort((a, b) => {
                 let aValue = a[column];
                 let bValue = b[column];
@@ -973,8 +971,8 @@
                     aValue = aValue ? new Date(aValue).getTime() : 0;
                     bValue = bValue ? new Date(bValue).getTime() : 0;
                 } else {
-                    aValue = aValue.toString().toLowerCase();
-                    bValue = bValue.toString().toLowerCase();
+                    aValue = aValue ? aValue.toString().toLowerCase() : '';
+                    bValue = bValue ? bValue.toString().toLowerCase() : '';
                 }
                 return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
             });
@@ -1031,9 +1029,11 @@
 
         // Apply sorting to Completed Trades
         let displayCompletedTrades = [...dataCache.funbags.completed];
+        const completedSort = { ...sortStates.funbags.completed };
         if (Object.keys(completedSort).length > 0) {
             const column = Object.keys(completedSort)[0];
             const direction = completedSort[column];
+            console.log(`Applying sort to completed trades: ${column} ${direction}`);
             displayCompletedTrades.sort((a, b) => {
                 let aValue = a[column];
                 let bValue = b[column];
@@ -1044,14 +1044,15 @@
                     aValue = aValue ? new Date(aValue).getTime() : 0;
                     bValue = bValue ? new Date(bValue).getTime() : 0;
                 } else {
-                    aValue = aValue.toString().toLowerCase();
-                    bValue = bValue.toString().toLowerCase();
+                    aValue = aValue ? aValue.toString().toLowerCase() : '';
+                    bValue = bValue ? bValue.toString().toLowerCase() : '';
                 }
                 return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
             });
         }
 
         // Apply profit filter and pagination to Completed Trades
+        const profitFilterValue = document.getElementById(`${prefix}-profitFilter`)?.value || 'all';
         const filteredTrades = displayCompletedTrades.filter(trade => {
             const buyPrice = trade.buy_price_usd || 0;
             const sellPrice = trade.sell_price_usd || 0;
@@ -1113,7 +1114,12 @@
         totalProfitElement.textContent = `$${totalProfit.toFixed(2)}`;
 
         // Update sort indicators for Active Trades
-        if (activeSort && Object.keys(activeSort).length > 0) {
+        activeTable.querySelectorAll('th[data-sort]').forEach(header => {
+            header.classList.remove('sort-asc', 'sort-desc');
+            const icon = header.querySelector('.sort-icon');
+            if (icon) icon.innerHTML = '↕';
+        });
+        if (Object.keys(activeSort).length > 0) {
             const column = Object.keys(activeSort)[0];
             const direction = activeSort[column];
             const header = activeTable.querySelector(`th[data-sort="${column}"]`);
@@ -1124,7 +1130,12 @@
         }
 
         // Update sort indicators for Completed Trades
-        if (completedSort && Object.keys(completedSort).length > 0) {
+        completedTable.querySelectorAll('th[data-sort]').forEach(header => {
+            header.classList.remove('sort-asc', 'sort-desc');
+            const icon = header.querySelector('.sort-icon');
+            if (icon) icon.innerHTML = '↕';
+        });
+        if (Object.keys(completedSort).length > 0) {
             const column = Object.keys(completedSort)[0];
             const direction = completedSort[column];
             const header = completedTable.querySelector(`th[data-sort="${column}"]`);
@@ -1134,10 +1145,13 @@
             }
         }
 
+        // Reapply filters
+        const activeFilterValue = document.getElementById(`${prefix}-activeFilter`)?.value || '';
         if (activeFilterValue) {
             document.getElementById(`${prefix}-activeFilter`).value = activeFilterValue;
             document.getElementById(`${prefix}-activeFilter`).dispatchEvent(new Event('input'));
         }
+        const completedFilterValue = document.getElementById(`${prefix}-completedFilter`)?.value || '';
         if (completedFilterValue) {
             document.getElementById(`${prefix}-completedFilter`).value = completedFilterValue;
             document.getElementById(`${prefix}-completedFilter`).dispatchEvent(new Event('input'));
@@ -1151,37 +1165,48 @@
         completedStatus.classList.remove('loading');
     }
 }
-
         function setupSortListeners(section, tableId, sortStateKey) {
-            console.log(`Setting up sort listeners for funbags ${section} at #${tableId}`);
-            const table = document.querySelector(`#${tableId} table`);
-            if (!table) {
-                console.error(`Table not found for funbags ${section} at #${tableId}`);
-                return;
-            }
+    console.log(`Setting up sort listeners for ${section} at #${tableId}`);
+    const table = document.querySelector(`#${tableId} table`);
+    if (!table) {
+        console.error(`Table not found for ${section} at #${tableId}`);
+        return;
+    }
 
-            table.querySelectorAll('th[data-sort]').forEach(header => {
-                header.addEventListener('click', () => {
-                    const column = header.getAttribute('data-sort');
-                    const currentDirection = sortStates.funbags[sortStateKey][column];
-                    const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
-                    console.log(`Sorting funbags ${section} by ${column} ${newDirection}`);
+    table.querySelectorAll('th[data-sort]').forEach(header => {
+        header.addEventListener('click', () => {
+            const column = header.getAttribute('data-sort');
+            const currentDirection = sortStates.funbags[sortStateKey][column];
+            const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+            console.log(`Sorting ${section} by ${column} ${newDirection}`);
 
-                    table.querySelectorAll('th').forEach(h => {
-                        h.classList.remove('sort-asc', 'sort-desc');
-                        const icon = h.querySelector('.sort-icon');
-                        if (icon) icon.innerHTML = '↕';
-                    });
+            // Clear previous sort state for this section
+            sortStates.funbags[sortStateKey] = {};
+            sortStates.funbags[sortStateKey][column] = newDirection;
+            console.log(`Updated sortStates.funbags.${sortStateKey}:`, sortStates.funbags[sortStateKey]);
 
-                    header.classList.add(`sort-${newDirection}`);
-                    const icon = header.querySelector('.sort-icon');
-                    if (icon) icon.innerHTML = newDirection === 'asc' ? '↑' : '↓';
-
-                    sortStates.funbags[sortStateKey] = { [column]: newDirection };
-                    refreshTab();
-                });
+            // Reset all header indicators
+            table.querySelectorAll('th[data-sort]').forEach(h => {
+                h.classList.remove('sort-asc', 'sort-desc');
+                const icon = h.querySelector('.sort-icon');
+                if (icon) icon.innerHTML = '↕';
             });
-        }
+
+            // Update clicked header
+            header.classList.add(`sort-${newDirection}`);
+            const icon = header.querySelector('.sort-icon');
+            if (icon) icon.innerHTML = newDirection === 'asc' ? '↑' : '↓';
+
+            // Reset to first page
+            pageStates.funbags[sortStateKey] = 1;
+            const pageSpan = document.getElementById(`funbags-${sortStateKey}CurrentPage`);
+            if (pageSpan) pageSpan.textContent = '1';
+
+            // Refresh the tab
+            refreshTab();
+        });
+    });
+}
 
         function setupFilterListeners(section, filterId, tableId, cardId) {
             const filterInput = document.getElementById(filterId);
