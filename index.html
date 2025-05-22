@@ -108,15 +108,19 @@ document.addEventListener('DOMContentLoaded', () => {
             if (error) throw new Error(`Failed to fetch monitored coins: ${error.message}`);
             console.log('Monitored coins fetched:', monitoredCoins || 'No coins');
 
-            // Fetch all coins for sorting
-            const { data: allCoins, error: allError } = await withRetry(async () => await supabase
-                .from('token_states')
-                .select('token_address, max_market_cap, lowest_market_cap, within_range_start_time, is_bonding')
-                .eq('monitoring', true)
-                .eq('bought', false)
-                .order('within_range_start_time', { ascending: false })
-            );
-            if (allError) throw new Error(`Failed to fetch all monitored coins: ${allError.message}`);
+            // Fetch all coins for sorting if sort is active
+            let allCoins = [];
+            if (sortStates.funbags.monitored && Object.keys(sortStates.funbags.monitored).length > 0) {
+                const { data: allCoinsData, error: allError } = await withRetry(async () => await supabase
+                    .from('token_states')
+                    .select('token_address, max_market_cap, lowest_market_cap, within_range_start_time, is_bonding')
+                    .eq('monitoring', true)
+                    .eq('bought', false)
+                    .order('within_range_start_time', { ascending: false })
+                );
+                if (allError) throw new Error(`Failed to fetch all monitored coins: ${allError.message}`);
+                allCoins = allCoinsData || [];
+            }
 
             const coinsWithData = await Promise.all((monitoredCoins || []).map(async coin => {
                 const tokenData = await fetchTokenData(coin.token_address);
@@ -124,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const price = marketCap / 1_000_000_000;
                 return {
                     token_address: coin.token_address || '-',
-                    token_name: tokenData.name,
+                    token_name: tokenData.name || '-',
                     market_cap: marketCap,
                     current_price_usd: price,
                     lowest_market_cap: parseFloat(coin.lowest_market_cap) || 999999999,
@@ -132,13 +136,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             }));
 
-            const allCoinsWithData = await Promise.all((allCoins || []).map(async coin => {
+            const allCoinsWithData = await Promise.all(allCoins.map(async coin => {
                 const tokenData = await fetchTokenData(coin.token_address);
                 const marketCap = parseFloat(coin.max_market_cap) || 0;
                 const price = marketCap / 1_000_000_000;
                 return {
                     token_address: coin.token_address || '-',
-                    token_name: tokenData.name,
+                    token_name: tokenData.name || '-',
                     market_cap: marketCap,
                     current_price_usd: price,
                     lowest_market_cap: parseFloat(coin.lowest_market_cap) || 999999999,
@@ -146,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             }));
 
-            return { coins: coinsWithData, total: count || allCoinsWithData.length, allCoins: allCoinsWithData };
+            return { coins: coinsWithData, total: count || coinsWithData.length, allCoins: allCoinsWithData };
         } catch (error) {
             console.error('Error in fetchMonitoredCoins:', error);
             throw error;
@@ -178,12 +182,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const pageSize = pageSizeSelect ? parseInt(pageSizeSelect.value) || 10 : 10;
 
         try {
-            let { coins: monitoredCoins, total, allCoins } = await fetchMonitoredCoins(page, pageSize);
-            monitoredBody.innerHTML = '';
-            monitoredCards.innerHTML = '';
+            const { coins: monitoredCoins, total, allCoins } = await fetchMonitoredCoins(page, pageSize);
+            let displayCoins = monitoredCoins;
 
-            // Apply sorting to full dataset
-            if (monitoredSort && Object.keys(monitoredSort).length > 0) {
+            // Apply sorting to full dataset if sort is active
+            if (monitoredSort && Object.keys(monitoredSort).length > 0 && allCoins.length > 0) {
                 const column = Object.keys(monitoredSort)[0];
                 const direction = monitoredSort[column];
                 allCoins.sort((a, b) => {
@@ -201,19 +204,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
                 });
-                // Re-paginate sorted data
-                monitoredCoins = allCoins.slice((page - 1) * pageSize, page * pageSize);
-                total = allCoins.length;
+                displayCoins = allCoins.slice((page - 1) * pageSize, page * pageSize);
             }
 
-            if (!monitoredCoins || monitoredCoins.length === 0) {
+            monitoredBody.innerHTML = '';
+            monitoredCards.innerHTML = '';
+
+            if (!displayCoins || displayCoins.length === 0) {
                 monitoredStatus.textContent = 'No monitored coins found';
                 monitoredCards.innerHTML = '<p>No monitored coins available.</p>';
                 monitoredStatus.classList.remove('loading');
                 return;
             }
 
-            monitoredCoins.forEach(coin => {
+            displayCoins.forEach(coin => {
                 const tokenAddress = coin.token_address || '-';
                 const tokenName = coin.token_name || '-';
                 const marketCap = coin.market_cap || 0;
@@ -243,17 +247,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 monitoredCards.appendChild(card);
             });
 
-            monitoredStatus.textContent = `Monitored coins loaded (${monitoredCoins.length} of ${total})`;
+            monitoredStatus.textContent = `Monitored coins loaded (${displayCoins.length} of ${total})`;
             currentPageSpan.textContent = page;
             prevPage.classList.toggle('disabled', page === 1);
-            nextPage.classList.toggle('disabled', monitoredCoins.length < pageSize || page * pageSize >= total);
+            nextPage.classList.toggle('disabled', displayCoins.length < pageSize || page * pageSize >= total);
 
             if (monitoredFilterValue) {
                 monitoredFilterInput.value = monitoredFilterValue;
                 monitoredFilterInput.dispatchEvent(new Event('input'));
             }
 
-            // Update sort indicators
             if (monitoredSort && Object.keys(monitoredSort).length > 0) {
                 const column = Object.keys(monitoredSort)[0];
                 const direction = monitoredSort[column];
@@ -353,7 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const profitPercent = buyPrice !== 0 && currentPrice !== 0 ? (((currentPrice - buyPrice) / buyPrice) * 100).toFixed(2) : '0';
                     return {
                         token_address: state.token_address,
-                        token_name: tokenData.name,
+                        token_name: tokenData.name || '-',
                         buy_price_usd: buyPrice,
                         current_price_usd: currentPrice,
                         market_cap: marketCap,
@@ -441,7 +444,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     return {
                         token_address: tokenAddress,
-                        token_name: tokenData.name,
+                        token_name: tokenData.name || '-',
                         buy_price_usd: buyPrice,
                         sell_price_usd: avgSellPrice,
                         profit: profitPercent,
@@ -490,7 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const direction = completedSort[column];
                 completedTrades.sort((a, b) => {
                     let aValue = a[column] || '';
-                    bValue = b[column] || '';
+                    let bValue = b[column] || '';
                     if (['profit', 'total_profit_usd', 'buy_price_usd', 'sell_price_usd'].includes(column)) {
                         aValue = parseFloat(aValue) || 0;
                         bValue = parseFloat(bValue) || 0;
@@ -622,7 +625,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById(`${prefix}-completedFilter`).dispatchEvent(new Event('input'));
             }
 
-            // Update sort indicators
             if (activeSort && Object.keys(activeSort).length > 0) {
                 const column = Object.keys(activeSort)[0];
                 const direction = activeSort[column];
@@ -668,23 +670,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
                 console.log(`Sorting funbags ${section} by ${column} ${newDirection}`);
 
-                // Reset all headers
                 table.querySelectorAll('th').forEach(h => {
                     h.classList.remove('sort-asc', 'sort-desc');
                     const icon = h.querySelector('.sort-icon');
                     if (icon) icon.innerHTML = '↕';
                 });
 
-                // Set new sort state
                 header.classList.add(`sort-${newDirection}`);
                 const icon = header.querySelector('.sort-icon');
                 if (icon) icon.innerHTML = newDirection === 'asc' ? '↑' : '↓';
                 sortStates.funbags[sortStateKey] = { [column]: newDirection };
 
-                // Reset to first page
                 pageStates.funbags[sortStateKey] = 1;
-
-                // Refresh the tab
                 refreshTab();
             });
         });
@@ -810,7 +807,6 @@ document.addEventListener('DOMContentLoaded', () => {
         await refreshTrades(pageStates.funbags.active, pageStates.funbags.completed);
     }
 
-    // Sexy Mode Toggle
     const sexyModeToggle = document.getElementById('sexyModeToggle');
     if (sexyModeToggle) {
         sexyModeToggle.addEventListener('click', () => {
@@ -825,7 +821,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('sexyModeToggle button not found');
     }
 
-    // Setup listeners
     console.log(`Initializing listeners for funbags`);
     setupSortListeners('active', 'funbags-activeTradesBody', 'active');
     setupSortListeners('completed', 'funbags-completedTableContainer', 'completed');
@@ -847,10 +842,8 @@ document.addEventListener('DOMContentLoaded', () => {
         'funbags-monitoredRefreshBtn'
     ]);
 
-    // Initial load
     refreshTab();
 
-    // Auto-refresh every 10 seconds
     setInterval(() => {
         if (document.visibilityState === 'visible') {
             console.log(`Auto-refreshing for funbags`);
