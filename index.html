@@ -10,7 +10,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
-    <!-- CSS will be included in Part 2 -->
 </head>
 <body class="flex items-center justify-center min-h-screen">
     <div class="container mx-auto p-6 max-w-7xl">
@@ -34,7 +33,16 @@
                         </button>
                     </div>
                     <p id="funbags-monitored-status" class="text-gray-700 text-sm mb-2 status">Loading monitored coins...</p>
-                    <input type="text" id="funbags-monitoredFilter" class="filter-input" placeholder="Filter by Token...">
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                        <input type="text" id="funbags-monitoredFilter" class="filter-input" placeholder="Filter by Token...">
+                        <select id="funbags-monitoredPageSize" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                            <option value="10">10 per page</option>
+                            <option value="20">20 per page</option>
+                            <option value="30">30 per page</option>
+                            <option value="50">50 per page</option>
+                            <option value="100">100 per page</option>
+                        </select>
+                    </div>
                     <div class="table-container">
                         <table class="min-w-full">
                             <thead>
@@ -54,13 +62,13 @@
                     </div>
                     <div class="flex justify-between items-center mt-4">
                         <div class="flex items-center space-x-2">
-                            <span id="funbags-monitoredPrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
+                            <span id="funbags-monitoredPrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></span>
                             <span class="pagination-text text-gray-700">Page <span id="funbags-monitoredCurrentPage">1</span></span>
-                            <span id="funbags-monitoredNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
+                            <span id="funbags-monitoredNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></span>
                         </div>
                     </div>
                 </div>
-                <div class="mb-6 section-card">
+                                <div class="mb-6 section-card">
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
                         <h2 class="text-xl text-navy">Active Trades</h2>
                         <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
@@ -73,7 +81,16 @@
                         </div>
                     </div>
                     <p id="funbags-active-status" class="text-gray-700 text-sm mb-2 status">Loading active trades...</p>
-                    <input type="text" id="funbags-activeFilter" class="filter-input" placeholder="Filter by Token...">
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                        <input type="text" id="funbags-activeFilter" class="filter-input" placeholder="Filter by Token...">
+                        <select id="funbags-activePageSize" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                            <option value="10">10 per page</option>
+                            <option value="20">20 per page</option>
+                            <option value="30">30 per page</option>
+                            <option value="50">50 per page</option>
+                            <option value="100">100 per page</option>
+                        </select>
+                    </div>
                     <div class="table-container">
                         <table class="min-w-full">
                             <thead>
@@ -97,9 +114,9 @@
                             <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
                         </button>
                         <div class="flex items-center space-x-2">
-                            <span id="funbags-activePrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
+                            <span id="funbags-activePrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></span>
                             <span class="pagination-text text-gray-700">Page <span id="funbags-activeCurrentPage">1</span></span>
-                            <span id="funbags-activeNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
+                            <span id="funbags-activeNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></span>
                         </div>
                     </div>
                 </div>
@@ -113,7 +130,16 @@
                             <option value="negative">Negative Profit</option>
                         </select>
                     </div>
-                    <input type="text" id="funbags-completedFilter" class="filter-input" placeholder="Filter by Token...">
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                        <input type="text" id="funbags-completedFilter" class="filter-input" placeholder="Filter by Token...">
+                        <select id="funbags-completedPageSize" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                            <option value="10">10 per page</option>
+                            <option value="20">20 per page</option>
+                            <option value="30">30 per page</option>
+                            <option value="50">50 per page</option>
+                            <option value="100">100 per page</option>
+                        </select>
+                    </div>
                     <div id="funbags-completedTableContainer" class="table-container">
                         <table class="min-w-full">
                             <thead>
@@ -135,9 +161,9 @@
                     </div>
                     <div class="flex justify-between items-center mt-4">
                         <div class="flex items-center space-x-2">
-                            <span id="funbags-completedPrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
+                            <span id="funbags-completedPrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></span>
                             <span class="pagination-text text-gray-700">Page <span id="funbags-completedCurrentPage">1</span></span>
-                            <span id="funbags-completedNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
+                            <span id="funbags-completedNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></span>
                         </div>
                         <button id="funbags-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
                             <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
@@ -147,7 +173,6 @@
             </div>
         </div>
     </div>
-    <!-- JavaScript will be included in Parts 3 and 4 -->
 </body>
 </html>
 <style>
@@ -461,7 +486,14 @@
         const pageStates = {
             funbags: { active: 1, completed: 1, monitored: 1 }
         };
-        const pageSize = 10;
+        const pageSizes = {
+            funbags: { active: 10, completed: 10, monitored: 10 }
+        };
+
+        // Cache for full dataset
+        const dataCache = {
+            funbags: { monitored: [], active: [], completed: [] }
+        };
 
         // Cache for token names
         const tokenNameCache = new Map();
@@ -490,7 +522,6 @@
 
         async function fetchTokenData(tokenAddress) {
             console.log(`Fetching token data for ${tokenAddress}`);
-            // Check cache first
             if (tokenNameCache.has(tokenAddress)) {
                 console.log(`Cache hit for ${tokenAddress}`);
                 return tokenNameCache.get(tokenAddress);
@@ -537,7 +568,7 @@
                     .eq('monitoring', true)
                     .eq('bought', false)
                     .order('within_range_start_time', { ascending: false })
-                    .range((page - 1) * pageSize, page * pageSize - 1)
+                    .range((page - 1) * pageSizes.funbags.monitored, page * pageSizes.funbags.monitored - 1)
                 );
                 if (error) throw new Error(`Failed to fetch monitored coins: ${error.message}`);
                 console.log('Monitored coins fetched:', monitoredCoins || 'No coins');
@@ -556,241 +587,11 @@
                     };
                 }));
 
-                return { coins: coinsWithData, total: count || coinsWithData.length };
-            } catch (error) {
-                console.error('Error in fetchMonitoredCoins:', error);
-                throw error;
-            }
-        }
-
-        async function refreshMonitoredCoins(page = 1) {
-            console.log(`Starting refreshMonitoredCoins, page ${page}`);
-            const monitoredStatus = document.getElementById('funbags-monitored-status');
-            const monitoredBody = document.getElementById('funbags-monitoredBody');
-            const monitoredCards = document.getElementById('funbags-monitoredCards');
-            const monitoredTable = monitoredBody?.closest('table');
-            const monitoredFilterInput = document.getElementById('funbags-monitoredFilter');
-            const prevPage = document.getElementById('funbags-monitoredPrevPage');
-            const nextPage = document.getElementById('funbags-monitoredNextPage');
-            const currentPageSpan = document.getElementById('funbags-monitoredCurrentPage');
-
-            if (!monitoredStatus || !monitoredBody || !monitoredCards || !monitoredTable || !monitoredFilterInput || !prevPage || !nextPage || !currentPageSpan) {
-                console.error('Missing DOM elements for monitored coins');
-                return;
-            }
-
-            monitoredStatus.textContent = 'Loading monitored coins...';
-            monitoredStatus.classList.add('loading');
-            const monitoredSort = { ...sortStates.funbags.monitored };
-            const monitoredFilterValue = monitoredFilterInput.value || '';
-
-            try {
-                const { coins: monitoredCoins, total } = await fetchMonitoredCoins(page);
-                monitoredBody.innerHTML = '';
-                monitoredCards.innerHTML = '';
-
-                if (monitoredCoins.length === 0) {
-                    monitoredStatus.textContent = 'No monitored coins found';
-                    monitoredCards.innerHTML = '<p>No monitored coins available.</p>';
-                    return;
-                }
-
-                monitoredCoins.forEach(coin => {
-                    const tokenAddress = coin.token_address || '-';
-                    const tokenName = coin.token_name || '-';
-                    const marketCap = coin.market_cap || 0;
-                    const currentPrice = coin.current_price_usd || 0;
-                    const lowestMarketCap = coin.lowest_market_cap || 999999999;
-                    const timestamp = coin.timestamp ? new Date(coin.timestamp).toLocaleString() : '-';
-
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
-                        <td>$${marketCap.toLocaleString()}</td>
-                        <td>$${currentPrice.toFixed(8)}</td>
-                        <td>$${lowestMarketCap.toLocaleString()}</td>
-                        <td>${timestamp}</td>
-                    `;
-                    monitoredBody.appendChild(row);
-
-                    const card = document.createElement('div');
-                    card.className = 'card';
-                    card.innerHTML = `
-                        <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></p>
-                        <p><span class="card-label">Market Cap:</span> $${marketCap.toLocaleString()}</p>
-                        <p><span class="card-label">Current Price:</span> $${currentPrice.toFixed(8)}</p>
-                        <p><span class="card-label">Lowest Market Cap:</span> $${lowestMarketCap.toLocaleString()}</p>
-                        <p><span class="card-label">Monitoring Start:</span> ${timestamp}</p>
-                    `;
-                    monitoredCards.appendChild(card);
+                // Merge into dataCache, avoiding duplicates
+                coinsWithData.forEach(coin => {
+                    const existing = dataCache.funbags.monitored.find(c => c.token_address === coin.token_address);
+                    if (!existing) dataCache.funbags.monitored.push(coin);
                 });
-
-                monitoredStatus.textContent = `Monitored coins loaded (${monitoredCoins.length})`;
-                currentPageSpan.textContent = page;
-                prevPage.classList.toggle('disabled', page === 1);
-                nextPage.classList.toggle('disabled', monitoredCoins.length < pageSize || page * pageSize >= total);
-
-                if (monitoredSort && Object.keys(monitoredSort).length > 0) {
-                    const column = Object.keys(monitoredSort)[0];
-                    const direction = monitoredSort[column];
-                    const header = monitoredTable.querySelector(`th[data-sort="${column}"]`);
-                    if (header) {
-                        header.classList.add(`sort-${direction}`);
-                        header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
-                        const rows = Array.from(monitoredBody.querySelectorAll('tr'));
-                        rows.sort((a, b) => {
-                            let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                            let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                            if (['market_cap', 'current_price_usd', 'lowest_market_cap'].includes(column)) {
-                                aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
-                                bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
-                            } else if (column === 'timestamp') {
-                                aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
-                                bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
-                            } else {
-                                aValue = aValue.toLowerCase();
-                                bValue = bValue.toLowerCase();
-                            }
-                            return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
-                        });
-                        monitoredBody.innerHTML = '';
-                        rows.forEach(row => monitoredBody.appendChild(row));
-                    }
-                }
-
-                if (monitoredFilterValue) {
-                    monitoredFilterInput.value = monitoredFilterValue;
-                    monitoredFilterInput.dispatchEvent(new Event('input'));
-                }
-            } catch (error) {
-                console.error('Error in refreshMonitoredCoins:', error);
-                monitoredStatus.textContent = `Error loading monitored coins: ${error.message}`;
-            } finally {
-                monitoredStatus.classList.remove('loading');
-            }
-        }
-        <script>
-    console.log('Script loaded');
-
-    document.addEventListener('DOMContentLoaded', () => {
-        console.log('DOM loaded');
-
-        // Initialize Supabase client
-        let supabase;
-        try {
-            supabase = window.supabase.createClient(
-                'https://bprfbjsxbkitrbqszqpz.supabase.co',
-                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcmZianN4YmtpdHJicXN6cXB6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4OTQzMzksImV4cCI6MjA2MTQ3MDMzOX0.Uc2iM_H3vEd4dnTLi_B2EncReqlYHXWyZ9zGHsXh4mM'
-            );
-            console.log('Supabase client initialized');
-        } catch (error) {
-            console.error('Error initializing Supabase:', error);
-            alert('Failed to initialize Supabase. Check console for details.');
-            return;
-        }
-
-        // Sorting and Filtering States
-        const sortStates = {
-            funbags: { active: {}, completed: {}, monitored: {} }
-        };
-
-        // Pagination States
-        const pageStates = {
-            funbags: { active: 1, completed: 1, monitored: 1 }
-        };
-        const pageSize = 10;
-
-        // Cache for token names
-        const tokenNameCache = new Map();
-
-        // Retry mechanism for Supabase queries
-        async function withRetry(fn, retries = 3, delay = 1000) {
-            for (let attempt = 1; attempt <= retries; attempt++) {
-                try {
-                    return await fn();
-                } catch (error) {
-                    if (attempt === retries) throw error;
-                    console.warn(`Attempt ${attempt} failed, retrying in ${delay}ms...`, error);
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                }
-            }
-        }
-
-        // Debounce function for button clicks
-        function debounce(func, wait) {
-            let timeout;
-            return function (...args) {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(this, args), wait);
-            };
-        }
-
-        async function fetchTokenData(tokenAddress) {
-            console.log(`Fetching token data for ${tokenAddress}`);
-            if (tokenNameCache.has(tokenAddress)) {
-                console.log(`Cache hit for ${tokenAddress}`);
-                return tokenNameCache.get(tokenAddress);
-            }
-
-            const url = `https://solana-gateway.moralis.io/token/mainnet/${tokenAddress}/metadata`;
-            const moralisOptions = {
-                method: 'GET',
-                headers: {
-                    accept: 'application/json',
-                    'X-API-Key': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjZhMjdlMWU0LWUwNGEtNGRiNC05ZjQ5LTU4MjFkNGU2MmEzMiIsIm9yZ0lkIjoiNDQ3NjY4IiwidXNlcklkIjoiNDYwNTkzIiwidHlwZUlkIjoiMGRjZmM0ZTctNzhkOC00YzRhLWE2YzgtYzc2OWRiMTdkMzk3IiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NDc1MjU1NjAsImV4cCI6NDkwMzI4NTU2MH0.2CVGa61MAN5zUvbh8yssfNZdNSTORl1GBYXXBs2nJbM'
-                }
-            };
-            try {
-                if (!tokenAddress || typeof tokenAddress !== 'string' || tokenAddress.length < 10) {
-                    throw new Error('Invalid token address');
-                }
-                const response = await fetch(url, moralisOptions);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                const data = await response.json();
-                const marketCap = parseFloat(data.fullyDilutedValue) || 0;
-                const price = parseFloat(data.price) || 0;
-                const name = data.name || data.symbol || tokenAddress.slice(0, 8);
-                console.log(`Token data fetched: ${tokenAddress}`, { marketCap, price, name });
-                const result = { marketCap, price, name };
-                tokenNameCache.set(tokenAddress, result);
-                return result;
-            } catch (error) {
-                console.error(`Error fetching token data for ${tokenAddress}:`, error.message);
-                const fallback = { marketCap: 0, price: 0, name: tokenAddress.slice(0, 8) };
-                tokenNameCache.set(tokenAddress, fallback);
-                return fallback;
-            }
-        }
-
-        async function fetchMonitoredCoins(page = 1) {
-            console.log(`Fetching monitored coins, page ${page}`);
-            try {
-                const { data: monitoredCoins, error, count } = await withRetry(async () => await supabase
-                    .from('token_states')
-                    .select('token_address, max_market_cap, lowest_market_cap, within_range_start_time, is_bonding', { count: 'exact' })
-                    .eq('monitoring', true)
-                    .eq('bought', false)
-                    .order('within_range_start_time', { ascending: false })
-                    .range((page - 1) * pageSize, page * pageSize - 1)
-                );
-                if (error) throw new Error(`Failed to fetch monitored coins: ${error.message}`);
-                console.log('Monitored coins fetched:', monitoredCoins || 'No coins');
-
-                const coinsWithData = await Promise.all((monitoredCoins || []).map(async coin => {
-                    const tokenData = await fetchTokenData(coin.token_address);
-                    const marketCap = parseFloat(coin.max_market_cap) || 0;
-                    const price = marketCap / 1_000_000_000;
-                    return {
-                        token_address: coin.token_address || '-',
-                        token_name: tokenData.name,
-                        market_cap: marketCap,
-                        current_price_usd: price,
-                        lowest_market_cap: parseFloat(coin.lowest_market_cap) || 999999999,
-                        timestamp: coin.within_range_start_time ? new Date(parseInt(coin.within_range_start_time)).toISOString() : new Date().toISOString()
-                    };
-                }));
 
                 return { coins: coinsWithData, total: count || coinsWithData.length };
             } catch (error) {
@@ -822,17 +623,41 @@
             const monitoredFilterValue = monitoredFilterInput.value || '';
 
             try {
-                const { coins: monitoredCoins, total } = await fetchMonitoredCoins(page);
+                const { coins: fetchedCoins, total } = await fetchMonitoredCoins(page);
                 monitoredBody.innerHTML = '';
                 monitoredCards.innerHTML = '';
 
-                if (!monitoredCoins || monitoredCoins.length === 0) {
+                let displayCoins = fetchedCoins;
+                if (Object.keys(monitoredSort).length > 0) {
+                    const column = Object.keys(monitoredSort)[0];
+                    const direction = monitoredSort[column];
+                    const sortedCache = [...dataCache.funbags.monitored].sort((a, b) => {
+                        let aValue = a[column];
+                        let bValue = b[column];
+                        if (['market_cap', 'current_price_usd', 'lowest_market_cap'].includes(column)) {
+                            aValue = parseFloat(aValue) || 0;
+                            bValue = parseFloat(bValue) || 0;
+                        } else if (column === 'timestamp') {
+                            aValue = aValue ? new Date(aValue).getTime() : 0;
+                            bValue = bValue ? new Date(bValue).getTime() : 0;
+                        } else {
+                            aValue = aValue.toLowerCase();
+                            bValue = bValue.toLowerCase();
+                        }
+                        return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
+                    });
+                    const start = (page - 1) * pageSizes.funbags.monitored;
+                    const end = start + pageSizes.funbags.monitored;
+                    displayCoins = sortedCache.slice(start, end);
+                }
+
+                if (!displayCoins || displayCoins.length === 0) {
                     monitoredStatus.textContent = 'No monitored coins found';
                     monitoredCards.innerHTML = '<p>No monitored coins available.</p>';
                     return;
                 }
 
-                monitoredCoins.forEach(coin => {
+                displayCoins.forEach(coin => {
                     const tokenAddress = coin.token_address || '-';
                     const tokenName = coin.token_name || '-';
                     const marketCap = coin.market_cap || 0;
@@ -862,10 +687,10 @@
                     monitoredCards.appendChild(card);
                 });
 
-                monitoredStatus.textContent = `Monitored coins loaded (${monitoredCoins.length})`;
+                monitoredStatus.textContent = `Monitored coins loaded (${displayCoins.length})`;
                 currentPageSpan.textContent = page;
                 prevPage.classList.toggle('disabled', page === 1);
-                nextPage.classList.toggle('disabled', monitoredCoins.length < pageSize || page * pageSize >= total);
+                nextPage.classList.toggle('disabled', displayCoins.length < pageSizes.funbags.monitored || page * pageSizes.funbags.monitored >= total);
 
                 if (monitoredSort && Object.keys(monitoredSort).length > 0) {
                     const column = Object.keys(monitoredSort)[0];
@@ -874,24 +699,6 @@
                     if (header) {
                         header.classList.add(`sort-${direction}`);
                         header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
-                        const rows = Array.from(monitoredBody.querySelectorAll('tr'));
-                        rows.sort((a, b) => {
-                            let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                            let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                            if (['market_cap', 'current_price_usd', 'lowest_market_cap'].includes(column)) {
-                                aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
-                                bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
-                            } else if (column === 'timestamp') {
-                                aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
-                                bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
-                            } else {
-                                aValue = aValue.toLowerCase();
-                                bValue = bValue.toLowerCase();
-                            }
-                            return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
-                        });
-                        monitoredBody.innerHTML = '';
-                        rows.forEach(row => monitoredBody.appendChild(row));
                     }
                 }
 
@@ -906,8 +713,7 @@
                 monitoredStatus.classList.remove('loading');
             }
         }
-
-        async function refreshTrades(activePage = 1, completedPage = 1) {
+                async function refreshTrades(activePage = 1, completedPage = 1) {
             console.log(`Starting refreshTrades for funbags, activePage: ${activePage}, completedPage: ${completedPage}`);
             const prefix = 'funbags';
             const activeStatus = document.getElementById(`${prefix}-active-status`);
@@ -952,7 +758,7 @@
                     .select('token_address, purchase_price, amount, sold50, buy_market_cap', { count: 'exact' })
                     .eq('bought', true)
                     .gt('amount', 0)
-                    .range((activePage - 1) * pageSize, activePage * pageSize - 1)
+                    .range((activePage - 1) * pageSizes.funbags.active, activePage * pageSizes.funbags.active - 1)
                 );
                 if (tokenError) throw new Error(`Failed to fetch token states: ${tokenError.message}`);
                 console.log('Token states fetched:', tokenStates);
@@ -1008,6 +814,12 @@
                     .map(result => result.value)
                     .filter(trade => trade !== null && trade !== undefined);
                 console.log('Processed active trades:', activeTrades);
+
+                // Merge into dataCache, avoiding duplicates
+                activeTrades.forEach(trade => {
+                    const existing = dataCache.funbags.active.find(t => t.token_address === trade.token_address);
+                    if (!existing) dataCache.funbags.active.push(trade);
+                });
                 const activeTotal = tokenCount || activeTrades.length;
 
                 console.log('Fetching completed trades for Fun Bags');
@@ -1017,12 +829,11 @@
                     .in('event_type', ['sell_50', 'trailing_stop', 'stop_loss'])
                     .not('sell_price', 'is', null)
                     .order('timestamp', { ascending: false })
-                    .range((completedPage - 1) * pageSize, completedPage * pageSize - 1)
+                    .range((completedPage - 1) * pageSizes.funbags.completed, completedPage * pageSizes.funbags.completed - 1)
                 );
                 if (sellLogError) throw new Error(`Failed to fetch sell logs: ${sellLogError.message}`);
                 console.log('Raw sell logs fetched:', sellLogsRaw);
 
-                // Filter out invalid sell_price values
                 const sellLogs = (Array.isArray(sellLogsRaw) ? sellLogsRaw : []).filter(log => {
                     if (!log.sell_price) return false;
                     const sellPrice = parseFloat(log.sell_price);
@@ -1104,14 +915,44 @@
                     .map(result => result.value)
                     .filter(trade => trade !== null && trade !== undefined);
                 console.log('Processed completed trades:', completedTrades);
+
+                // Merge into dataCache, avoiding duplicates
+                completedTrades.forEach(trade => {
+                    const existing = dataCache.funbags.completed.find(t => t.token_address === trade.token_address);
+                    if (!existing) dataCache.funbags.completed.push(trade);
+                });
                 const completedTotal = sellCount || completedTrades.length;
+
+                let displayActiveTrades = activeTrades;
+                if (Object.keys(activeSort).length > 0) {
+                    const column = Object.keys(activeSort)[0];
+                    const direction = activeSort[column];
+                    const sortedCache = [...dataCache.funbags.active].sort((a, b) => {
+                        let aValue = a[column];
+                        let bValue = b[column];
+                        if (['profit', 'buy_price_usd', 'current_price_usd', 'market_cap'].includes(column)) {
+                            aValue = parseFloat(aValue) || 0;
+                            bValue = parseFloat(bValue) || 0;
+                        } else if (['buy_timestamp'].includes(column)) {
+                            aValue = aValue ? new Date(aValue).getTime() : 0;
+                            bValue = bValue ? new Date(bValue).getTime() : 0;
+                        } else {
+                            aValue = aValue.toLowerCase();
+                            bValue = bValue.toLowerCase();
+                        }
+                        return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
+                    });
+                    const start = (activePage - 1) * pageSizes.funbags.active;
+                    const end = start + pageSizes.funbags.active;
+                    displayActiveTrades = sortedCache.slice(start, end);
+                }
 
                 activeTradesBody.innerHTML = '';
                 activeTradesCards.innerHTML = '';
-                if (activeTrades.length === 0) {
+                if (displayActiveTrades.length === 0) {
                     activeTradesCards.innerHTML = '<p>No active trades available.</p>';
                 }
-                activeTrades.forEach(trade => {
+                displayActiveTrades.forEach(trade => {
                     const buyPrice = trade.buy_price_usd || 0;
                     const currentPrice = trade.current_price_usd || 0;
                     const profitPercent = trade.profit && trade.profit !== 'N/A' ? trade.profit : (buyPrice !== 0 && currentPrice !== 0 ? (((currentPrice - buyPrice) / buyPrice) * 100).toFixed(2) : '0');
@@ -1145,48 +986,36 @@
                     activeTradesCards.appendChild(card);
                 });
 
-                activeStatus.textContent = `Active trades loaded (${activeTrades.length})`;
+                activeStatus.textContent = `Active trades loaded (${displayActiveTrades.length})`;
                 activeCurrentPage.textContent = activePage;
                 activePrevPage.classList.toggle('disabled', activePage === 1);
-                activeNextPage.classList.toggle('disabled', activeTrades.length < pageSize || activePage * pageSize >= activeTotal);
+                activeNextPage.classList.toggle('disabled', displayActiveTrades.length < pageSizes.funbags.active || activePage * pageSizes.funbags.active >= activeTotal);
 
-                if (activeSort && Object.keys(activeSort).length > 0) {
-                    const column = Object.keys(activeSort)[0];
-                    const direction = activeSort[column];
-                    const header = activeTable.querySelector(`th[data-sort="${column}"]`);
-                    if (header) {
-                        header.classList.add(`sort-${direction}`);
-                        header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
-                        const rows = Array.from(activeTradesBody.querySelectorAll('tr'));
-                        rows.sort((a, b) => {
-                            let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                            let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                            if (column === 'profit') {
-                                aValue = parseFloat(aValue.replace('%', '')) || 0;
-                                bValue = parseFloat(bValue.replace('%', '')) || 0;
-                            } else if (['buy_price_usd', 'current_price_usd', 'market_cap'].includes(column)) {
-                                aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
-                                bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
-                            } else if (['buy_timestamp'].includes(column)) {
-                                aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
-                                bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
-                            } else {
-                                aValue = aValue.toLowerCase();
-                                bValue = bValue.toLowerCase();
-                            }
-                            return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
-                        });
-                        activeTradesBody.innerHTML = '';
-                        rows.forEach(row => activeTradesBody.appendChild(row));
-                    }
+                let displayCompletedTrades = completedTrades;
+                if (Object.keys(completedSort).length > 0) {
+                    const column = Object.keys(completedSort)[0];
+                    const direction = completedSort[column];
+                    const sortedCache = [...dataCache.funbags.completed].sort((a, b) => {
+                        let aValue = a[column];
+                        let bValue = b[column];
+                        if (['profit', 'total_profit_usd', 'buy_price_usd', 'sell_price_usd'].includes(column)) {
+                            aValue = parseFloat(aValue) || 0;
+                            bValue = parseFloat(bValue) || 0;
+                        } else if (['buy_timestamp', 'sell_timestamp'].includes(column)) {
+                            aValue = aValue ? new Date(aValue).getTime() : 0;
+                            bValue = bValue ? new Date(bValue).getTime() : 0;
+                        } else {
+                            aValue = aValue.toLowerCase();
+                            bValue = bValue.toLowerCase();
+                        }
+                        return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
+                    });
+                    const start = (completedPage - 1) * pageSizes.funbags.completed;
+                    const end = start + pageSizes.funbags.completed;
+                    displayCompletedTrades = sortedCache.slice(start, end);
                 }
 
-                completedTradesBody.innerHTML = '';
-                completedTradesCards.innerHTML = '';
-                if (completedTrades.length === 0) {
-                    completedTradesCards.innerHTML = '<p>No completed trades available.</p>';
-                }
-                const filteredTrades = completedTrades.filter(trade => {
+                const filteredTrades = displayCompletedTrades.filter(trade => {
                     const buyPrice = trade.buy_price_usd || 0;
                     const sellPrice = trade.sell_price_usd || 0;
                     const profitPercent = trade.profit && trade.profit !== 'N/A' ? trade.profit : (buyPrice !== 0 && sellPrice !== 0 ? ((sellPrice - buyPrice) / buyPrice * 100).toFixed(2) : '0');
@@ -1195,6 +1024,11 @@
                     return true;
                 });
 
+                completedTradesBody.innerHTML = '';
+                completedTradesCards.innerHTML = '';
+                if (filteredTrades.length === 0) {
+                    completedTradesCards.innerHTML = '<p>No completed trades available.</p>';
+                }
                 filteredTrades.forEach(trade => {
                     const buyPrice = trade.buy_price_usd || 0;
                     const sellPrice = trade.sell_price_usd || 0;
@@ -1232,38 +1066,7 @@
                 completedStatus.textContent = `Completed trades loaded (${filteredTrades.length})`;
                 completedCurrentPage.textContent = completedPage;
                 completedPrevPage.classList.toggle('disabled', completedPage === 1);
-                completedNextPage.classList.toggle('disabled', filteredTrades.length < pageSize || completedPage * pageSize >= completedTotal);
-
-                if (completedSort && Object.keys(completedSort).length > 0) {
-                    const column = Object.keys(completedSort)[0];
-                    const direction = completedSort[column];
-                    const header = completedTable.querySelector(`th[data-sort="${column}"]`);
-                    if (header) {
-                        header.classList.add(`sort-${direction}`);
-                        header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
-                        const rows = Array.from(completedTradesBody.querySelectorAll('tr'));
-                        rows.sort((a, b) => {
-                            let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                            let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                            if (['profit', 'total_profit_usd'].includes(column)) {
-                                aValue = parseFloat(aValue.replace('$', '').replace('%', '').replace(',', '')) || 0;
-                                bValue = parseFloat(bValue.replace('$', '').replace('%', '').replace(',', '')) || 0;
-                            } else if (['buy_price_usd', 'sell_price_usd'].includes(column)) {
-                                aValue = parseFloat(aValue.replace('$', '').replace(',', '')) || 0;
-                                bValue = parseFloat(bValue.replace('$', '').replace(',', '')) || 0;
-                            } else if (['buy_timestamp', 'sell_timestamp'].includes(column)) {
-                                aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
-                                bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
-                            } else {
-                                aValue = aValue.toLowerCase();
-                                bValue = bValue.toLowerCase();
-                            }
-                            return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
-                        });
-                        completedTradesBody.innerHTML = '';
-                        rows.forEach(row => completedTradesBody.appendChild(row));
-                    }
-                }
+                completedNextPage.classList.toggle('disabled', filteredTrades.length < pageSizes.funbags.completed || completedPage * pageSizes.funbags.completed >= completedTotal);
 
                 const totalProfit = filteredTrades.reduce((sum, trade) => sum + (parseFloat(trade.total_profit_usd) || 0), 0);
                 totalProfitElement.textContent = `$${totalProfit.toFixed(2)}`;
@@ -1312,27 +1115,7 @@
                     if (icon) icon.innerHTML = newDirection === 'asc' ? '↑' : '↓';
 
                     sortStates.funbags[sortStateKey] = { [column]: newDirection };
-
-                    const body = table.querySelector('tbody');
-                    const rows = Array.from(body.querySelectorAll('tr'));
-                    rows.sort((a, b) => {
-                        let aValue = a.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                        let bValue = b.querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`).textContent;
-                        if (['profit', 'total_profit_usd', 'buy_price_usd', 'sell_price_usd', 'current_price_usd', 'market_cap', 'lowest_market_cap'].includes(column)) {
-                            aValue = parseFloat(aValue.replace('$', '').replace('%', '').replace(',', '')) || 0;
-                            bValue = parseFloat(bValue.replace('$', '').replace('%', '').replace(',', '')) || 0;
-                        } else if (['buy_timestamp', 'sell_timestamp', 'timestamp'].includes(column)) {
-                            aValue = aValue === '-' ? 0 : new Date(aValue).getTime();
-                            bValue = bValue === '-' ? 0 : new Date(bValue).getTime();
-                        } else {
-                            aValue = aValue.toLowerCase();
-                            bValue = bValue.toLowerCase();
-                        }
-                        return newDirection === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
-                    });
-
-                    body.innerHTML = '';
-                    rows.forEach(row => body.appendChild(row));
+                    refreshTab();
                 });
             });
         }
@@ -1462,6 +1245,24 @@
         } else {
             console.error('sexyModeToggle button not found');
         }
+
+        // Setup page size listeners
+        const pageSizeSelects = {
+            monitored: document.getElementById('funbags-monitoredPageSize'),
+            active: document.getElementById('funbags-activePageSize'),
+            completed: document.getElementById('funbags-completedPageSize')
+        };
+        Object.entries(pageSizeSelects).forEach(([section, select]) => {
+            if (select) {
+                select.addEventListener('change', () => {
+                    pageSizes.funbags[section] = parseInt(select.value) || 10;
+                    pageStates.funbags[section] = 1;
+                    document.getElementById(`funbags-${section}CurrentPage`).textContent = '1';
+                    console.log(`Page size changed for ${section} to ${pageSizes.funbags[section]}`);
+                    refreshTab();
+                });
+            }
+        });
 
         // Setup listeners
         console.log(`Initializing listeners for funbags`);
