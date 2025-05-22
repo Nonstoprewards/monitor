@@ -27,7 +27,7 @@
         const pageStates = {
             funbags: { active: 1, completed: 1, monitored: 1 }
         };
-        // *** Modified: Make pageSize dynamic and configurable ***
+        // *** Modified: Make pageSize dynamic ***
         let pageSize = 10; // Default page size
         const pageSizeOptions = [10, 20, 30, 50, 100];
 
@@ -109,7 +109,7 @@
                     .eq('bought', false)
                     .order('within_range_start_time', { ascending: false })
                     // *** Modified: Fetch all data for sorting ***
-                    .range(0, 9999) // Fetch all rows for sorting
+                    .range(0, 9999)
                 );
                 if (error) throw new Error(`Failed to fetch monitored coins: ${error.message}`);
                 console.log('Monitored coins fetched:', monitoredCoins || 'No coins');
@@ -175,7 +175,6 @@
             const monitoredFilterValue = monitoredFilterInput.value || '';
 
             try {
-                // *** Modified: Fetch all data and use cache ***
                 const { coins: allCoins, total } = await fetchMonitoredCoins(page);
                 monitoredBody.innerHTML = '';
                 monitoredCards.innerHTML = '';
@@ -248,7 +247,6 @@
                 prevPage.classList.toggle('disabled', page === 1);
                 nextPage.classList.toggle('disabled', paginatedCoins.length < pageSize || end >= total);
 
-                // Apply sorting to table headers
                 if (monitoredSort && Object.keys(monitoredSort).length > 0) {
                     const column = Object.keys(monitoredSort)[0];
                     const direction = monitoredSort[column];
@@ -696,6 +694,7 @@
                     sortStates.funbags[sortStateKey] = { [column]: newDirection };
 
                     // *** Modified: Trigger refresh to sort full dataset ***
+                    pageStates.funbags[sortStateKey] = 1; // Reset to first page on sort
                     refreshTab();
                 });
             });
