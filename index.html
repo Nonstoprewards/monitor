@@ -522,7 +522,7 @@
                 monitoredCards.innerHTML = '';
 
                 let displayCoins = fetchedCoins;
-                if (dataCache.funbags.monitored.length > 0 && Object.keys(monitoredSort).length > 0) {
+                if (Object.keys(monitoredSort).length > 0) {
                     const column = Object.keys(monitoredSort)[0];
                     const direction = monitoredSort[column];
                     const sortedCache = [...dataCache.funbags.monitored].sort((a, b) => {
@@ -871,7 +871,7 @@
                 const completedTotal = sellCount || completedTrades.length;
 
                 let displayActiveTrades = activeTrades;
-                if (dataCache.funbags.active.length > 0 && Object.keys(activeSort).length > 0) {
+                if (Object.keys(activeSort).length > 0) {
                     const column = Object.keys(activeSort)[0];
                     const direction = activeSort[column];
                     const sortedCache = [...dataCache.funbags.active].sort((a, b) => {
@@ -939,7 +939,7 @@
                 activeNextPage.classList.toggle('disabled', displayActiveTrades.length < pageSizes.funbags.active || activePage * pageSizes.funbags.active >= activeTotal);
 
                 let displayCompletedTrades = completedTrades;
-                if (dataCache.funbags.completed.length > 0 && Object.keys(completedSort).length > 0) {
+                if (Object.keys(completedSort).length > 0) {
                     const column = Object.keys(completedSort)[0];
                     const direction = completedSort[column];
                     const sortedCache = [...dataCache.funbags.completed].sort((a, b) => {
@@ -1186,7 +1186,7 @@
             }
 
             select.addEventListener('change', () => {
-                pageSizes.funbags[section] = parseInt(select.value);
+                pageSizes.funbags[section] = parseInt(select.value) || 10;
                 pageStates.funbags[section] = 1;
                 console.log(`Page size changed to ${pageSizes.funbags[section]} for funbags ${section}`);
                 refreshTab();
@@ -1291,5 +1291,3 @@
         refreshTab();
     });
     </script>
-</body>
-</html>
