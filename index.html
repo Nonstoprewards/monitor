@@ -1219,17 +1219,24 @@
         completedStatus.classList.remove('loading');
     }
 }
-        function setupSortListeners(section, tableId, sortStateKey) {
-    console.log(`Setting up sort listeners for ${section} at #${tableId}`);
-    const table = document.querySelector(`#${tableId} table`);
+        function setupSortListeners(section, containerId, sortStateKey) {
+    console.log(`Setting up sort listeners for ${section} at #${containerId}`);
+    // Adjust selector to handle both tbody and div containers
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.error(`Container not found for ${section} at #${containerId}`);
+        return;
+    }
+    // Find the table: if container is a tbody, get its parent table; if a div, get the table inside
+    const table = container.tagName === 'TBODY' ? container.closest('table') : container.querySelector('table');
     if (!table) {
-        console.error(`Table not found for ${section} at #${tableId}`);
+        console.error(`Table not found for ${section} at #${containerId}`);
         return;
     }
 
     const headers = table.querySelectorAll('th[data-sort]');
     if (headers.length === 0) {
-        console.error(`No sortable headers found for ${section} at #${tableId}`);
+        console.error(`No sortable headers found for ${section} at #${containerId}`);
         return;
     }
 
@@ -1244,7 +1251,6 @@
             // Clear previous sort state for this section
             sortStates.funbags[sortStateKey] = {};
             sortStates.funbags[sortStateKey][column] = newDirection;
-            console.log(`Updated sortStates.funbags.${sortStateKey}:`, sortStates.funbags[sortStateKey]);
 
             // Reset all header indicators
             headers.forEach(h => {
