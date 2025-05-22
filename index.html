@@ -30,11 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
         funbags: { active: 10, completed: 10, monitored: 10 }
     };
 
-    // Cache for token names and full datasets
+    // Cache for token names
     const tokenNameCache = new Map();
-    const dataCache = {
-        funbags: { monitored: [], active: [], completed: [] }
-    };
 
     // Retry mechanism for Supabase queries
     async function withRetry(fn, retries = 3, delay = 1000) {
@@ -96,18 +93,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function fetchMonitoredCoins() {
-        console.log(`Fetching all monitored coins`);
+    async function fetchMonitoredCoins(page = 1, pageSize = 10) {
+        console.log(`Fetching monitored coins, page ${page}, pageSize ${pageSize}`);
         try {
+            // Fetch paginated coins
             const { data: monitoredCoins, error, count } = await withRetry(async () => await supabase
                 .from('token_states')
                 .select('token_address, max_market_cap, lowest_market_cap, within_range_start_time, is_bonding', { count: 'exact' })
                 .eq('monitoring', true)
                 .eq('bought', false)
                 .order('within_range_start_time', { ascending: false })
+                .range((page - 1) * pageSize, page * pageSize - 1)
             );
             if (error) throw new Error(`Failed to fetch monitored coins: ${error.message}`);
             console.log('Monitored coins fetched:', monitoredCoins || 'No coins');
+
+            // Fetch all coins for sorting
+            const { data: allCoins, error: allError } = await withRetry(async () => await supabase
+                .from('token_states')
+                .select('token_address, max_market_cap, lowest_market_cap, within_range_start_time, is_bonding')
+                .eq('monitoring', true)
+                .eq('bought', false)
+                .order('within_range_start_time', { ascending: false })
+            );
+            if (allError) throw new Error(`Failed to fetch all monitored coins: ${allError.message}`);
 
             const coinsWithData = await Promise.all((monitoredCoins || []).map(async coin => {
                 const tokenData = await fetchTokenData(coin.token_address);
@@ -123,8 +132,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             }));
 
-            dataCache.funbags.monitored = coinsWithData; // Store full dataset
-            return { coins: coinsWithData, total: count || coinsWithData.length };
+            const allCoinsWithData = await Promise.all((allCoins || []).map(async coin => {
+                const tokenData = await fetchTokenData(coin.token_address);
+                const marketCap = parseFloat(coin.max_market_cap) || 0;
+                const price = marketCap / 1_000_000_000;
+                return {
+                    token_address: coin.token_address || '-',
+                    token_name: tokenData.name,
+                    market_cap: marketCap,
+                    current_price_usd: price,
+                    lowest_market_cap: parseFloat(coin.lowest_market_cap) || 999999999,
+                    timestamp: coin.within_range_start_time ? new Date(parseInt(coin.within_range_start_time)).toISOString() : new Date().toISOString()
+                };
+            }));
+
+            return { coins: coinsWithData, total: count || allCoinsWithData.length, allCoins: allCoinsWithData };
         } catch (error) {
             console.error('Error in fetchMonitoredCoins:', error);
             throw error;
@@ -143,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentPageSpan = document.getElementById('funbags-monitoredCurrentPage');
         const pageSizeSelect = document.getElementById('funbags-monitoredPageSize');
 
-        if (!monitoredStatus || !monitoredBody || !monitoredCards || !monitoredTable || !monitoredFilterInput || !prevPage || !nextPage || !currentPageSpan || !pageSizeSelect) {
+        if (!monitoredStatus || !monitoredBody || !monitoredCards || !monitoredTable || !monitoredFilterInput || !prevPage || !nextPage || !currentPageSpan) {
             console.error('Missing DOM elements for monitored coins');
             monitoredStatus.textContent = 'Error: Missing DOM elements';
             return;
@@ -153,24 +175,20 @@ document.addEventListener('DOMContentLoaded', () => {
         monitoredStatus.classList.add('loading');
         const monitoredSort = { ...sortStates.funbags.monitored };
         const monitoredFilterValue = monitoredFilterInput.value || '';
-        const pageSize = parseInt(pageSizeSelect.value) || 10;
+        const pageSize = pageSizeSelect ? parseInt(pageSizeSelect.value) || 10 : 10;
 
         try {
-            let monitoredCoins = dataCache.funbags.monitored;
-            let total = monitoredCoins.length;
-            if (monitoredCoins.length === 0) {
-                const result = await fetchMonitoredCoins();
-                monitoredCoins = result.coins;
-                total = result.total;
-            }
+            let { coins: monitoredCoins, total, allCoins } = await fetchMonitoredCoins(page, pageSize);
+            monitoredBody.innerHTML = '';
+            monitoredCards.innerHTML = '';
 
             // Apply sorting to full dataset
             if (monitoredSort && Object.keys(monitoredSort).length > 0) {
                 const column = Object.keys(monitoredSort)[0];
                 const direction = monitoredSort[column];
-                monitoredCoins.sort((a, b) => {
-                    let aValue = a[column];
-                    let bValue = b[column];
+                allCoins.sort((a, b) => {
+                    let aValue = a[column] || '';
+                    let bValue = b[column] || '';
                     if (['market_cap', 'current_price_usd', 'lowest_market_cap'].includes(column)) {
                         aValue = parseFloat(aValue) || 0;
                         bValue = parseFloat(bValue) || 0;
@@ -178,27 +196,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         aValue = aValue ? new Date(aValue).getTime() : 0;
                         bValue = bValue ? new Date(bValue).getTime() : 0;
                     } else {
-                        aValue = (aValue || '').toLowerCase();
-                        bValue = (bValue || '').toLowerCase();
+                        aValue = aValue.toString().toLowerCase();
+                        bValue = bValue.toString().toLowerCase();
                     }
                     return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
                 });
+                // Re-paginate sorted data
+                monitoredCoins = allCoins.slice((page - 1) * pageSize, page * pageSize);
+                total = allCoins.length;
             }
 
-            // Paginate
-            const start = (page - 1) * pageSize;
-            const paginatedCoins = monitoredCoins.slice(start, start + pageSize);
-
-            monitoredBody.innerHTML = '';
-            monitoredCards.innerHTML = '';
-
-            if (paginatedCoins.length === 0) {
+            if (!monitoredCoins || monitoredCoins.length === 0) {
                 monitoredStatus.textContent = 'No monitored coins found';
                 monitoredCards.innerHTML = '<p>No monitored coins available.</p>';
+                monitoredStatus.classList.remove('loading');
                 return;
             }
 
-            paginatedCoins.forEach(coin => {
+            monitoredCoins.forEach(coin => {
                 const tokenAddress = coin.token_address || '-';
                 const tokenName = coin.token_name || '-';
                 const marketCap = coin.market_cap || 0;
@@ -228,10 +243,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 monitoredCards.appendChild(card);
             });
 
-            monitoredStatus.textContent = `Monitored coins loaded (${paginatedCoins.length})`;
+            monitoredStatus.textContent = `Monitored coins loaded (${monitoredCoins.length} of ${total})`;
             currentPageSpan.textContent = page;
             prevPage.classList.toggle('disabled', page === 1);
-            nextPage.classList.toggle('disabled', paginatedCoins.length < pageSize || start + pageSize >= total);
+            nextPage.classList.toggle('disabled', monitoredCoins.length < pageSize || page * pageSize >= total);
 
             if (monitoredFilterValue) {
                 monitoredFilterInput.value = monitoredFilterValue;
@@ -276,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const activePageSizeSelect = document.getElementById(`${prefix}-activePageSize`);
         const completedPageSizeSelect = document.getElementById(`${prefix}-completedPageSize`);
 
-        if (!activeStatus || !completedStatus || !activeTradesBody || !activeTradesCards || !completedTradesBody || !completedTradesCards || !totalProfitElement || !activeTable || !completedTable || !activePrevPage || !activeNextPage || !completedPrevPage || !completedNextPage || !activeCurrentPage || !completedCurrentPage || !activePageSizeSelect || !completedPageSizeSelect) {
+        if (!activeStatus || !completedStatus || !activeTradesBody || !activeTradesCards || !completedTradesBody || !completedTradesCards || !totalProfitElement || !activeTable || !completedTable || !activePrevPage || !activeNextPage || !completedPrevPage || !completedNextPage || !activeCurrentPage || !completedCurrentPage) {
             console.error(`Missing DOM elements for funbags`);
             alert(`Failed to load Fun Bags dashboard. Check console for details.`);
             return;
@@ -292,8 +307,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const activeFilterValue = document.getElementById(`${prefix}-activeFilter`)?.value || '';
         const completedFilterValue = document.getElementById(`${prefix}-completedFilter`)?.value || '';
         const profitFilterValue = document.getElementById(`${prefix}-profitFilter`)?.value || 'all';
-        const activePageSize = parseInt(activePageSizeSelect.value) || 10;
-        const completedPageSize = parseInt(completedPageSizeSelect.value) || 10;
+        const activePageSize = activePageSizeSelect ? parseInt(activePageSizeSelect.value) || 10 : 10;
+        const completedPageSize = completedPageSizeSelect ? parseInt(completedPageSizeSelect.value) || 10 : 10;
 
         try {
             await refreshMonitoredCoins(pageStates.funbags.monitored);
@@ -357,7 +372,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 .filter(result => result.status === 'fulfilled' && result.value !== null)
                 .map(result => result.value)
                 .filter(trade => trade !== null && trade !== undefined);
-            dataCache.funbags.active = activeTrades; // Store full dataset
             const activeTotal = tokenCount || activeTrades.length;
 
             console.log('Fetching completed trades for Fun Bags');
@@ -447,7 +461,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 .filter(result => result.status === 'fulfilled' && result.value !== null)
                 .map(result => result.value)
                 .filter(trade => trade !== null && trade !== undefined);
-            dataCache.funbags.completed = completedTrades; // Store full dataset
             const completedTotal = sellCount || completedTrades.length;
 
             // Sort active trades
@@ -455,8 +468,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const column = Object.keys(activeSort)[0];
                 const direction = activeSort[column];
                 activeTrades.sort((a, b) => {
-                    let aValue = a[column];
-                    let bValue = b[column];
+                    let aValue = a[column] || '';
+                    let bValue = b[column] || '';
                     if (['profit', 'buy_price_usd', 'current_price_usd', 'market_cap'].includes(column)) {
                         aValue = parseFloat(aValue) || 0;
                         bValue = parseFloat(bValue) || 0;
@@ -464,8 +477,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         aValue = aValue ? new Date(aValue).getTime() : 0;
                         bValue = bValue ? new Date(bValue).getTime() : 0;
                     } else {
-                        aValue = (aValue || '').toLowerCase();
-                        bValue = (bValue || '').toLowerCase();
+                        aValue = aValue.toString().toLowerCase();
+                        bValue = bValue.toString().toLowerCase();
                     }
                     return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
                 });
@@ -476,8 +489,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const column = Object.keys(completedSort)[0];
                 const direction = completedSort[column];
                 completedTrades.sort((a, b) => {
-                    let aValue = a[column];
-                    let bValue = b[column];
+                    let aValue = a[column] || '';
+                    bValue = b[column] || '';
                     if (['profit', 'total_profit_usd', 'buy_price_usd', 'sell_price_usd'].includes(column)) {
                         aValue = parseFloat(aValue) || 0;
                         bValue = parseFloat(bValue) || 0;
@@ -485,8 +498,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         aValue = aValue ? new Date(aValue).getTime() : 0;
                         bValue = bValue ? new Date(bValue).getTime() : 0;
                     } else {
-                        aValue = (aValue || '').toLowerCase();
-                        bValue = (bValue || '').toLowerCase();
+                        aValue = aValue.toString().toLowerCase();
+                        bValue = bValue.toString().toLowerCase();
                     }
                     return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
                 });
@@ -535,10 +548,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 activeTradesCards.appendChild(card);
             });
 
-            activeStatus.textContent = `Active trades loaded (${paginatedActiveTrades.length})`;
+            activeStatus.textContent = `Active trades loaded (${paginatedActiveTrades.length} of ${activeTotal})`;
             activeCurrentPage.textContent = activePage;
             activePrevPage.classList.toggle('disabled', activePage === 1);
-            activeNextPage.classList.toggle('disabled', paginatedActiveTrades.length < activePageSize || activeStart + activePageSize >= activeTotal);
+            activeNextPage.classList.toggle('disabled', paginatedActiveTrades.length < activePageSize || activePage * activePageSize >= activeTotal);
 
             // Paginate completed trades
             const filteredTrades = completedTrades.filter(trade => {
@@ -592,10 +605,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 completedTradesCards.appendChild(card);
             });
 
-            completedStatus.textContent = `Completed trades loaded (${paginatedCompletedTrades.length})`;
+            completedStatus.textContent = `Completed trades loaded (${paginatedCompletedTrades.length} of ${filteredTrades.length})`;
             completedCurrentPage.textContent = completedPage;
             completedPrevPage.classList.toggle('disabled', completedPage === 1);
-            completedNextPage.classList.toggle('disabled', paginatedCompletedTrades.length < completedPageSize || completedStart + completedPageSize >= completedTotal);
+            completedNextPage.classList.toggle('disabled', paginatedCompletedTrades.length < completedPageSize || completedPage * completedPageSize >= filteredTrades.length);
 
             const totalProfit = filteredTrades.reduce((sum, trade) => sum + (parseFloat(trade.total_profit_usd) || 0), 0);
             totalProfitElement.textContent = `$${totalProfit.toFixed(2)}`;
@@ -671,7 +684,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Reset to first page
                 pageStates.funbags[sortStateKey] = 1;
 
-                // Refresh the tab to re-sort and paginate
+                // Refresh the tab
                 refreshTab();
             });
         });
@@ -735,13 +748,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const pageSizeSelect = document.getElementById(pageSizeId);
         console.log(`Setting up page size listener for funbags ${section} at #${pageSizeId}`);
         if (!pageSizeSelect) {
-            console.error(`Page size select not found for funbags ${section} at #${pageSizeId}`);
+            console.warn(`Page size select not found for funbags ${section} at #${pageSizeId}, using default page size`);
             return;
         }
 
         pageSizeSelect.addEventListener('change', () => {
             pageSizes.funbags[section] = parseInt(pageSizeSelect.value) || 10;
-            pageStates.funbags[section] = 1; // Reset to first page
+            pageStates.funbags[section] = 1;
             console.log(`Page size changed for funbags ${section} to ${pageSizes.funbags[section]}`);
             refreshTab();
         });
@@ -783,7 +796,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const newButton = document.getElementById(id);
                 newButton.addEventListener('click', debounce(() => {
                     console.log(`Manual refresh triggered for funbags via #${id}`);
-                    dataCache.funbags = { monitored: [], active: [], completed: [] }; // Clear cache
+                    tokenNameCache.clear();
                     refreshTab();
                 }, 300));
             } else {
@@ -841,7 +854,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(() => {
         if (document.visibilityState === 'visible') {
             console.log(`Auto-refreshing for funbags`);
-            dataCache.funbags = { monitored: [], active: [], completed: [] }; // Clear cache
             refreshTab();
         }
     }, 10000);
