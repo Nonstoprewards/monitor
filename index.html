@@ -628,19 +628,30 @@
 
     monitoredStatus.textContent = 'Loading monitored coins...';
     monitoredStatus.classList.add('loading');
-    const monitoredSort = { ...sortStates.funbags.monitored };
-    const monitoredFilterValue = monitoredFilterInput.value || '';
 
     try {
         const { coins: fetchedCoins, total } = await fetchMonitoredCoins(page);
-        monitoredBody.innerHTML = '';
-        monitoredCards.innerHTML = '';
+        console.log('Fetched coins:', fetchedCoins, 'Total:', total);
+
+        // Clear existing cache to avoid stale data
+        dataCache.funbags.monitored = [];
+        // Merge fetched coins into cache, avoiding duplicates
+        fetchedCoins.forEach(coin => {
+            if (!dataCache.funbags.monitored.some(c => c.token_address === coin.token_address)) {
+                dataCache.funbags.monitored.push(coin);
+            }
+        });
+        console.log('Updated dataCache.funbags.monitored:', dataCache.funbags.monitored);
 
         // Apply sorting to the full dataCache
         let displayCoins = [...dataCache.funbags.monitored];
+        const monitoredSort = { ...sortStates.funbags.monitored };
+        console.log('Current sort state:', monitoredSort);
+
         if (Object.keys(monitoredSort).length > 0) {
             const column = Object.keys(monitoredSort)[0];
             const direction = monitoredSort[column];
+            console.log(`Applying sort: ${column} ${direction}`);
             displayCoins.sort((a, b) => {
                 let aValue = a[column];
                 let bValue = b[column];
@@ -651,8 +662,8 @@
                     aValue = aValue ? new Date(aValue).getTime() : 0;
                     bValue = bValue ? new Date(bValue).getTime() : 0;
                 } else {
-                    aValue = aValue.toString().toLowerCase();
-                    bValue = bValue.toString().toLowerCase();
+                    aValue = aValue ? aValue.toString().toLowerCase() : '';
+                    bValue = bValue ? bValue.toString().toLowerCase() : '';
                 }
                 return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
             });
@@ -662,6 +673,10 @@
         const start = (page - 1) * pageSizes.funbags.monitored;
         const end = start + pageSizes.funbags.monitored;
         displayCoins = displayCoins.slice(start, end);
+        console.log('Paginated coins:', displayCoins);
+
+        monitoredBody.innerHTML = '';
+        monitoredCards.innerHTML = '';
 
         if (!displayCoins || displayCoins.length === 0) {
             monitoredStatus.textContent = 'No monitored coins found';
@@ -705,7 +720,12 @@
         nextPage.classList.toggle('disabled', displayCoins.length < pageSizes.funbags.monitored || page * pageSizes.funbags.monitored >= total);
 
         // Update sort indicators
-        if (monitoredSort && Object.keys(monitoredSort).length > 0) {
+        monitoredTable.querySelectorAll('th[data-sort]').forEach(header => {
+            header.classList.remove('sort-asc', 'sort-desc');
+            const icon = header.querySelector('.sort-icon');
+            if (icon) icon.innerHTML = '↕';
+        });
+        if (Object.keys(monitoredSort).length > 0) {
             const column = Object.keys(monitoredSort)[0];
             const direction = monitoredSort[column];
             const header = monitoredTable.querySelector(`th[data-sort="${column}"]`);
@@ -715,6 +735,8 @@
             }
         }
 
+        // Reapply filter if present
+        const monitoredFilterValue = monitoredFilterInput.value || '';
         if (monitoredFilterValue) {
             monitoredFilterInput.value = monitoredFilterValue;
             monitoredFilterInput.dispatchEvent(new Event('input'));
