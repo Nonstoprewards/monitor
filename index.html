@@ -621,16 +621,7 @@
     const currentPageSpan = document.getElementById('funbags-monitoredCurrentPage');
 
     if (!monitoredStatus || !monitoredBody || !monitoredCards || !monitoredTable || !monitoredFilterInput || !prevPage || !nextPage || !currentPageSpan) {
-        console.error('Missing DOM elements for monitored coins:', {
-            monitoredStatus: !!monitoredStatus,
-            monitoredBody: !!monitoredBody,
-            monitoredCards: !!monitoredCards,
-            monitoredTable: !!monitoredTable,
-            monitoredFilterInput: !!monitoredFilterInput,
-            prevPage: !!prevPage,
-            nextPage: !!nextPage,
-            currentPageSpan: !!currentPageSpan
-        });
+        console.error('Missing DOM elements for monitored coins');
         monitoredStatus.textContent = 'Error: Missing DOM elements';
         return;
     }
@@ -640,63 +631,18 @@
 
     try {
         const { coins: fetchedCoins, total } = await fetchMonitoredCoins(page);
-        console.log('Fetched coins:', fetchedCoins, 'Total:', total);
+        console.log(`Fetched monitored coins: ${fetchedCoins.length}, total: ${total}`);
 
-        // Fetch price logs for current prices
-        const { data: priceLogs, error: priceError } = await withRetry(async () => await supabase
-            .rpc('query_price_logs')
-        );
-        if (priceError) throw new Error(`Failed to fetch price logs: ${priceError.message}`);
-        console.log('Price logs fetched:', priceLogs);
-
-        // Process coins
-        const monitoredCoins = await Promise.all(fetchedCoins.map(async coin => {
-            try {
-                if (!coin.token_address) {
-                    console.warn('Skipping coin with missing token_address:', coin);
-                    return null;
-                }
-                const tokenData = await fetchTokenData(coin.token_address);
-                const latestPriceLog = (Array.isArray(priceLogs) ? priceLogs : []).find(log => log.token_address === coin.token_address) || {};
-                const currentPrice = latestPriceLog.usd_price != null && !isNaN(parseFloat(latestPriceLog.usd_price)) 
-                    ? parseFloat(latestPriceLog.usd_price) 
-                    : (parseFloat(coin.purchase_price) || 0);
-                const marketCap = currentPrice * 1_000_000_000;
-                console.log(`Coin ${coin.token_address}: current_price_usd=${currentPrice}, market_cap=${marketCap}`);
-                return {
-                    token_address: coin.token_address,
-                    token_name: tokenData.name || 'Unknown',
-                    market_cap: marketCap,
-                    current_price_usd: currentPrice,
-                    lowest_market_cap: marketCap, // Assume current is lowest if no history
-                    timestamp: coin.within_range_start_time ?? coin.timestamp ?? null
-                };
-            } catch (error) {
-                console.error(`Error processing coin ${coin.token_address || 'unknown'}:`, error);
-                return null;
-            }
-        }));
-
-        // Update cache with valid coins
-        dataCache.funbags.monitored = monitoredCoins.filter(coin => coin !== null && coin.token_name !== 'Unknown');
-        console.log('Updated dataCache.funbags.monitored:', dataCache.funbags.monitored);
-
-        if (dataCache.funbags.monitored.length === 0) {
-            console.warn('No valid coins in cache after processing');
-            monitoredStatus.textContent = 'No monitored coins found';
-            monitoredBody.innerHTML = '';
-            monitoredCards.innerHTML = '<p>No monitored coins available.</p>';
-            currentPageSpan.textContent = page;
-            prevPage.classList.toggle('disabled', page === 1);
-            nextPage.classList.add('disabled');
-            return;
-        }
+        // Update cache without clearing (merge new data)
+        fetchedCoins.forEach(coin => {
+            const existing = dataCache.funbags.monitored.find(c => c.token_address === coin.token_address);
+            if (!existing) dataCache.funbags.monitored.push(coin);
+            else Object.assign(existing, coin); // Update existing coin
+        });
 
         // Apply sorting
         let displayCoins = [...dataCache.funbags.monitored];
         const monitoredSort = { ...sortStates.funbags.monitored };
-        console.log('Current sort state:', monitoredSort);
-
         if (Object.keys(monitoredSort).length > 0) {
             const column = Object.keys(monitoredSort)[0];
             const direction = monitoredSort[column];
@@ -712,58 +658,62 @@
                     bValue = bValue ? new Date(bValue).getTime() : 0;
                 } else {
                     aValue = aValue ? aValue.toString().toLowerCase() : '';
-                    bValue = bValue ? aValue.toString().toLowerCase() : '';
+                    bValue = bValue ? bValue.toString().toLowerCase() : '';
                 }
                 const comparison = aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
                 return direction === 'asc' ? comparison : -comparison;
             });
-            console.log('Sorted coins:', displayCoins);
         }
 
-        // Apply pagination
+        // Apply pagination on the client side
         const start = (page - 1) * pageSizes.funbags.monitored;
         const end = start + pageSizes.funbags.monitored;
         displayCoins = displayCoins.slice(start, end);
-        console.log('Paginated coins:', displayCoins);
+        console.log(`Paginated monitored coins: start=${start}, end=${end}, coins=${displayCoins.length}`);
 
-        // Clear and render table
+        // Clear and render
         monitoredBody.innerHTML = '';
         monitoredCards.innerHTML = '';
+        if (displayCoins.length === 0) {
+            monitoredStatus.textContent = 'No monitored coins found';
+            monitoredCards.innerHTML = '<p>No monitored coins available.</p>';
+        } else {
+            displayCoins.forEach(coin => {
+                const tokenAddress = coin.token_address || '-';
+                const tokenName = coin.token_name || '-';
+                const marketCap = coin.market_cap || 0;
+                const currentPrice = coin.current_price_usd || 0;
+                const lowestMarketCap = coin.lowest_market_cap || 999999999;
+                const timestamp = coin.timestamp ? new Date(coin.timestamp).toLocaleString() : '-';
 
-        displayCoins.forEach(coin => {
-            const tokenAddress = coin.token_address || '-';
-            const tokenName = coin.token_name || '-';
-            const marketCap = coin.market_cap || 0;
-            const currentPrice = coin.current_price_usd || 0;
-            const lowestMarketCap = coin.lowest_market_cap || 999999999;
-            const timestamp = coin.timestamp ? new Date(coin.timestamp).toLocaleString() : '-';
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
+                    <td>$${marketCap.toLocaleString()}</td>
+                    <td>$${currentPrice.toFixed(8)}</td>
+                    <td>$${lowestMarketCap.toLocaleString()}</td>
+                    <td>${timestamp}</td>
+                `;
+                monitoredBody.appendChild(row);
 
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
-                <td>$${marketCap.toLocaleString()}</td>
-                <td>$${currentPrice.toFixed(8)}</td>
-                <td>$${lowestMarketCap.toLocaleString()}</td>
-                <td>${timestamp}</td>
-            `;
-            monitoredBody.appendChild(row);
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></p>
+                    <p><span class="card-label">Market Cap:</span> $${marketCap.toLocaleString()}</p>
+                    <p><span class="card-label">Current Price:</span> $${currentPrice.toFixed(8)}</p>
+                    <p><span class="card-label">Lowest Market Cap:</span> $${lowestMarketCap.toLocaleString()}</p>
+                    <p><span class="card-label">Monitoring Start:</span> ${timestamp}</p>
+                `;
+                monitoredCards.appendChild(card);
+            });
+            monitoredStatus.textContent = `Monitored coins loaded (${displayCoins.length})`;
+        }
 
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.innerHTML = `
-                <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></p>
-                <p><span class="card-label">Market Cap:</span> $${marketCap.toLocaleString()}</p>
-                <p><span class="card-label">Current Price:</span> $${currentPrice.toFixed(8)}</p>
-                <p><span class="card-label">Lowest Market Cap:</span> $${lowestMarketCap.toLocaleString()}</p>
-                <p><span class="card-label">Monitoring Start:</span> ${timestamp}</p>
-            `;
-            monitoredCards.appendChild(card);
-        });
-
-        monitoredStatus.textContent = `Monitored coins loaded (${displayCoins.length})`;
         currentPageSpan.textContent = page;
         prevPage.classList.toggle('disabled', page === 1);
         nextPage.classList.toggle('disabled', displayCoins.length < pageSizes.funbags.monitored || page * pageSizes.funbags.monitored >= total);
+        console.log(`Monitored pagination: page=${page}, total=${total}, displayCoins.length=${displayCoins.length}, disabled=${displayCoins.length < pageSizes.funbags.monitored || page * pageSizes.funbags.monitored >= total}`);
 
         // Update sort indicators
         const headers = monitoredTable.querySelectorAll('th[data-sort]');
@@ -778,30 +728,26 @@
             const header = monitoredTable.querySelector(`th[data-sort="${column}"]`);
             if (header) {
                 header.classList.add(`sort-${direction}`);
-                const icon = header.querySelector('.sort-icon');
-                if (icon) icon.innerHTML = direction === 'asc' ? '↑' : '↓';
-                console.log(`Updated sort indicator for ${column} ${direction}`);
-            } else {
-                console.warn(`Header not found for sort column ${column}`);
+                header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
             }
         }
 
         // Reapply filter
         const monitoredFilterValue = monitoredFilterInput.value || '';
         if (monitoredFilterValue) {
-            console.log(`Reapplying filter: ${monitoredFilterValue}`);
             monitoredFilterInput.value = monitoredFilterValue;
             monitoredFilterInput.dispatchEvent(new Event('input'));
         }
     } catch (error) {
         console.error('Error in refreshMonitoredCoins:', error);
-        monitoredStatus.textContent = `Error loading monitored coins: ${error.message}`;
+        monitoredStatus.textContent =七年级下册英语单词表
+`Error loading monitored coins: ${error.message}`;
     } finally {
         monitoredStatus.classList.remove('loading');
     }
 }
                 async function refreshTrades(activePage = 1, completedPage = 1) {
-    console.log(`Starting refreshTrades for funbags, activePage: ${activePage}, completedPage: ${completedPage}`);
+    console.log(`Starting refreshTrades, activePage: ${activePage}, completedPage: ${completedPage}`);
     const prefix = 'funbags';
     const activeStatus = document.getElementById(`${prefix}-active-status`);
     const completedStatus = document.getElementById(`${prefix}-completed-status`);
@@ -833,7 +779,7 @@
     try {
         await refreshMonitoredCoins(pageStates.funbags.monitored);
 
-        console.log('Fetching active trades for Fun Bags');
+        console.log('Fetching active trades');
         const { data: tokenStates, error: tokenError, count: tokenCount } = await withRetry(async () => await supabase
             .from('token_states')
             .select('token_address, purchase_price, amount, sold50, buy_market_cap', { count: 'exact' })
@@ -842,7 +788,7 @@
             .range((activePage - 1) * pageSizes.funbags.active, activePage * pageSizes.funbags.active - 1)
         );
         if (tokenError) throw new Error(`Failed to fetch token states: ${tokenError.message}`);
-        console.log('Token states fetched:', tokenStates);
+        console.log(`Active trades count: ${tokenCount}, data length: ${tokenStates?.length}, page: ${activePage}`);
 
         const { data: buyLogs, error: buyLogError } = await withRetry(async () => await supabase
             .from('bot_logs')
@@ -850,21 +796,16 @@
             .eq('event_type', 'buy')
         );
         if (buyLogError) throw new Error(`Failed to fetch buy logs: ${buyLogError.message}`);
-        console.log('Buy logs fetched:', buyLogs);
 
         const { data: priceLogs, error: priceError } = await withRetry(async () => await supabase
             .rpc('query_price_logs')
         );
         if (priceError) throw new Error(`Failed to fetch price logs: ${priceError.message}`);
-        console.log('Price logs fetched:', priceLogs);
 
         let activeTrades = [];
         const activePromises = (Array.isArray(tokenStates) ? tokenStates : []).map(async state => {
             try {
-                if (!state.token_address) {
-                    console.warn('Skipping active trade with missing token_address');
-                    return null;
-                }
+                if (!state.token_address) return null;
                 const tokenData = await fetchTokenData(state.token_address);
                 const buyLog = (Array.isArray(buyLogs) ? buyLogs : []).find(log => log.token_address === state.token_address) || {};
                 const latestPriceLog = (Array.isArray(priceLogs) ? priceLogs : []).find(log => log.token_address === state.token_address) || {};
@@ -888,24 +829,17 @@
                 return null;
             }
         });
-        const activeResults = await Promise.allSettled(activePromises);
-        console.log('Active trades Promise.allSettled result:', activeResults);
-        activeTrades = activeResults
-            .filter(result => result.status === 'fulfilled' && result.value !== null)
-            .map(result => result.value)
-            .filter(trade => trade !== null && trade !== undefined);
-        console.log('Processed active trades:', activeTrades);
+        activeTrades = (await Promise.all(activePromises)).filter(trade => trade !== null);
 
-        // Clear and update cache
-        dataCache.funbags.active = [];
+        // Update cache
         activeTrades.forEach(trade => {
-            if (!dataCache.funbags.active.some(t => t.token_address === trade.token_address)) {
-                dataCache.funbags.active.push(trade);
-            }
+            const existing = dataCache.funbags.active.find(t => t.token_address === trade.token_address);
+            if (!existing) dataCache.funbags.active.push(trade);
+            else Object.assign(existing, trade);
         });
-        const activeTotal = tokenCount || activeTrades.length;
+        const activeTotal = tokenCount || dataCache.funbags.active.length;
 
-        console.log('Fetching completed trades for Fun Bags');
+        console.log('Fetching completed trades');
         const { data: sellLogsRaw, error: sellLogError, count: sellCount } = await withRetry(async () => await supabase
             .from('bot_logs')
             .select('token_address, amount, timestamp, event_type, sell_price', { count: 'exact' })
@@ -915,25 +849,12 @@
             .range((completedPage - 1) * pageSizes.funbags.completed, completedPage * pageSizes.funbags.completed - 1)
         );
         if (sellLogError) throw new Error(`Failed to fetch sell logs: ${sellLogError.message}`);
-        console.log('Raw sell logs fetched:', sellLogsRaw);
+        console.log(`Completed trades count: ${sellCount}, data length: ${sellLogsRaw?.length}, page: ${completedPage}`);
 
-        const sellLogs = (Array.isArray(sellLogsRaw) ? sellLogsRaw : []).filter(log => {
-            if (!log.sell_price) return false;
-            const sellPrice = parseFloat(log.sell_price);
-            if (isNaN(sellPrice)) {
-                console.warn(`Skipping sell log with invalid sell_price: ${log.sell_price} for token ${log.token_address}`);
-                return false;
-            }
-            return true;
-        });
-        console.log('Filtered sell logs:', sellLogs);
-
+        const sellLogs = (Array.isArray(sellLogsRaw) ? sellLogsRaw : []).filter(log => log.sell_price && !isNaN(parseFloat(log.sell_price)));
         const sellGroups = sellLogs.reduce((acc, sell) => {
-            if (!sell.token_address) {
-                console.warn('Skipping sell log with missing token_address');
-                return acc;
-            }
-            if (!acc[sell.token_address]) acc[sell.token_address] = [];
+            if (!sell.token_address) return acc;
+            acc[sell.token_address] = acc[sell.token_address] || [];
             acc[sell.token_address].push(sell);
             return acc;
         }, {});
@@ -941,25 +862,17 @@
         let completedTrades = [];
         const completedPromises = Object.entries(sellGroups).map(async ([tokenAddress, sells]) => {
             try {
-                if (!tokenAddress) {
-                    console.warn('Skipping completed trade with missing token_address');
-                    return null;
-                }
+                if (!tokenAddress) return null;
                 const tokenData = await fetchTokenData(tokenAddress);
                 const buyLog = (Array.isArray(buyLogs) ? buyLogs : []).find(log => log.token_address === tokenAddress);
-                if (!buyLog) {
-                    console.warn(`No buy log for ${tokenAddress}`);
-                    return null;
-                }
+                if (!buyLog) return null;
 
                 const { data: buyState, error: buyStateError } = await supabase
                     .from('token_states')
                     .select('purchase_price')
                     .eq('token_address', tokenAddress)
                     .single();
-                if (buyStateError) {
-                    console.warn(`No token_state for ${tokenAddress}:`, buyStateError);
-                }
+                if (buyStateError) console.warn(`No token_state for ${tokenAddress}:`, buyStateError);
 
                 const buyPrice = buyState?.purchase_price ? parseFloat(buyState.purchase_price) : 0;
                 let totalAmount = 0;
@@ -991,30 +904,16 @@
                 return null;
             }
         });
-        const completedResults = await Promise.allSettled(completedPromises);
-        console.log('Completed trades Promise.allSettled result:', completedResults);
-        completedTrades = completedResults
-            .filter(result => result.status === 'fulfilled' && result.value !== null)
-            .map(result => result.value)
-            .filter(trade => trade !== null && trade !== undefined);
-        console.log('Processed completed trades:', completedTrades);
-
-        // Clear and update cache
-        dataCache.funbags.completed = [];
-        completedTrades.forEach(trade => {
-            if (!dataCache.funbags.completed.some(t => t.token_address === trade.token_address)) {
-                dataCache.funbags.completed.push(trade);
-            }
-        });
+        completedTrades = (await Promise.all(completedPromises)).filter(trade => trade !== null);
+        dataCache.funbags.completed = completedTrades;
         const completedTotal = sellCount || completedTrades.length;
 
-        // Apply sorting to Active Trades
+        // Apply sorting and pagination
         let displayActiveTrades = [...dataCache.funbags.active];
         const activeSort = { ...sortStates.funbags.active };
         if (Object.keys(activeSort).length > 0) {
             const column = Object.keys(activeSort)[0];
             const direction = activeSort[column];
-            console.log(`Applying sort to active trades: ${column} ${direction}`);
             displayActiveTrades.sort((a, b) => {
                 let aValue = a[column];
                 let bValue = b[column];
@@ -1032,10 +931,10 @@
             });
         }
 
-        // Apply pagination to Active Trades
         const activeStart = (activePage - 1) * pageSizes.funbags.active;
         const activeEnd = activeStart + pageSizes.funbags.active;
         displayActiveTrades = displayActiveTrades.slice(activeStart, activeEnd);
+        console.log(`Paginated active trades: start=${activeStart}, end=${activeEnd}, trades=${displayActiveTrades.length}`);
 
         activeTradesBody.innerHTML = '';
         activeTradesCards.innerHTML = '';
@@ -1045,7 +944,7 @@
         displayActiveTrades.forEach(trade => {
             const buyPrice = trade.buy_price_usd || 0;
             const currentPrice = trade.current_price_usd || 0;
-            const profitPercent = trade.profit && trade.profit !== 'N/A' ? trade.profit : (buyPrice !== 0 && currentPrice !== 0 ? (((currentPrice - buyPrice) / buyPrice) * 100).toFixed(2) : '0');
+            const profitPercent = trade.profit || '0';
             const profitClass = profitPercent !== '0' && parseFloat(profitPercent) >= 0 ? 'profit-positive' : 'profit-negative';
             const tokenAddress = trade.token_address || '-';
             const tokenName = trade.token_name || '-';
@@ -1080,14 +979,13 @@
         activeCurrentPage.textContent = activePage;
         activePrevPage.classList.toggle('disabled', activePage === 1);
         activeNextPage.classList.toggle('disabled', displayActiveTrades.length < pageSizes.funbags.active || activePage * pageSizes.funbags.active >= activeTotal);
+        console.log(`Active pagination: page=${activePage}, total=${activeTotal}, displayTrades.length=${displayActiveTrades.length}`);
 
-        // Apply sorting to Completed Trades
         let displayCompletedTrades = [...dataCache.funbags.completed];
         const completedSort = { ...sortStates.funbags.completed };
         if (Object.keys(completedSort).length > 0) {
             const column = Object.keys(completedSort)[0];
             const direction = completedSort[column];
-            console.log(`Applying sort to completed trades: ${column} ${direction}`);
             displayCompletedTrades.sort((a, b) => {
                 let aValue = a[column];
                 let bValue = b[column];
@@ -1105,12 +1003,9 @@
             });
         }
 
-        // Apply profit filter and pagination to Completed Trades
         const profitFilterValue = document.getElementById(`${prefix}-profitFilter`)?.value || 'all';
         const filteredTrades = displayCompletedTrades.filter(trade => {
-            const buyPrice = trade.buy_price_usd || 0;
-            const sellPrice = trade.sell_price_usd || 0;
-            const profitPercent = trade.profit && trade.profit !== 'N/A' ? trade.profit : (buyPrice !== 0 && sellPrice !== 0 ? ((sellPrice - buyPrice) / buyPrice * 100).toFixed(2) : '0');
+            const profitPercent = trade.profit || '0';
             if (profitFilterValue === 'positive') return parseFloat(profitPercent) >= 0;
             if (profitFilterValue === 'negative') return parseFloat(profitPercent) < 0;
             return true;
@@ -1119,6 +1014,7 @@
         const completedStart = (completedPage - 1) * pageSizes.funbags.completed;
         const completedEnd = completedStart + pageSizes.funbags.completed;
         displayCompletedTrades = filteredTrades.slice(completedStart, completedEnd);
+        console.log(`Paginated completed trades: start=${completedStart}, end=${completedEnd}, trades=${displayCompletedTrades.length}`);
 
         completedTradesBody.innerHTML = '';
         completedTradesCards.innerHTML = '';
@@ -1128,7 +1024,7 @@
         displayCompletedTrades.forEach(trade => {
             const buyPrice = trade.buy_price_usd || 0;
             const sellPrice = trade.sell_price_usd || 0;
-            const profitPercent = trade.profit && trade.profit !== 'N/A' ? trade.profit : (buyPrice !== 0 && sellPrice !== 0 ? ((sellPrice - buyPrice) / buyPrice * 100).toFixed(2) : '0');
+            const profitPercent = trade.profit || '0';
             const profitClass = profitPercent !== '0' && parseFloat(profitPercent) >= 0 ? 'profit-positive' : 'profit-negative';
             const tokenAddress = trade.token_address || '-';
             const tokenName = trade.token_name || '-';
@@ -1163,11 +1059,12 @@
         completedCurrentPage.textContent = completedPage;
         completedPrevPage.classList.toggle('disabled', completedPage === 1);
         completedNextPage.classList.toggle('disabled', displayCompletedTrades.length < pageSizes.funbags.completed || completedPage * pageSizes.funbags.completed >= completedTotal);
+        console.log(`Completed pagination: page=${completedPage}, total=${completedTotal}, displayTrades.length=${displayCompletedTrades.length}`);
 
         const totalProfit = filteredTrades.reduce((sum, trade) => sum + (parseFloat(trade.total_profit_usd) || 0), 0);
         totalProfitElement.textContent = `$${totalProfit.toFixed(2)}`;
 
-        // Update sort indicators for Active Trades
+        // Update sort indicators
         activeTable.querySelectorAll('th[data-sort]').forEach(header => {
             header.classList.remove('sort-asc', 'sort-desc');
             const icon = header.querySelector('.sort-icon');
@@ -1183,7 +1080,6 @@
             }
         }
 
-        // Update sort indicators for Completed Trades
         completedTable.querySelectorAll('th[data-sort]').forEach(header => {
             header.classList.remove('sort-asc', 'sort-desc');
             const icon = header.querySelector('.sort-icon');
@@ -1211,7 +1107,7 @@
             document.getElementById(`${prefix}-completedFilter`).dispatchEvent(new Event('input'));
         }
     } catch (error) {
-        console.error(`Error in refreshTrades for funbags:`, error);
+        console.error(`Error in refreshTrades:`, error);
         activeStatus.textContent = `Error loading active trades: ${error.message}`;
         completedStatus.textContent = `Error loading completed trades: ${error.message}`;
     } finally {
