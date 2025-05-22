@@ -642,23 +642,47 @@
         const { coins: fetchedCoins, total } = await fetchMonitoredCoins(page);
         console.log('Fetched coins:', fetchedCoins, 'Total:', total);
 
-        // Validate and update cache with minimal requirements
-        dataCache.funbags.monitored = fetchedCoins.filter(coin => {
-            const hasRequired = coin.token_address && coin.token_name;
-            if (!hasRequired) console.warn('Coin missing required fields:', coin);
-            return hasRequired;
-        }).map(coin => ({
-            token_address: coin.token_address,
-            token_name: coin.token_name,
-            market_cap: coin.max_market_cap ?? coin.market_cap ?? 0,
-            current_price_usd: coin.current_price_usd ?? 0,
-            lowest_market_cap: coin.lowest_market_cap ?? 999999999,
-            timestamp: coin.within_range_start_time ?? coin.timestamp ?? null
+        // Fetch price logs for current prices
+        const { data: priceLogs, error: priceError } = await withRetry(async () => await supabase
+            .rpc('query_price_logs')
+        );
+        if (priceError) throw new Error(`Failed to fetch price logs: ${priceError.message}`);
+        console.log('Price logs fetched:', priceLogs);
+
+        // Process coins
+        const monitoredCoins = await Promise.all(fetchedCoins.map(async coin => {
+            try {
+                if (!coin.token_address) {
+                    console.warn('Skipping coin with missing token_address:', coin);
+                    return null;
+                }
+                const tokenData = await fetchTokenData(coin.token_address);
+                const latestPriceLog = (Array.isArray(priceLogs) ? priceLogs : []).find(log => log.token_address === coin.token_address) || {};
+                const currentPrice = latestPriceLog.usd_price != null && !isNaN(parseFloat(latestPriceLog.usd_price)) 
+                    ? parseFloat(latestPriceLog.usd_price) 
+                    : (parseFloat(coin.purchase_price) || 0);
+                const marketCap = currentPrice * 1_000_000_000;
+                console.log(`Coin ${coin.token_address}: current_price_usd=${currentPrice}, market_cap=${marketCap}`);
+                return {
+                    token_address: coin.token_address,
+                    token_name: tokenData.name || 'Unknown',
+                    market_cap: marketCap,
+                    current_price_usd: currentPrice,
+                    lowest_market_cap: marketCap, // Assume current is lowest if no history
+                    timestamp: coin.within_range_start_time ?? coin.timestamp ?? null
+                };
+            } catch (error) {
+                console.error(`Error processing coin ${coin.token_address || 'unknown'}:`, error);
+                return null;
+            }
         }));
+
+        // Update cache with valid coins
+        dataCache.funbags.monitored = monitoredCoins.filter(coin => coin !== null && coin.token_name !== 'Unknown');
         console.log('Updated dataCache.funbags.monitored:', dataCache.funbags.monitored);
 
         if (dataCache.funbags.monitored.length === 0) {
-            console.warn('No valid coins in cache after filtering');
+            console.warn('No valid coins in cache after processing');
             monitoredStatus.textContent = 'No monitored coins found';
             monitoredBody.innerHTML = '';
             monitoredCards.innerHTML = '<p>No monitored coins available.</p>';
@@ -688,7 +712,7 @@
                     bValue = bValue ? new Date(bValue).getTime() : 0;
                 } else {
                     aValue = aValue ? aValue.toString().toLowerCase() : '';
-                    bValue = bValue ? bValue.toString().toLowerCase() : '';
+                    bValue = bValue ? aValue.toString().toLowerCase() : '';
                 }
                 const comparison = aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
                 return direction === 'asc' ? comparison : -comparison;
