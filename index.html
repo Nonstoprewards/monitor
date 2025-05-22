@@ -1376,9 +1376,9 @@
         }
 
         async function refreshTab() {
-            console.log(`Refreshing tab: funbags`);
-            await refreshTrades(pageStates.funbags.active, pageStates.funbags.completed);
-        }
+    console.log(`Refreshing tab: funbags, sortStates:`, JSON.stringify(sortStates));
+    await refreshTrades(pageStates.funbags.active, pageStates.funbags.completed);
+}
 
         // Auto-refresh every 10 seconds
         setInterval(() => {
