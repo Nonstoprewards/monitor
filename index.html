@@ -610,118 +610,122 @@
         }
 
         async function refreshMonitoredCoins(page = 1) {
-            console.log(`Starting refreshMonitoredCoins, page ${page}`);
-            const monitoredStatus = document.getElementById('funbags-monitored-status');
-            const monitoredBody = document.getElementById('funbags-monitoredBody');
-            const monitoredCards = document.getElementById('funbags-monitoredCards');
-            const monitoredTable = monitoredBody?.closest('table');
-            const monitoredFilterInput = document.getElementById('funbags-monitoredFilter');
-            const prevPage = document.getElementById('funbags-monitoredPrevPage');
-            const nextPage = document.getElementById('funbags-monitoredNextPage');
-            const currentPageSpan = document.getElementById('funbags-monitoredCurrentPage');
+    console.log(`Starting refreshMonitoredCoins, page ${page}`);
+    const monitoredStatus = document.getElementById('funbags-monitored-status');
+    const monitoredBody = document.getElementById('funbags-monitoredBody');
+    const monitoredCards = document.getElementById('funbags-monitoredCards');
+    const monitoredTable = monitoredBody?.closest('table');
+    const monitoredFilterInput = document.getElementById('funbags-monitoredFilter');
+    const prevPage = document.getElementById('funbags-monitoredPrevPage');
+    const nextPage = document.getElementById('funbags-monitoredNextPage');
+    const currentPageSpan = document.getElementById('funbags-monitoredCurrentPage');
 
-            if (!monitoredStatus || !monitoredBody || !monitoredCards || !monitoredTable || !monitoredFilterInput || !prevPage || !nextPage || !currentPageSpan) {
-                console.error('Missing DOM elements for monitored coins');
-                monitoredStatus.textContent = 'Error: Missing DOM elements';
-                return;
-            }
+    if (!monitoredStatus || !monitoredBody || !monitoredCards || !monitoredTable || !monitoredFilterInput || !prevPage || !nextPage || !currentPageSpan) {
+        console.error('Missing DOM elements for monitored coins');
+        monitoredStatus.textContent = 'Error: Missing DOM elements';
+        return;
+    }
 
-            monitoredStatus.textContent = 'Loading monitored coins...';
-            monitoredStatus.classList.add('loading');
-            const monitoredSort = { ...sortStates.funbags.monitored };
-            const monitoredFilterValue = monitoredFilterInput.value || '';
+    monitoredStatus.textContent = 'Loading monitored coins...';
+    monitoredStatus.classList.add('loading');
+    const monitoredSort = { ...sortStates.funbags.monitored };
+    const monitoredFilterValue = monitoredFilterInput.value || '';
 
-            try {
-                const { coins: fetchedCoins, total } = await fetchMonitoredCoins(page);
-                monitoredBody.innerHTML = '';
-                monitoredCards.innerHTML = '';
+    try {
+        const { coins: fetchedCoins, total } = await fetchMonitoredCoins(page);
+        monitoredBody.innerHTML = '';
+        monitoredCards.innerHTML = '';
 
-                let displayCoins = fetchedCoins;
-                if (Object.keys(monitoredSort).length > 0) {
-                    const column = Object.keys(monitoredSort)[0];
-                    const direction = monitoredSort[column];
-                    const sortedCache = [...dataCache.funbags.monitored].sort((a, b) => {
-                        let aValue = a[column];
-                        let bValue = b[column];
-                        if (['market_cap', 'current_price_usd', 'lowest_market_cap'].includes(column)) {
-                            aValue = parseFloat(aValue) || 0;
-                            bValue = parseFloat(bValue) || 0;
-                        } else if (column === 'timestamp') {
-                            aValue = aValue ? new Date(aValue).getTime() : 0;
-                            bValue = bValue ? new Date(bValue).getTime() : 0;
-                        } else {
-                            aValue = aValue.toLowerCase();
-                            bValue = bValue.toLowerCase();
-                        }
-                        return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
-                    });
-                    const start = (page - 1) * pageSizes.funbags.monitored;
-                    const end = start + pageSizes.funbags.monitored;
-                    displayCoins = sortedCache.slice(start, end);
+        // Apply sorting to the full dataCache
+        let displayCoins = [...dataCache.funbags.monitored];
+        if (Object.keys(monitoredSort).length > 0) {
+            const column = Object.keys(monitoredSort)[0];
+            const direction = monitoredSort[column];
+            displayCoins.sort((a, b) => {
+                let aValue = a[column];
+                let bValue = b[column];
+                if (['market_cap', 'current_price_usd', 'lowest_market_cap'].includes(column)) {
+                    aValue = parseFloat(aValue) || 0;
+                    bValue = parseFloat(bValue) || 0;
+                } else if (column === 'timestamp') {
+                    aValue = aValue ? new Date(aValue).getTime() : 0;
+                    bValue = bValue ? new Date(bValue).getTime() : 0;
+                } else {
+                    aValue = aValue.toString().toLowerCase();
+                    bValue = bValue.toString().toLowerCase();
                 }
+                return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
+            });
+        }
 
-                if (!displayCoins || displayCoins.length === 0) {
-                    monitoredStatus.textContent = 'No monitored coins found';
-                    monitoredCards.innerHTML = '<p>No monitored coins available.</p>';
-                    return;
-                }
+        // Apply pagination
+        const start = (page - 1) * pageSizes.funbags.monitored;
+        const end = start + pageSizes.funbags.monitored;
+        displayCoins = displayCoins.slice(start, end);
 
-                displayCoins.forEach(coin => {
-                    const tokenAddress = coin.token_address || '-';
-                    const tokenName = coin.token_name || '-';
-                    const marketCap = coin.market_cap || 0;
-                    const currentPrice = coin.current_price_usd || 0;
-                    const lowestMarketCap = coin.lowest_market_cap || 999999999;
-                    const timestamp = coin.timestamp ? new Date(coin.timestamp).toLocaleString() : '-';
+        if (!displayCoins || displayCoins.length === 0) {
+            monitoredStatus.textContent = 'No monitored coins found';
+            monitoredCards.innerHTML = '<p>No monitored coins available.</p>';
+            return;
+        }
 
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
-                        <td>$${marketCap.toLocaleString()}</td>
-                        <td>$${currentPrice.toFixed(8)}</td>
-                        <td>$${lowestMarketCap.toLocaleString()}</td>
-                        <td>${timestamp}</td>
-                    `;
-                    monitoredBody.appendChild(row);
+        displayCoins.forEach(coin => {
+            const tokenAddress = coin.token_address || '-';
+            const tokenName = coin.token_name || '-';
+            const marketCap = coin.market_cap || 0;
+            const currentPrice = coin.current_price_usd || 0;
+            const lowestMarketCap = coin.lowest_market_cap || 999999999;
+            const timestamp = coin.timestamp ? new Date(coin.timestamp).toLocaleString() : '-';
 
-                    const card = document.createElement('div');
-                    card.className = 'card';
-                    card.innerHTML = `
-                        <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></p>
-                        <p><span class="card-label">Market Cap:</span> $${marketCap.toLocaleString()}</p>
-                        <p><span class="card-label">Current Price:</span> $${currentPrice.toFixed(8)}</p>
-                        <p><span class="card-label">Lowest Market Cap:</span> $${lowestMarketCap.toLocaleString()}</p>
-                        <p><span class="card-label">Monitoring Start:</span> ${timestamp}</p>
-                    `;
-                    monitoredCards.appendChild(card);
-                });
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
+                <td>$${marketCap.toLocaleString()}</td>
+                <td>$${currentPrice.toFixed(8)}</td>
+                <td>$${lowestMarketCap.toLocaleString()}</td>
+                <td>${timestamp}</td>
+            `;
+            monitoredBody.appendChild(row);
 
-                monitoredStatus.textContent = `Monitored coins loaded (${displayCoins.length})`;
-                currentPageSpan.textContent = page;
-                prevPage.classList.toggle('disabled', page === 1);
-                nextPage.classList.toggle('disabled', displayCoins.length < pageSizes.funbags.monitored || page * pageSizes.funbags.monitored >= total);
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></p>
+                <p><span class="card-label">Market Cap:</span> $${marketCap.toLocaleString()}</p>
+                <p><span class="card-label">Current Price:</span> $${currentPrice.toFixed(8)}</p>
+                <p><span class="card-label">Lowest Market Cap:</span> $${lowestMarketCap.toLocaleString()}</p>
+                <p><span class="card-label">Monitoring Start:</span> ${timestamp}</p>
+            `;
+            monitoredCards.appendChild(card);
+        });
 
-                if (monitoredSort && Object.keys(monitoredSort).length > 0) {
-                    const column = Object.keys(monitoredSort)[0];
-                    const direction = monitoredSort[column];
-                    const header = monitoredTable.querySelector(`th[data-sort="${column}"]`);
-                    if (header) {
-                        header.classList.add(`sort-${direction}`);
-                        header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
-                    }
-                }
+        monitoredStatus.textContent = `Monitored coins loaded (${displayCoins.length})`;
+        currentPageSpan.textContent = page;
+        prevPage.classList.toggle('disabled', page === 1);
+        nextPage.classList.toggle('disabled', displayCoins.length < pageSizes.funbags.monitored || page * pageSizes.funbags.monitored >= total);
 
-                if (monitoredFilterValue) {
-                    monitoredFilterInput.value = monitoredFilterValue;
-                    monitoredFilterInput.dispatchEvent(new Event('input'));
-                }
-            } catch (error) {
-                console.error('Error in refreshMonitoredCoins:', error);
-                monitoredStatus.textContent = `Error loading monitored coins: ${error.message}`;
-            } finally {
-                monitoredStatus.classList.remove('loading');
+        // Update sort indicators
+        if (monitoredSort && Object.keys(monitoredSort).length > 0) {
+            const column = Object.keys(monitoredSort)[0];
+            const direction = monitoredSort[column];
+            const header = monitoredTable.querySelector(`th[data-sort="${column}"]`);
+            if (header) {
+                header.classList.add(`sort-${direction}`);
+                header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
             }
         }
+
+        if (monitoredFilterValue) {
+            monitoredFilterInput.value = monitoredFilterValue;
+            monitoredFilterInput.dispatchEvent(new Event('input'));
+        }
+    } catch (error) {
+        console.error('Error in refreshMonitoredCoins:', error);
+        monitoredStatus.textContent = `Error loading monitored coins: ${error.message}`;
+    } finally {
+        monitoredStatus.classList.remove('loading');
+    }
+}
                 async function refreshTrades(activePage = 1, completedPage = 1) {
             console.log(`Starting refreshTrades for funbags, activePage: ${activePage}, completedPage: ${completedPage}`);
             const prefix = 'funbags';
