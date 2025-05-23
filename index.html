@@ -10,6 +10,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/@solana/web3.js@1.95.3/dist/index.global.js"></script>
+    <script src="https://unpkg.com/@metaplex-foundation/mpl-token-metadata@3.2.1/dist/index.global.js"></script>
 </head>
 <body class="flex items-center justify-center min-h-screen">
     <div class="container mx-auto p-6 max-w-7xl">
@@ -25,7 +27,7 @@
                     <h2 class="text-xl text-navy mb-2">Summary</h2>
                     <p class="text-gray-700">Total Completed Profit: <span id="funbags-totalProfit" class="font-semibold text-navy">Calculating...</span></p>
                 </div>
-                <!-- Active Trades Section (Moved Up) -->
+                <!-- Active Trades Section -->
                 <div class="mb-6 section-card">
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
                         <h2 class="text-xl text-navy">Active Trades</h2>
@@ -78,7 +80,7 @@
                         </div>
                     </div>
                 </div>
-                <!-- Monitored Coins Section (Moved Down) -->
+                <!-- Monitored Coins Section -->
                 <div class="mb-6 section-card">
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
                         <h2 class="text-xl text-navy">Monitored Coins</h2>
@@ -122,7 +124,7 @@
                         </div>
                     </div>
                 </div>
-                <!-- Completed Trades Section (Unchanged) -->
+                <!-- Completed Trades Section -->
                 <div class="mb-6 section-card">
                     <h2 class="text-xl text-navy mb-4">Completed Trades</h2>
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
@@ -406,6 +408,30 @@
     .sort-desc::after {
         content: '↓';
     }
+    /* New styles for token name and icon */
+    .token-cell {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .token-cell a {
+        flex-grow: 1;
+    }
+    .token-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        margin-left: 8px;
+        object-fit: cover;
+    }
+    .card-token {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .card-token a {
+        flex-grow: 1;
+    }
     @media (max-width: 640px) {
         .container {
             padding: 1rem;
@@ -480,7 +506,7 @@
         try {
             supabase = window.supabase.createClient(
                 'https://bprfbjsxbkitrbqszqpz.supabase.co',
-                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcmZianN4YmtpdHJicXN6cXB6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4OTQzMzksImV4cCI6MjA2MTQ3MDMzOX0.Uc2iM_H3vEd4dnTLi_B2EncReqlYHXWyZ9zGHsXh4mM'
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcmZianN4YmtpdHJicXN6cXB6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NTg5NDMzOSwiZXhwIjoyMDYxNDcwMzM5fQ.wtFixniNTzbObmwjI1R8OuIusXB95w5waoXBN4DiiNw'
             );
             console.log('Supabase client initialized');
         } catch (error) {
@@ -534,37 +560,118 @@
 
         async function fetchTokenData(tokenAddress) {
             console.log(`Fetching token data for ${tokenAddress}`);
+            
+            // Check cache first
             if (tokenNameCache.has(tokenAddress)) {
                 console.log(`Cache hit for ${tokenAddress}`);
                 return tokenNameCache.get(tokenAddress);
             }
 
-            const url = `https://solana-gateway.moralis.io/token/mainnet/${tokenAddress}/metadata`;
-            const moralisOptions = {
-                method: 'GET',
-                headers: {
-                    accept: 'application/json',
-                    'X-API-Key': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjZhMjdlMWU0LWUwNGEtNGRiNC05ZjQ5LTU4MjFkNGU2MmEzMiIsIm9yZ0lkIjoiNDQ3NjY4IiwidXNlcklkIjoiNDYwNTkzIiwidHlwZUlkIjoiMGRjZmM0ZTctNzhkOC00YzRhLWE2YzgtYzc2OWRiMTdkMzk3IiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NDc1MjU1NjAsImV4cCI6NDkwMzI4NTU2MH0.2CVGa61MAN5zUvbh8yssfNZdNSTORl1GBYXXBs2nJbM'
+            // Check Supabase for existing token data
+            try {
+                const { data: tokenData, error } = await supabase
+                    .from('token_states')
+                    .select('token_name, icon_url, max_market_cap')
+                    .eq('token_address', tokenAddress)
+                    .single();
+
+                if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+                    console.error(`Supabase error for ${tokenAddress}:`, error.message);
                 }
-            };
+
+                if (tokenData && tokenData.token_name && tokenData.icon_url) {
+                    console.log(`Supabase hit for ${tokenAddress}`);
+                    const marketCap = parseFloat(tokenData.max_market_cap) || 0;
+                    const price = marketCap / 1_000_000_000 || 0;
+                    const result = {
+                        name: tokenData.token_name,
+                        iconUrl: tokenData.icon_url,
+                        marketCap,
+                        price
+                    };
+                    tokenNameCache.set(tokenAddress, result);
+                    return result;
+                }
+            } catch (error) {
+                console.error(`Error checking Supabase for ${tokenAddress}:`, error);
+            }
+
+            // Fetch from QuickNode RPC
             try {
                 if (!tokenAddress || typeof tokenAddress !== 'string' || tokenAddress.length < 10) {
                     throw new Error('Invalid token address');
                 }
-                const response = await fetch(url, moralisOptions);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+
+                // Initialize Solana connection
+                const { Connection, PublicKey } = window.SolanaWeb3;
+                const connection = new Connection('https://withered-evocative-panorama.solana-mainnet.quiknode.pro/627142859becf3b0b6537d96bef8105397aa2ba3/');
+
+                // Get token supply for market cap
+                const tokenMint = new PublicKey(tokenAddress);
+                const tokenSupply = await connection.getTokenSupply(tokenMint);
+                const totalSupply = tokenSupply.value.uiAmount || 1_000_000_000;
+
+                // Get token metadata
+                const { findMetadataPda, unpackMetadata } = window.Metaplex;
+                const metadataPda = findMetadataPda({ mint: tokenMint });
+                const accountInfo = await connection.getAccountInfo(metadataPda);
+
+                let name = tokenAddress.slice(0, 8);
+                let iconUrl = '';
+                let price = 0;
+                let marketCap = 0;
+
+                if (accountInfo) {
+                    const metadata = unpackMetadata(accountInfo.data);
+                    name = metadata.data.name.trim() || tokenAddress.slice(0, 8);
+                    const uri = metadata.data.uri.trim();
+
+                    // Fetch off-chain metadata for image URL
+                    if (uri) {
+                        try {
+                            const response = await fetch(uri);
+                            if (response.ok) {
+                                const offChainData = await response.json();
+                                iconUrl = offChainData.image || '';
+                            }
+                        } catch (uriError) {
+                            console.warn(`Failed to fetch off-chain metadata for ${tokenAddress}:`, uriError);
+                        }
+                    }
                 }
-                const data = await response.json();
-                const marketCap = parseFloat(data.price) * 1_000_000_000 || 0;
-                const price = parseFloat(data.price) || 0;
-                const name = data.name || data.symbol || tokenAddress.slice(0, 8);
-                const result = { marketCap, price, name };
+
+                // Fallback market cap and price (reusing existing logic)
+                marketCap = parseFloat(totalSupply) * price || 0;
+                price = marketCap / 1_000_000_000 || 0;
+
+                const result = { name, iconUrl, marketCap, price };
                 tokenNameCache.set(tokenAddress, result);
+
+                // Store in Supabase
+                try {
+                    const { error: upsertError } = await supabase
+                        .from('token_states')
+                        .upsert({
+                            token_address: tokenAddress,
+                            token_name: name,
+                            icon_url: iconUrl,
+                            max_market_cap: marketCap,
+                            updated_at: new Date().toISOString()
+                        }, { onConflict: 'token_address' });
+
+                    if (upsertError) {
+                        console.error(`Error upserting token data for ${tokenAddress}:`, upsertError.message);
+                    } else {
+                        console.log(`Stored token data for ${tokenAddress} in Supabase`);
+                    }
+                } catch (error) {
+                    console.error(`Error saving to Supabase for ${tokenAddress}:`, error);
+                }
+
                 return result;
             } catch (error) {
                 console.error(`Error fetching token data for ${tokenAddress}:`, error.message);
-                const fallback = { marketCap: 0, price: 0, name: tokenAddress.slice(0, 8) };
+                const fallback = { name: tokenAddress.slice(0, 8), iconUrl: '', marketCap: 0, price: 0 };
                 tokenNameCache.set(tokenAddress, fallback);
                 return fallback;
             }
@@ -590,6 +697,7 @@
                     return {
                         token_address: coin.token_address || '-',
                         token_name: tokenData.name,
+                        iconUrl: tokenData.iconUrl,
                         market_cap: marketCap,
                         current_price_usd: price,
                         lowest_market_cap: parseFloat(coin.lowest_market_cap) || 999999999,
@@ -604,8 +712,7 @@
                 throw error;
             }
         }
-
-        async function refreshMonitoredCoins(page = 1) {
+                async function refreshMonitoredCoins(page = 1) {
             console.log(`Starting refreshMonitoredCoins, page ${page}`);
             const monitoredStatus = document.getElementById('funbags-monitored-status');
             const monitoredBody = document.getElementById('funbags-monitoredBody');
@@ -674,7 +781,10 @@
 
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
+                            <td class="token-cell">
+                                <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a>
+                                ${coin.iconUrl ? `<img src="${coin.iconUrl}" alt="${tokenName} icon" class="token-icon">` : ''}
+                            </td>
                             <td>$${marketCap.toLocaleString()}</td>
                             <td>$${currentPrice.toFixed(8)}</td>
                             <td>$${lowestMarketCap.toLocaleString()}</td>
@@ -685,7 +795,11 @@
                         const card = document.createElement('div');
                         card.className = 'card';
                         card.innerHTML = `
-                            <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></p>
+                            <p class="card-token">
+                                <span class="card-label">Token:</span>
+                                <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a>
+                                ${coin.iconUrl ? `<img src="${coin.iconUrl}" alt="${tokenName} icon" class="token-icon">` : ''}
+                            </p>
                             <p><span class="card-label">Market Cap:</span> $${marketCap.toLocaleString()}</p>
                             <p><span class="card-label">Current Price:</span> $${currentPrice.toFixed(8)}</p>
                             <p><span class="card-label">Lowest Market Cap:</span> $${lowestMarketCap.toLocaleString()}</p>
@@ -799,6 +913,7 @@
                         return {
                             token_address: state.token_address,
                             token_name: tokenData.name,
+                            iconUrl: tokenData.iconUrl,
                             buy_price_usd: buyPrice,
                             current_price_usd: currentPrice,
                             market_cap: marketCap,
@@ -869,6 +984,7 @@
                         return {
                             token_address: tokenAddress,
                             token_name: tokenData.name,
+                            iconUrl: tokenData.iconUrl,
                             buy_price_usd: buyPrice,
                             sell_price_usd: avgSellPrice,
                             profit: profitPercent,
@@ -933,7 +1049,10 @@
 
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
+                            <td class="token-cell">
+                                <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a>
+                                ${trade.iconUrl ? `<img src="${trade.iconUrl}" alt="${tokenName} icon" class="token-icon">` : ''}
+                            </td>
                             <td>$${buyPrice.toFixed(8)}</td>
                             <td>$${currentPrice.toFixed(8)}</td>
                             <td>$${marketCap.toLocaleString()}</td>
@@ -945,7 +1064,11 @@
                         const card = document.createElement('div');
                         card.className = 'card';
                         card.innerHTML = `
-                            <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></p>
+                            <p class="card-token">
+                                <span class="card-label">Token:</span>
+                                <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a>
+                                ${trade.iconUrl ? `<img src="${trade.iconUrl}" alt="${tokenName} icon" class="token-icon">` : ''}
+                            </p>
                             <p><span class="card-label">Buy Price:</span> $${buyPrice.toFixed(8)}</p>
                             <p><span class="card-label">Current Price:</span> $${currentPrice.toFixed(8)}</p>
                             <p><span class="card-label">Market Cap:</span> $${marketCap.toLocaleString()}</p>
@@ -1007,7 +1130,10 @@
 
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
+                            <td class="token-cell">
+                                <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a>
+                                ${trade.iconUrl ? `<img src="${trade.iconUrl}" alt="${tokenName} icon" class="token-icon">` : ''}
+                            </td>
                             <td>$${buyPrice.toFixed(8)}</td>
                             <td>$${sellPrice.toFixed(8)}</td>
                             <td class="${profit >= 0 ? 'profit-positive' : 'profit-negative'}">${profit}%</td>
@@ -1020,7 +1146,11 @@
                         const card = document.createElement('div');
                         card.className = 'card';
                         card.innerHTML = `
-                            <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></p>
+                            <p class="card-token">
+                                <span class="card-label">Token:</span>
+                                <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a>
+                                ${trade.iconUrl ? `<img src="${trade.iconUrl}" alt="${tokenName} icon" class="token-icon">` : ''}
+                            </p>
                             <p><span class="card-label">Buy Price:</span> $${buyPrice.toFixed(8)}</p>
                             <p><span class="card-label">Sell Price:</span> $${sellPrice.toFixed(8)}</p>
                             <p><span class="card-label">Profit:</span> <span class="${profit >= 0 ? 'profit-positive' : 'profit-negative'}">${profit}%</span></p>
