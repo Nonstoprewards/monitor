@@ -25,49 +25,7 @@
                     <h2 class="text-xl text-navy mb-2">Summary</h2>
                     <p class="text-gray-700">Total Completed Profit: <span id="funbags-totalProfit" class="font-semibold text-navy">Calculating...</span></p>
                 </div>
-                <div class="mb-6 section-card">
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <h2 class="text-xl text-navy">Monitored Coins</h2>
-                        <button id="funbags-monitoredRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Monitored
-                        </button>
-                    </div>
-                    <p id="funbags-monitored-status" class="text-gray-700 text-sm mb-2 status">Loading monitored coins...</p>
-                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                        <input type="text" id="funbags-monitoredFilter" class="filter-input" placeholder="Filter by Token...">
-                        <select id="funbags-monitoredPageSize" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                            <option value="10">10 per page</option>
-                            <option value="20">20 per page</option>
-                            <option value="30">30 per page</option>
-                            <option value="50">50 per page</option>
-                            <option value="100">100 per page</option>
-                        </select>
-                    </div>
-                    <div class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="lowest_market_cap">Lowest Market Cap (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="timestamp">Monitoring Start<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="funbags-monitoredBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="funbags-monitoredCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <div class="flex items-center space-x-2">
-                            <span id="funbags-monitoredPrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
-                            <span class="pagination-text text-gray-700">Page <span id="funbags-monitoredCurrentPage">1</span></span>
-                            <span id="funbags-monitoredNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
-                        </div>
-                    </div>
-                </div>
+                <!-- Active Trades Section (Moved Up) -->
                 <div class="mb-6 section-card">
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
                         <h2 class="text-xl text-navy">Active Trades</h2>
@@ -120,6 +78,51 @@
                         </div>
                     </div>
                 </div>
+                <!-- Monitored Coins Section (Moved Down) -->
+                <div class="mb-6 section-card">
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                        <h2 class="text-xl text-navy">Monitored Coins</h2>
+                        <button id="funbags-monitoredRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                            <i class="fas fa-sync-alt mr-2"></i> Refresh Monitored
+                        </button>
+                    </div>
+                    <p id="funbags-monitored-status" class="text-gray-700 text-sm mb-2 status">Loading monitored coins...</p>
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                        <input type="text" id="funbags-monitoredFilter" class="filter-input" placeholder="Filter by Token...">
+                        <select id="funbags-monitoredPageSize" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                            <option value="10">10 per page</option>
+                            <option value="20">20 per page</option>
+                            <option value="30">30 per page</option>
+                            <option value="50">50 per page</option>
+                            <option value="100">100 per page</option>
+                        </select>
+                    </div>
+                    <div class="table-container">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr>
+                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
+                                    <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
+                                    <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
+                                    <th data-sort="lowest_market_cap">Lowest Market Cap (USD)<span class="sort-icon"></span></th>
+                                    <th data-sort="timestamp">Monitoring Start<span class="sort-icon"></span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="funbags-monitoredBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="card-container">
+                        <div id="funbags-monitoredCards"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-4">
+                        <div class="flex items-center space-x-2">
+                            <span id="funbags-monitoredPrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
+                            <span class="pagination-text text-gray-700">Page <span id="funbags-monitoredCurrentPage">1</span></span>
+                            <span id="funbags-monitoredNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Completed Trades Section (Unchanged) -->
                 <div class="mb-6 section-card">
                     <h2 class="text-xl text-navy mb-4">Completed Trades</h2>
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
