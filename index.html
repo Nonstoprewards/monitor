@@ -3,469 +3,277 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>Rich 1 Day</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <title>Fun Bags Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body class="flex items-center justify-center min-h-screen">
-    <div class="container mx-auto p-6 max-w-7xl">
-        <div class="section-card">
-            <div class="flex justify-between items-center mb-6">
-                <h1 class="text-3xl sm:text-4xl text-navy">Rich 1 Day</h1>
-                <button id="sexyModeToggle" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                    <i class="fas fa-moon mr-2"></i> Sexy Mode
-                </button>
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold mb-4 text-center">Fun Bags Dashboard</h1>
+        <div class="flex justify-end mb-4">
+            <button id="sexyModeToggle" class="bg-blue-500 text-white px-4 py-2 rounded flex items-center">
+                <i class="fas fa-moon mr-2"></i> Sexy Mode
+            </button>
+        </div>
+
+        <!-- Monitored Coins Section -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-semibold">Monitored Coins</h2>
+                <div class="flex items-center space-x-2">
+                    <input id="funbags-monitoredFilter" type="text" placeholder="Filter by token..." class="border p-2 rounded">
+                    <button id="funbags-monitoredRefreshBtn" class="bg-green-500 text-white px-4 py-2 rounded">Refresh</button>
+                    <select id="funbags-monitoredPageSize" class="border p-2 rounded">
+                        <option value="10">10 per page</option>
+                        <option value="25">25 per page</option>
+                        <option value="50">50 per page</option>
+                    </select>
+                </div>
             </div>
-            <div id="content-funbags" class="tab-content">
-                <div class="mb-6 section-card">
-                    <h2 class="text-xl text-navy mb-2">Summary</h2>
-                    <p class="text-gray-700">Total Completed Profit: <span id="funbags-totalProfit" class="font-semibold text-navy">Calculating...</span></p>
+            <p id="funbags-monitored-status" class="text-gray-600 mb-2">Loading monitored coins...</p>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white border">
+                    <thead>
+                        <tr>
+                            <th class="py-2 px-4 border-b" data-sort="token_name">Token <span class="sort-icon">↕</span></th>
+                            <th class="py-2 px-4 border-b" data-sort="market_cap">Market Cap <span class="sort-icon">↕</span></th>
+                            <th class="py-2 px-4 border-b" data-sort="current_price_usd">Current Price (USD) <span class="sort-icon">↕</span></th>
+                            <th class="py-2 px-4 border-b" data-sort="lowest_market_cap">Lowest Market Cap <span class="sort-icon">↕</span></th>
+                            <th class="py-2 px-4 border-b" data-sort="timestamp">Monitoring Start <span class="sort-icon">↕</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="funbags-monitoredBody"></tbody>
+                </table>
+            </div>
+            <div class="mt-4 flex justify-between items-center">
+                <button id="funbags-monitoredPrevPage" class="bg-gray-300 px-4 py-2 rounded disabled:opacity-50">Previous</button>
+                <span>Page <span id="funbags-monitoredCurrentPage">1</span></span>
+                <button id="funbags-monitoredNextPage" class="bg-gray-300 px-4 py-2 rounded disabled:opacity-50">Next</button>
+            </div>
+            <div id="funbags-monitoredCards" class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+
+        <!-- Active Trades Section -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-semibold">Active Trades</h2>
+                <div class="flex items-center space-x-2">
+                    <input id="funbags-activeFilter" type="text" placeholder="Filter by token..." class="border p-2 rounded">
+                    <button id="funbags-topRefreshBtn" class="bg-green-500 text-white px-4 py-2 rounded">Refresh</button>
+                    <select id="funbags-activePageSize" class="border p-2 rounded">
+                        <option value="10">10 per page</option>
+                        <option value="25">25 per page</option>
+                        <option value="50">50 per page</option>
+                    </select>
                 </div>
-                <!-- Active Trades Section (Moved Up) -->
-                <div class="mb-6 section-card">
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <h2 class="text-xl text-navy">Active Trades</h2>
-                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                            <button id="funbags-topRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                                <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                            </button>
-                            <button id="funbags-exportBtn" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
-                                <i class="fas fa-file-export mr-2"></i> Export Trades
-                            </button>
-                        </div>
-                    </div>
-                    <p id="funbags-active-status" class="text-gray-700 text-sm mb-2 status">Loading active trades...</p>
-                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                        <input type="text" id="funbags-activeFilter" class="filter-input" placeholder="Filter by Token...">
-                        <select id="funbags-activePageSize" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                            <option value="10">10 per page</option>
-                            <option value="20">20 per page</option>
-                            <option value="30">30 per page</option>
-                            <option value="50">50 per page</option>
-                            <option value="100">100 per page</option>
-                        </select>
-                    </div>
-                    <div class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="funbags-activeTradesBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="funbags-activeTradesCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <button id="funbags-middleRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                        </button>
-                        <div class="flex items-center space-x-2">
-                            <span id="funbags-activePrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
-                            <span class="pagination-text text-gray-700">Page <span id="funbags-activeCurrentPage">1</span></span>
-                            <span id="funbags-activeNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
-                        </div>
-                    </div>
+            </div>
+            <p id="funbags-active-status" class="text-gray-600 mb-2">Loading active trades...</p>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white border">
+                    <thead>
+                        <tr>
+                            <th class="py-2 px-4 border-b" data-sort="token_name">Token <span class="sort-icon">↕</span></th>
+                            <th class="py-2 px-4 border-b" data-sort="buy_price_usd">Buy Price (USD) <span class="sort-icon">↕</span></th>
+                            <th class="py-2 px-4 border-b" data-sort="current_price_usd">Current Price (USD) <span class="sort-icon">↕</span></th>
+                            <th class="py-2 px-4 border-b" data-sort="market_cap">Market Cap <span class="sort-icon">↕</span></th>
+                            <th class="py-2 px-4 border-b" data-sort="profit">Profit (%) <span class="sort-icon">↕</span></th>
+                            <th class="py-2 px-4 border-b" data-sort="buy_timestamp">Buy Time <span class="sort-icon">↕</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="funbags-activeTradesBody"></tbody>
+                </table>
+            </div>
+            <div class="mt-4 flex justify-between items-center">
+                <button id="funbags-activePrevPage" class="bg-gray-300 px-4 py-2 rounded disabled:opacity-50">Previous</button>
+                <span>Page <span id="funbags-activeCurrentPage">1</span></span>
+                <button id="funbags-activeNextPage" class="bg-gray-300 px-4 py-2 rounded disabled:opacity-50">Next</button>
+            </div>
+            <div id="funbags-activeTradesCards" class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            <button id="funbags-middleRefreshBtn" class="mt-4 bg-green-500 text-white px-4 py-2 rounded">Refresh</button>
+        </div>
+
+        <!-- Completed Trades Section -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-semibold">Completed Trades</h2>
+                <div class="flex items-center space-x-2">
+                    <input id="funbags-completedFilter" type="text" placeholder="Filter by token..." class="border p-2 rounded">
+                    <select id="funbags-profitFilter" class="border p-2 rounded">
+                        <option value="all">All Profits</option>
+                        <option value="positive">Positive Profits</option>
+                        <option value="negative">Negative Profits</option>
+                    </select>
+                    <button id="funbags-exportBtn" class="bg-blue-500 text-white px-4 py-2 rounded">Export CSV</button>
+                    <select id="funbags-completedPageSize" class="border p-2 rounded">
+                        <option value="10">10 per page</option>
+                        <option value="25">25 per page</option>
+                        <option value="50">50 per page</option>
+                    </select>
                 </div>
-                <!-- Monitored Coins Section (Moved Down) -->
-                <div class="mb-6 section-card">
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <h2 class="text-xl text-navy">Monitored Coins</h2>
-                        <button id="funbags-monitoredRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Monitored
-                        </button>
-                    </div>
-                    <p id="funbags-monitored-status" class="text-gray-700 text-sm mb-2 status">Loading monitored coins...</p>
-                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                        <input type="text" id="funbags-monitoredFilter" class="filter-input" placeholder="Filter by Token...">
-                        <select id="funbags-monitoredPageSize" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                            <option value="10">10 per page</option>
-                            <option value="20">20 per page</option>
-                            <option value="30">30 per page</option>
-                            <option value="50">50 per page</option>
-                            <option value="100">100 per page</option>
-                        </select>
-                    </div>
-                    <div class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="lowest_market_cap">Lowest Market Cap (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="timestamp">Monitoring Start<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="funbags-monitoredBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="funbags-monitoredCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <div class="flex items-center space-x-2">
-                            <span id="funbags-monitoredPrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
-                            <span class="pagination-text text-gray-700">Page <span id="funbags-monitoredCurrentPage">1</span></span>
-                            <span id="funbags-monitoredNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
-                        </div>
-                    </div>
-                </div>
-                <!-- Completed Trades Section (Unchanged) -->
-                <div class="mb-6 section-card">
-                    <h2 class="text-xl text-navy mb-4">Completed Trades</h2>
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <p id="funbags-completed-status" class="text-gray-700 text-sm mb-2 sm:mb-0 status">Loading completed trades...</p>
-                        <select id="funbags-profitFilter" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                            <option value="all">All Trades</option>
-                            <option value="positive">Positive Profit</option>
-                            <option value="negative">Negative Profit</option>
-                        </select>
-                    </div>
-                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                        <input type="text" id="funbags-completedFilter" class="filter-input" placeholder="Filter by Token...">
-                        <select id="funbags-completedPageSize" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                            <option value="10">10 per page</option>
-                            <option value="20">20 per page</option>
-                            <option value="30">30 per page</option>
-                            <option value="50">50 per page</option>
-                            <option value="100">100 per page</option>
-                        </select>
-                    </div>
-                    <div id="funbags-completedTableContainer" class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="sell_price_usd">Sell Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
-                                    <th data-sort="total_profit_usd">Total Profit (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
-                                    <th data-sort="sell_timestamp">Sell Time<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="funbags-completedTradesBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="funbags-completedTradesCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <div class="flex items-center space-x-2">
-                            <span id="funbags-completedPrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
-                            <span class="pagination-text text-gray-700">Page <span id="funbags-completedCurrentPage">1</span></span>
-                            <span id="funbags-completedNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
-                        </div>
-                        <button id="funbags-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                        </button>
-                    </div>
-                </div>
+            </div>
+            <p id="funbags-completed-status" class="text-gray-600 mb-2">Loading completed trades...</p>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white border">
+                    <thead>
+                        <tr>
+                            <th class="py-2 px-4 border-b" data-sort="token_name">Token <span class="sort-icon">↕</span></th>
+                            <th class="py-2 px-4 border-b" data-sort="buy_price_usd">Buy Price (USD) <span class="sort-icon">↕</span></th>
+                            <th class="py-2 px-4 border-b" data-sort="sell_price_usd">Sell Price (USD) <span class="sort-icon">↕</span></th>
+                            <th class="py-2 px-4 border-b" data-sort="profit">Profit (%) <span class="sort-icon">↕</span></th>
+                            <th class="py-2 px-4 border-b" data-sort="total_profit_usd">Total Profit (USD) <span class="sort-icon">↕</span></th>
+                            <th class="py-2 px-4 border-b" data-sort="buy_timestamp">Buy Time <span class="sort-icon">↕</span></th>
+                            <th class="py-2 px-4 border-b" data-sort="sell_timestamp">Sell Time <span class="sort-icon">↕</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="funbags-completedTradesBody"></tbody>
+                </table>
+            </div>
+            <div class="mt-4 flex justify-between items-center">
+                <button id="funbags-completedPrevPage" class="bg-gray-300 px-4 py-2 rounded disabled:opacity-50">Previous</button>
+                <span>Page <span id="funbags-completedCurrentPage">1</span></span>
+                <button id="funbags-completedNextPage" class="bg-gray-300 px-4 py-2 rounded disabled:opacity-50">Next</button>
+            </div>
+            <div id="funbags-completedTradesCards" class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            <div class="mt-4">
+                <p class="text-lg font-semibold">Total Profit: <span id="funbags-totalProfit">$0.00</span></p>
+                <button id="funbags-bottomRefreshBtn" class="bg-green-500 text-white px-4 py-2 rounded">Refresh</button>
             </div>
         </div>
     </div>
 </body>
 </html>
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Open+Sans:wght@400;600&display=swap');
     body {
-        font-family: 'Open Sans', sans-serif;
-        background-color: #f4f7fa;
-        color: #2d3748;
-        transition: background-color 0.3s, color 0.3s;
+        font-family: Arial, sans-serif;
     }
-    h1, h2 {
-        font-family: 'Poppins', sans-serif;
-        font-weight: 600;
-    }
-    select {
-        font-family: 'Open Sans', sans-serif;
-        font-size: 0.875rem;
-    }
-    .sexy {
-        background-color: #1a0033;
-        color: #f8d1e9;
-    }
-    .sexy .bg-light {
-        background-color: #4b0082;
-    }
-    .sexy .text-gray-700 {
-        color: #f8d1e9;
-    }
-    .sexy select {
-        background-color: #4b0082;
-        color: #f8d1e9;
-        border-color: #ff69b4;
-    }
-    .sexy .bg-teal-600 {
-        background: linear-gradient(145deg, #ff69b4, #c71585);
-    }
-    .sexy .hover\:bg-teal-700:hover {
-        background: linear-gradient(145deg, #c71585, #ff69b4);
-    }
-    .sexy .profit-positive {
-        color: #98fb98;
-    }
-    .sexy .profit-negative {
-        color: #ff4040;
-    }
-    .sexy .card {
-        background-color: #4b0082;
-        border-color: #ff69b4;
-    }
-    .sexy .card:hover {
-        background-color: #6a0dad;
-        transform: translateY(-3px);
-    }
-    .sexy th {
-        background-color: #2e004f;
-    }
-    .sexy tr:nth-child(even) {
-        background-color: #4b0082;
-    }
-    .sexy tr:hover {
-        background-color: #6a0dad;
-        border-left: 3px solid #ff69b4;
-    }
-    .table-container {
-        overflow-x: auto;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        position: relative;
-    }
-    .sexy .table-container {
-        box-shadow: 0 2px 10px rgba(255, 105, 180, 0.5);
-        border: 1px solid #ff69b4;
-    }
-    .loading::after {
-        content: '';
-        display: inline-block;
-        width: 16px;
-        height: 16px;
-        border: 2px solid #2c7a7b;
-        border-top-color: transparent;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin-left: 8px;
-    }
-    .sexy .loading::after {
-        border-color: #ff69b4;
-        border-top-color: transparent;
-    }
-    @keyframes spin {
-        to { transform: rotate(360deg); }
+    .container {
+        max-width: 1200px;
     }
     table {
-        border-collapse: collapse;
         width: 100%;
+        border-collapse: collapse;
     }
     th, td {
         text-align: left;
         padding: 12px;
-        border: 1px solid #e2e8f0;
-    }
-    .sexy th, .sexy td {
-        border-color: #ff69b4;
     }
     th {
-        background-color: #1e2a44;
-        color: #ffffff;
-        font-size: 0.85rem;
-        white-space: nowrap;
-        position: sticky;
-        top: 0;
-        z-index: 10;
+        background-color: #f4f4f4;
         cursor: pointer;
     }
     th:hover {
-        background-color: #285e61;
-    }
-    .sexy th:hover {
-        background-color: #6a0dad;
+        background-color: #e0e0e0;
     }
     tr:nth-child(even) {
-        background-color: #edf2f7;
+        background-color: #f9f9f9;
     }
     tr:hover {
-        background-color: #e6fffa;
-        border-left: 3px solid #2c7a7b;
-        transition: all 0.2s ease;
+        background-color: #f1f1f1;
     }
-    .pagination-arrow {
-        cursor: pointer;
-        padding: 8px;
-        color: #2c7a7b;
-        font-size: 1.5rem;
-        min-width: 44px;
-        min-height: 44px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: color 0.2s;
+    .sort-icon {
+        display: inline-block;
+        width: 12px;
+        text-align: center;
     }
-    .sexy .pagination-arrow {
-        color: #ff69b4;
-    }
-    .pagination-arrow:hover:not(.disabled) {
-        color: #285e61;
-    }
-    .sexy .pagination-arrow:hover:not(.disabled) {
-        color: #c71585;
-    }
-    .pagination-arrow.disabled {
-        color: #a0aec0;
-        cursor: not-allowed;
-    }
-    a {
-        color: #2c7a7b;
-        text-decoration: none;
-    }
-    a:hover {
-        text-decoration: underline;
-    }
-    .sexy a {
-        color: #ff69b4;
-    }
-    .profit-positive {
-        color: #38a169;
-        font-weight: 600;
-    }
-    .profit-negative {
-        color: #e53e3e;
-        font-weight: 600;
-    }
-    .card {
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 12px;
-        margin-bottom: 12px;
-        background-color: #ffffff;
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-    }
-    .card-label {
-        font-weight: 600;
-        color: #1e2a44;
-        margin-right: 8px;
-    }
-    .sexy .card-label {
-        color: #f8d1e9;
-    }
-    .btn {
-        transition: transform 0.2s, background-color 0.2s;
-    }
-    .btn:hover {
-        transform: translateY(-2px);
-    }
-    .section-card {
-        background: linear-gradient(145deg, #ffffff, #edf2f7);
-        border-radius: 12px;
-        padding: 24px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    }
-    .sexy .section-card {
-        background: linear-gradient(145deg, #4b0082, #1a0033);
-        box-shadow: 0 4px 20px rgba(255, 105, 180, 0.5);
-    }
-    .filter-input {
-        width: 100%;
-        padding: 8px;
-        margin-bottom: 12px;
-        border: 1px solid #e2e8f0;
-        border-radius: 4px;
-        font-size: 0.875rem;
-    }
-    .sexy .filter-input {
-        background-color: #4b0082;
-        color: #f8d1e9;
-        border-color: #ff69b4;
-    }
-    .sort-icon::after {
-        content: '↕';
-        margin-left: 5px;
-        font-size: 0.8rem;
-    }
-    .sort-asc::after {
+    .sort-asc .sort-icon::after {
         content: '↑';
     }
-    .sort-desc::after {
+    .sort-desc .sort-icon::after {
         content: '↓';
     }
-    @media (max-width: 640px) {
-        .container {
-            padding: 1rem;
-        }
-        h1 {
-            font-size: 1.75rem;
-        }
-        .btn {
-            padding: 10px 16px;
-            font-size: 0.875rem;
-            min-height: 48px;
-            width: 100%;
-        }
-        .pagination-arrow {
-            padding: 6px;
-            font-size: 1.25rem;
-        }
-        .pagination-text {
-            font-size: 0.875rem;
-        }
-        .status {
-            font-size: 0.875rem;
-            margin-top: 1.5rem;
-        }
-        .table-container {
-            display: none;
-        }
-        .card-container {
-            display: block;
-        }
-        .filter-input {
-            font-size: 0.8rem;
-        }
+    .card {
+        background-color: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 16px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    @media (min-width: 641px) {
-        .card-container {
-            display: none;
-        }
+    .card p {
+        margin: 8px 0;
     }
-    @media (max-width: 400px) {
-        .card {
-            padding: 10px;
-            font-size: 0.8rem;
-        }
-        .card-label, .card-value {
-            font-size: 0.8rem;
-        }
+    .card-label {
+        font-weight: bold;
+        color: #555;
     }
-    @media (max-width: 1024px) and (min-width: 641px) {
-        th, td {
-            padding: 10px;
-            font-size: 0.875rem;
-        }
-        .btn {
-            padding: 10px 20px;
-            font-size: 0.875rem;
-        }
-        .filter-input {
-            font-size: 0.85rem;
-        }
+    .loading::after {
+        content: ' ⏳';
+    }
+    .profit-positive {
+        color: green;
+        font-weight: bold;
+    }
+    .profit-negative {
+        color: red;
+        font-weight: bold;
+    }
+    .disabled {
+        pointer-events: none;
+        opacity: 0.5;
+    }
+    .sexy {
+        background-color: #1a1a1a;
+        color: #fff;
+    }
+    .sexy h1, .sexy h2 {
+        color: #ff69b4;
+    }
+    .sexy .bg-white {
+        background-color: #2a2a2a;
+        border-color: #444;
+    }
+    .sexy .bg-gray-100 {
+        background-color: #1a1a1a;
+    }
+    .sexy .text-gray-600 {
+        color: #ccc;
+    }
+    .sexy th {
+        background-color: #333;
+        color: #fff;
+    }
+    .sexy tr:nth-child(even) {
+        background-color: #2f2f2f;
+    }
+    .sexy tr:hover {
+        background-color: #3a3a3a;
+    }
+    .sexy .card {
+        background-color: #2a2a2a;
+        border-color: #444;
+        box-shadow: 0 2px 4px rgba(255,105,180,0.2);
+    }
+    .sexy .card-label {
+        color: #ff69b4;
+    }
+    .token-cell {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px;
+    }
+    .token-icon {
+        width: 24px;
+        height: 24px;
+        margin-left: 8px;
+        vertical-align: middle;
+        display: none; /* Hide until loaded */
+    }
+    .token-icon.loaded {
+        display: inline-block; /* Show when loaded */
+    }
+    .card .token-icon {
+        margin-left: 8px;
+        vertical-align: middle;
+        display: none;
+    }
+    .card .token-icon.loaded {
+        display: inline-block;
+    }
+    .sexy .token-cell a {
+        color: #ff69b4;
+    }
+    .sexy .token-icon {
+        filter: brightness(1.2);
     }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -507,7 +315,7 @@
             funbags: { monitored: [], active: [], completed: [] }
         };
 
-        // Cache for token names
+        // Cache for token metadata
         const tokenNameCache = new Map();
 
         // Retry mechanism for Supabase queries
@@ -539,43 +347,86 @@
                 return tokenNameCache.get(tokenAddress);
             }
 
-            const url = `https://solana-gateway.moralis.io/token/mainnet/${tokenAddress}/metadata`;
-            const moralisOptions = {
-                method: 'GET',
-                headers: {
-                    accept: 'application/json',
-                    'X-API-Key': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjZhMjdlMWU0LWUwNGEtNGRiNC05ZjQ5LTU4MjFkNGU2MmEzMiIsIm9yZ0lkIjoiNDQ3NjY4IiwidXNlcklkIjoiNDYwNTkzIiwidHlwZUlkIjoiMGRjZmM0ZTctNzhkOC00YzRhLWE2YzgtYzc2OWRiMTdkMzk3IiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NDc1MjU1NjAsImV4cCI6NDkwMzI4NTU2MH0.2CVGa61MAN5zUvbh8yssfNZdNSTORl1GBYXXBs2nJbM'
-                }
-            };
             try {
                 if (!tokenAddress || typeof tokenAddress !== 'string' || tokenAddress.length < 10) {
                     throw new Error('Invalid token address');
                 }
-                const response = await fetch(url, moralisOptions);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+
+                // Check Supabase for metadata
+                const { data: tokenState, error: tokenError } = await supabase
+                    .from('token_states')
+                    .select('token_address, token_name, icon_url')
+                    .eq('token_address', tokenAddress)
+                    .single();
+                if (tokenError && !tokenError.message.includes('0 rows')) {
+                    console.warn(`Supabase error for ${tokenAddress}:`, tokenError.message);
                 }
-                const data = await response.json();
-                const marketCap = parseFloat(data.price) * 1_000_000_000 || 0;
-                const price = parseFloat(data.price) || 0;
-                const name = data.name || data.symbol || tokenAddress.slice(0, 8);
-                const result = { marketCap, price, name };
+
+                let name = tokenState?.token_name || null;
+                let iconUrl = tokenState?.icon_url || null;
+                let marketCap = 0;
+                let price = 0;
+
+                // Fetch from CoinGecko if metadata missing
+                if (!name || !iconUrl) {
+                    const coingeckoUrl = `https://api.coingecko.com/api/v3/coins/solana/contract/${tokenAddress}`;
+                    const response = await fetch(coingeckoUrl);
+                    if (response.ok) {
+                        const data = await response.json();
+                        name = data.name || data.symbol || null;
+                        marketCap = data.market_data?.market_cap?.usd || 0;
+                        price = data.market_data?.current_price?.usd || 0;
+                        iconUrl = data.image?.thumb || null;
+
+                        // Save to Supabase
+                        if (name || iconUrl) {
+                            const updateData = {};
+                            if (name) updateData.token_name = name;
+                            if (iconUrl) updateData.icon_url = iconUrl;
+                            const { error: updateError } = await supabase
+                                .from('token_states')
+                                .update(updateData)
+                                .eq('token_address', tokenAddress);
+                            if (updateError) {
+                                console.warn(`Failed to save metadata for ${tokenAddress}:`, updateError.message);
+                            } else {
+                                console.log(`Saved metadata for ${tokenAddress} to Supabase`);
+                            }
+                        }
+                    } else {
+                        console.warn(`CoinGecko API error for ${tokenAddress}: ${response.status}`);
+                    }
+                }
+
+                // Fallback values
+                const fallbackIcon = 'https://via.placeholder.com/24?text=C';
+                const result = {
+                    marketCap: marketCap || 0,
+                    price: price || 0,
+                    name: name || 'Unknown Token',
+                    icon: iconUrl || fallbackIcon
+                };
                 tokenNameCache.set(tokenAddress, result);
                 return result;
             } catch (error) {
                 console.error(`Error fetching token data for ${tokenAddress}:`, error.message);
-                const fallback = { marketCap: 0, price: 0, name: tokenAddress.slice(0, 8) };
+                const fallbackIcon = 'https://via.placeholder.com/24?text=C';
+                const fallback = {
+                    marketCap: 0,
+                    price: 0,
+                    name: 'Unknown Token',
+                    icon: fallbackIcon
+                };
                 tokenNameCache.set(tokenAddress, fallback);
                 return fallback;
             }
         }
-
-        async function fetchMonitoredCoins() {
+                async function fetchMonitoredCoins() {
             console.log(`Fetching all monitored coins`);
             try {
                 const { data: monitoredCoins, error, count } = await withRetry(async () => await supabase
                     .from('token_states')
-                    .select('token_address, max_market_cap, lowest_market_cap, within_range_start_time, is_bonding', { count: 'exact' })
+                    .select('token_address, max_market_cap, lowest_market_cap, within_range_start_time, is_bonding, token_name, icon_url', { count: 'exact' })
                     .eq('monitoring', true)
                     .eq('bought', false)
                     .order('within_range_start_time', { ascending: false })
@@ -589,11 +440,12 @@
                     const price = marketCap / 1_000_000_000;
                     return {
                         token_address: coin.token_address || '-',
-                        token_name: tokenData.name,
+                        token_name: coin.token_name || tokenData.name,
                         market_cap: marketCap,
                         current_price_usd: price,
                         lowest_market_cap: parseFloat(coin.lowest_market_cap) || 999999999,
-                        timestamp: coin.within_range_start_time ? new Date(parseInt(coin.within_range_start_time)).toISOString() : new Date().toISOString()
+                        timestamp: coin.within_range_start_time ? new Date(parseInt(coin.within_range_start_time)).toISOString() : new Date().toISOString(),
+                        icon: coin.icon_url || tokenData.icon
                     };
                 }));
 
@@ -671,10 +523,14 @@
                         const currentPrice = coin.current_price_usd || 0;
                         const lowestMarketCap = coin.lowest_market_cap || 999999999;
                         const timestamp = coin.timestamp ? new Date(coin.timestamp).toLocaleString() : '-';
+                        const iconUrl = coin.icon || 'https://via.placeholder.com/24?text=C';
 
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
+                            <td class="token-cell">
+                                <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a>
+                                <img src="${iconUrl}" alt="${tokenName} icon" class="token-icon" onload="this.classList.add('loaded')" onerror="this.src='https://via.placeholder.com/24?text=C';this.classList.add('loaded')">
+                            </td>
                             <td>$${marketCap.toLocaleString()}</td>
                             <td>$${currentPrice.toFixed(8)}</td>
                             <td>$${lowestMarketCap.toLocaleString()}</td>
@@ -685,7 +541,10 @@
                         const card = document.createElement('div');
                         card.className = 'card';
                         card.innerHTML = `
-                            <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></p>
+                            <p><span class="card-label">Token:</span> 
+                                <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a>
+                                <img src="${iconUrl}" alt="${tokenName} icon" class="token-icon" onload="this.classList.add('loaded')" onerror="this.src='https://via.placeholder.com/24?text=C';this.classList.add('loaded')">
+                            </p>
                             <p><span class="card-label">Market Cap:</span> $${marketCap.toLocaleString()}</p>
                             <p><span class="card-label">Current Price:</span> $${currentPrice.toFixed(8)}</p>
                             <p><span class="card-label">Lowest Market Cap:</span> $${lowestMarketCap.toLocaleString()}</p>
@@ -766,7 +625,7 @@
                 console.log('Fetching active trades');
                 const { data: tokenStates, error: tokenError, count: tokenCount } = await withRetry(async () => await supabase
                     .from('token_states')
-                    .select('token_address, purchase_price, amount, sold50, buy_market_cap', { count: 'exact' })
+                    .select('token_address, purchase_price, amount, sold50, buy_market_cap, token_name, icon_url', { count: 'exact' })
                     .eq('bought', true)
                     .gt('amount', 0)
                 );
@@ -798,14 +657,15 @@
                         const profitPercent = buyPrice !== 0 && currentPrice !== 0 ? (((currentPrice - buyPrice) / buyPrice) * 100).toFixed(2) : '0';
                         return {
                             token_address: state.token_address,
-                            token_name: tokenData.name,
+                            token_name: state.token_name || tokenData.name,
                             buy_price_usd: buyPrice,
                             current_price_usd: currentPrice,
                             market_cap: marketCap,
                             profit: profitPercent,
                             buy_timestamp: buyLog.timestamp || null,
                             status: state.sold50 ? 'partial_sold' : 'open',
-                            amount: parseFloat(state.amount) || 0
+                            amount: parseFloat(state.amount) || 0,
+                            icon: state.icon_url || tokenData.icon
                         };
                     } catch (error) {
                         console.error(`Error processing active trade for ${state.token_address || 'unknown'}:`, error);
@@ -847,7 +707,7 @@
 
                         const { data: buyState, error: buyStateError } = await supabase
                             .from('token_states')
-                            .select('purchase_price, buy_market_cap')
+                            .select('purchase_price, buy_market_cap, token_name, icon_url')
                             .eq('token_address', tokenAddress)
                             .single();
                         if (buyStateError) console.warn(`No token_state for ${tokenAddress}:`, buyStateError);
@@ -868,13 +728,14 @@
 
                         return {
                             token_address: tokenAddress,
-                            token_name: tokenData.name,
+                            token_name: buyState?.token_name || tokenData.name,
                             buy_price_usd: buyPrice,
                             sell_price_usd: avgSellPrice,
                             profit: profitPercent,
                             total_profit_usd: profitUsd,
                             buy_timestamp: buyLog.timestamp || null,
-                            sell_timestamp: sells[0].timestamp || null
+                            sell_timestamp: sells[0].timestamp || null,
+                            icon: buyState?.icon_url || tokenData.icon
                         };
                     } catch (error) {
                         console.error(`Error processing completed trade for ${tokenAddress}:`, error);
@@ -930,10 +791,14 @@
                         const marketCap = trade.market_cap || 0;
                         const profit = trade.profit || '0';
                         const buyTime = trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-';
+                        const iconUrl = trade.icon || 'https://via.placeholder.com/24?text=C';
 
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
+                            <td class="token-cell">
+                                <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a>
+                                <img src="${iconUrl}" alt="${tokenName} icon" class="token-icon" onload="this.classList.add('loaded')" onerror="this.src='https://via.placeholder.com/24?text=C';this.classList.add('loaded')">
+                            </td>
                             <td>$${buyPrice.toFixed(8)}</td>
                             <td>$${currentPrice.toFixed(8)}</td>
                             <td>$${marketCap.toLocaleString()}</td>
@@ -945,7 +810,10 @@
                         const card = document.createElement('div');
                         card.className = 'card';
                         card.innerHTML = `
-                            <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></p>
+                            <p><span class="card-label">Token:</span> 
+                                <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a>
+                                <img src="${iconUrl}" alt="${tokenName} icon" class="token-icon" onload="this.classList.add('loaded')" onerror="this.src='https://via.placeholder.com/24?text=C';this.classList.add('loaded')">
+                            </p>
                             <p><span class="card-label">Buy Price:</span> $${buyPrice.toFixed(8)}</p>
                             <p><span class="card-label">Current Price:</span> $${currentPrice.toFixed(8)}</p>
                             <p><span class="card-label">Market Cap:</span> $${marketCap.toLocaleString()}</p>
@@ -1004,10 +872,14 @@
                         const totalProfit = trade.total_profit_usd || 0;
                         const buyTime = trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-';
                         const sellTime = trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-';
+                        const iconUrl = trade.icon || 'https://via.placeholder.com/24?text=C';
 
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td><a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></td>
+                            <td class="token-cell">
+                                <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a>
+                                <img src="${iconUrl}" alt="${tokenName} icon" class="token-icon" onload="this.classList.add('loaded')" onerror="this.src='https://via.placeholder.com/24?text=C';this.classList.add('loaded')">
+                            </td>
                             <td>$${buyPrice.toFixed(8)}</td>
                             <td>$${sellPrice.toFixed(8)}</td>
                             <td class="${profit >= 0 ? 'profit-positive' : 'profit-negative'}">${profit}%</td>
@@ -1020,7 +892,10 @@
                         const card = document.createElement('div');
                         card.className = 'card';
                         card.innerHTML = `
-                            <p><span class="card-label">Token:</span> <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a></p>
+                            <p><span class="card-label">Token:</span> 
+                                <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a>
+                                <img src="${iconUrl}" alt="${tokenName} icon" class="token-icon" onload="this.classList.add('loaded')" onerror="this.src='https://via.placeholder.com/24?text=C';this.classList.add('loaded')">
+                            </p>
                             <p><span class="card-label">Buy Price:</span> $${buyPrice.toFixed(8)}</p>
                             <p><span class="card-label">Sell Price:</span> $${sellPrice.toFixed(8)}</p>
                             <p><span class="card-label">Profit:</span> <span class="${profit >= 0 ? 'profit-positive' : 'profit-negative'}">${profit}%</span></p>
@@ -1265,5 +1140,25 @@
         // Initial load
         refreshMonitoredCoins(1);
         refreshTrades(1, 1);
+
+        // One-time script to populate token_name and icon_url
+        async function populateTokenMetadata() {
+            console.log('Populating token metadata for existing tokens');
+            const { data: tokens, error } = await supabase
+                .from('token_states')
+                .select('token_address')
+                .or('token_name.is.null,icon_url.is.null');
+            if (error) {
+                console.error('Error fetching tokens for metadata population:', error);
+                return;
+            }
+            console.log(`Found ${tokens.length} tokens needing metadata`);
+            for (const token of tokens) {
+                await fetchTokenData(token.token_address);
+            }
+            console.log('Metadata population complete');
+        }
+        // Uncomment to run once
+        // populateTokenMetadata();
     });
 </script>
