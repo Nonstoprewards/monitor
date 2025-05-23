@@ -248,7 +248,6 @@
     .token-cell {
         display: flex;
         align-items: center;
-        justify-content: space-between;
         padding: 12px;
     }
     .token-icon {
@@ -256,10 +255,10 @@
         height: 24px;
         margin-left: 8px;
         vertical-align: middle;
-        display: none; /* Hide until loaded */
+        display: none;
     }
     .token-icon.loaded {
-        display: inline-block; /* Show when loaded */
+        display: inline-block;
     }
     .card .token-icon {
         margin-left: 8px;
@@ -608,9 +607,10 @@
             const activeCurrentPage = document.getElementById(`${prefix}-activeCurrentPage`);
             const completedCurrentPage = document.getElementById(`${prefix}-completedCurrentPage`);
 
-            if (!activeStatus || !completedStatus || !activeTradesBody || !activeTradesCards || !completedTradesBody || !completedTradesCards || !totalProfitElement || !activeTable || !completedTable || !activePrevPage || !activeNextPage || !completedPrevPage || !completedNextPage || !activeCurrentPage || !completedCurrentPage) {
+            if (!activeStatus || !activeTradesBody || !activeTradesCards || !completedStatus || !completedTradesBody || !completedTradesCards || !totalProfitElement || !activeTable || !completedTable || !activePrevPage || !activeNextPage || !completedPrevPage || !completedNextPage || !activeCurrentPage || !completedCurrentPage) {
                 console.error(`Missing DOM elements for funbags`);
-                alert(`Failed to load Fun Bags dashboard. Check console for details.`);
+                activeStatus.textContent = 'Error: Missing DOM elements';
+                completedStatus.textContent = 'Error: Missing DOM elements';
                 return;
             }
 
@@ -629,7 +629,7 @@
                     .eq('bought', true)
                     .gt('amount', 0)
                 );
-                if (tokenError) throw new Error(`Failed to fetch token states: ${tokenError.message}`);
+                if (tokenError) throw new Error(`Failed to fetch token states: ${error.message}`);
                 console.log(`Active trades count: ${tokenCount}, data length: ${tokenStates?.length}`);
 
                 const { data: buyLogs, error: buyLogError } = await withRetry(async () => await supabase
@@ -995,7 +995,7 @@
             refreshTrades(pageStates.funbags.active, pageStates.funbags.completed);
         });
 
-        document.getElementById('funbags-completedPrevPage').addEventListener('click', () => {
+        document.getElementById('fun AscentButton(() => {
             if (pageStates.funbags.completed > 1) {
                 pageStates.funbags.completed--;
                 refreshTrades(pageStates.funbags.active, pageStates.funbags.completed);
