@@ -367,7 +367,7 @@
             color: #f8d1e9;
         }
         .btn {
-            transition: transform 0.2s, background-color 0.2s;
+            transition: transform BEFORE: 0.2s, background-color 0.2s;
         }
         .btn:hover {
             transform: translateY(-2px);
@@ -513,6 +513,94 @@
                 return;
             }
 
+            // Moralis API configuration
+            const MORALIS_API = 'https://solana-gateway.moralis.io';
+            const MORALIS_API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjZhMjdlMWU0LWUwNGEtNGRiNC05ZjQ5LTU4MjFkNGU2MmEzMiIsIm9yZ0lkIjoiNDQ3NjY4IiwidXNlcklkIjoiNDYwNTkzIiwidHlwZUlkIjoiMGRjZmM0ZTctNzhkOC00YzRhLWE2YzgtYzc2OWRiMTdkMzk3IiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NDc1MjU1NjAsImV4cCI6NDkwMzI4NTU2MH0.2CVGa61MAN5zUvbh8yssfNZdNSTORl1GBYXXBs2nJbM';
+            const MORALIS_CACHE_KEY = 'moralisTokenCache';
+            let moralisTokenMap = new Map();
+
+            // Load Moralis cache from localStorage
+            function loadMoralisCache() {
+                try {
+                    const cached = localStorage.getItem(MORALIS_CACHE_KEY);
+                    return cached ? new Map(JSON.parse(cached)) : new Map();
+                } catch (error) {
+                    console.error('Error loading Moralis cache:', error);
+                    return new Map();
+                }
+            }
+
+            // Save Moralis cache to localStorage
+            function saveMoralisCache(cache) {
+                try {
+                    const serialized = JSON.stringify(Array.from(cache.entries()));
+                    localStorage.setItem(MORALIS_CACHE_KEY, serialized);
+                } catch (error) {
+                    console.error('Error saving Moralis cache:', error);
+                }
+            }
+
+            // Fetch token data from Moralis
+            async function fetchMoralisTokenData() {
+                console.log('Fetching Moralis token data');
+                try {
+                    const response = await fetch(`${MORALIS_API}/token/mainnet/exchange/pumpfun/bonding?limit=100`, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-API-Key': MORALIS_API_KEY
+                        }
+                    });
+                    if (!response.ok) {
+                        throw new Error(`Moralis API error: HTTP ${response.status}`);
+                    }
+                    const data = await response.json();
+                    console.log('Moralis data fetched:', data.result?.length || 0, 'tokens');
+
+                    const tokenMap = new Map();
+                    (data.result || []).forEach(token => {
+                        if (token.tokenAddress) {
+                            tokenMap.set(token.tokenAddress, {
+                                name: token.name?.trim() || token.tokenAddress.slice(0, 8),
+                                iconUrl: token.logo || ''
+                            });
+                        }
+                    });
+
+                    // Upsert to Supabase
+                    const upsertData = Array.from(tokenMap.entries()).map(([tokenAddress, { name, iconUrl }]) => ({
+                        token_address: tokenAddress,
+                        token_name: name,
+                        icon_url: iconUrl,
+                        updated_at: new Date().toISOString()
+                    }));
+                    try {
+                        const { error: upsertError } = await supabase
+                            .from('token_states')
+                            .upsert(upsertData, { onConflict: 'token_address' });
+                        if (upsertError) {
+                            console.error('Error upserting Moralis data to Supabase:', {
+                                message: upsertError.message,
+                                code: upsertError.code,
+                                details: upsertError.details
+                            });
+                        } else {
+                            console.log(`Upserted ${upsertData.length} tokens to Supabase`);
+                        }
+                    } catch (error) {
+                        console.error('Error saving Moralis data to Supabase:', error);
+                    }
+
+                    // Update cache
+                    moralisTokenMap = tokenMap;
+                    saveMoralisCache(tokenMap);
+                    return tokenMap;
+                } catch (error) {
+                    console.error('Error fetching Moralis token data:', error);
+                    return loadMoralisCache();
+                }
+            }
+
             // Sorting and Filtering States
             const sortStates = {
                 funbags: { active: {}, completed: {}, monitored: {} }
@@ -533,32 +621,6 @@
 
             // Cache for token names
             const tokenNameCache = new Map();
-
-            // Rate limit handling for CoinGecko (30 RPM = 1 call every 2 seconds)
-            const requestQueue = [];
-            let lastRequestTime = 0;
-            const minRequestInterval = 2000; // 2000ms = 30 requests per 60s
-
-            async function queueCoinGeckoRequest(url) {
-                const now = Date.now();
-                const timeSinceLast = now - lastRequestTime;
-                if (timeSinceLast < minRequestInterval) {
-                    await new Promise(resolve => setTimeout(resolve, minRequestInterval - timeSinceLast));
-                }
-                try {
-                    const response = await fetch(url, {
-                        headers: {
-                            'Accept': 'application/json',
-                            'x-cg-demo-api-key': 'CG-fBxQuGw5A3xbZd9GqvgLXrF7'
-                        }
-                    });
-                    lastRequestTime = Date.now();
-                    return response;
-                } catch (error) {
-                    console.error('CoinGecko request error:', error);
-                    throw error;
-                }
-            }
 
             // Retry mechanism for Supabase queries
             async function withRetry(fn, retries = 3, delay = 1000) {
@@ -583,103 +645,99 @@
             }
 
             async function fetchTokenData(tokenAddress) {
-                console.log(`Fetching token data for ${tokenAddress}`);
+  console.log(`Fetching token data for ${tokenAddress}`);
 
-                // Check cache first
-                if (tokenNameCache.has(tokenAddress)) {
-                    console.log(`Cache hit for ${tokenAddress}`);
-                    return tokenNameCache.get(tokenAddress);
-                }
+  // Check cache
+  if (tokenNameCache.has(tokenAddress)) {
+    const cached = tokenNameCache.get(tokenAddress);
+    console.log(`Cache hit for ${tokenAddress}: name=${cached.name}, iconUrl=${cached.iconUrl}`);
+    return cached;
+  }
 
-                // Check Supabase for existing token data
-                try {
-                    const { data: tokenData, error } = await supabase
-                        .from('token_states')
-                        .select('token_name, icon_url')
-                        .eq('token_address', tokenAddress)
-                        .maybeSingle();
+  // Check Moralis map
+  if (moralisTokenMap.has(tokenAddress)) {
+    const result = moralisTokenMap.get(tokenAddress);
+    console.log(`Moralis map hit for ${tokenAddress}: name=${result.name}, iconUrl=${result.iconUrl}`);
+    if (result.name && result.name !== tokenAddress.slice(0, 8)) {
+      tokenNameCache.set(tokenAddress, result);
+      return result;
+    }
+    console.warn(`Moralis map has invalid name for ${tokenAddress}, fetching fresh data`);
+  }
 
-                    if (error) {
-                        console.error(`Supabase query error for ${tokenAddress}:`, {
-                            message: error.message,
-                            code: error.code,
-                            details: error.details,
-                            hint: error.hint
-                        });
-                    }
+  // Check Supabase
+  try {
+    const { data: tokenData, error } = await supabase
+      .from('token_states')
+      .select('token_name, icon_url')
+      .eq('token_address', tokenAddress)
+      .maybeSingle();
+    if (error) {
+      console.error(`Supabase query error for ${tokenAddress}:`, error);
+    }
+    if (tokenData && tokenData.token_name && tokenData.token_name !== tokenAddress.slice(0, 8)) {
+      const result = { name: tokenData.token_name, iconUrl: tokenData.icon_url || '' };
+      console.log(`Supabase hit for ${tokenAddress}: name=${result.name}, iconUrl=${result.iconUrl}`);
+      tokenNameCache.set(tokenAddress, result);
+      return result;
+    }
+    console.log(`No valid token data in Supabase for ${tokenAddress}`);
+  } catch (error) {
+    console.error(`Error checking Supabase for ${tokenAddress}:`, error);
+  }
 
-                    if (tokenData && tokenData.token_name) {
-                        console.log(`Supabase hit for ${tokenAddress}:`, tokenData);
-                        const result = {
-                            name: tokenData.token_name,
-                            iconUrl: tokenData.icon_url || ''
-                        };
-                        tokenNameCache.set(tokenAddress, result);
-                        return result;
-                    } else {
-                        console.log(`No token data found in Supabase for ${tokenAddress}`);
-                    }
-                } catch (error) {
-                    console.error(`Error checking Supabase for ${tokenAddress}:`, error);
-                }
+  // Fetch from Moralis metadata endpoint
+  try {
+    const response = await fetch(`${MORALIS_API}/token/mainnet/${tokenAddress}/metadata`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'X-API-Key': MORALIS_API_KEY
+      }
+    });
+    if (!response.ok) {
+      throw new Error(`Moralis API error: HTTP ${response.status}`);
+    }
+    const token = await response.json();
+    const name = token.name?.trim() || tokenAddress.slice(0, 8);
+    const iconUrl = token.logo || '';
+    console.log(`Moralis metadata fetch for ${tokenAddress}: name=${name}, iconUrl=${iconUrl}`);
 
-                // Fetch from CoinGecko API
-                try {
-                    if (!tokenAddress || typeof tokenAddress !== 'string' || tokenAddress.length < 10) {
-                        throw new Error('Invalid token address');
-                    }
+    const result = { name, iconUrl };
+    tokenNameCache.set(tokenAddress, result);
+    moralisTokenMap.set(tokenAddress, result);
+    saveMoralisCache(moralisTokenMap);
 
-                    const url = `https://api.coingecko.com/api/v3/coins/solana/contract/${tokenAddress}`;
-                    const response = await queueCoinGeckoRequest(url);
+    // Upsert to Supabase
+    try {
+      const { error: upsertError } = await supabase
+        .from('token_states')
+        .upsert({
+          token_address: tokenAddress,
+          token_name: name,
+          icon_url: iconUrl,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'token_address' });
+      if (upsertError) {
+        console.error(`Error upserting token ${tokenAddress} to Supabase:`, upsertError);
+      } else {
+        console.log(`Upserted token ${tokenAddress} to Supabase: name=${name}, iconUrl=${iconUrl}`);
+      }
+    } catch (error) {
+      console.error(`Error saving ${tokenAddress} to Supabase:`, error);
+    }
 
-                    if (!response.ok) {
-                        throw new Error(`CoinGecko API error: HTTP ${response.status}`);
-                    }
+    return result;
+  } catch (error) {
+    console.warn(`Failed to fetch Moralis metadata for ${tokenAddress}:`, error);
+  }
 
-                    const data = await response.json();
-                    console.log(`CoinGecko data for ${tokenAddress}:`, data);
-
-                    const name = data.name?.trim() || tokenAddress.slice(0, 8);
-                    const iconUrl = data.image?.large || data.image?.small || data.image?.thumb || '';
-                    console.log(`Parsed data for ${tokenAddress}:`, { name, iconUrl });
-
-                    const result = { name, iconUrl };
-                    console.log(`Fetched token data for ${tokenAddress}:`, result);
-
-                    // Store in Supabase
-                    try {
-                        const { error: upsertError } = await supabase
-                            .from('token_states')
-                            .upsert({
-                                token_address: tokenAddress,
-                                token_name: name,
-                                icon_url: iconUrl,
-                                updated_at: new Date().toISOString()
-                            }, { onConflict: 'token_address' });
-
-                        if (upsertError) {
-                            console.error(`Error upserting token data for ${tokenAddress}:`, {
-                                message: upsertError.message,
-                                code: upsertError.code,
-                                details: upsertError.details,
-                                hint: upsertError.hint
-                            });
-                        } else {
-                            console.log(`Stored token data for ${tokenAddress} in Supabase`);
-                        }
-                    } catch (error) {
-                        console.error(`Error saving to Supabase for ${tokenAddress}:`, error);
-                    }
-
-                    tokenNameCache.set(tokenAddress, result);
-                    return result;
-                } catch (error) {
-                    console.error(`Error fetching token data for ${tokenAddress}:`, error.message);
-                    const fallback = { name: tokenAddress.slice(0, 8), iconUrl: '' };
-                    tokenNameCache.set(tokenAddress, fallback);
-                    return fallback;
-                }
-            }
+  // Fallback
+  console.warn(`No token data found for ${tokenAddress}, using fallback`);
+  const fallback = { name: tokenAddress.slice(0, 8), iconUrl: '' };
+  tokenNameCache.set(tokenAddress, fallback);
+  return fallback;
+}
 
             async function fetchMonitoredCoins() {
                 console.log(`Fetching all monitored coins`);
@@ -1398,8 +1456,11 @@
             });
 
             // Initial load
-            refreshMonitoredCoins(1);
-            refreshTrades(1, 1);
+            (async () => {
+                await fetchMoralisTokenData();
+                refreshMonitoredCoins(1);
+                refreshTrades(1, 1);
+            })();
         });
     </script>
 </body>
