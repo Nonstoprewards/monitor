@@ -989,8 +989,8 @@
                 }
 
                 // Determine current price and market cap
-                const currentPrice = parseFloat(latestPriceLog.usd_price) || buyPrice; // Fallback to buy price if no price update
-                const marketCap = parseFloat(latestPriceLog.marketcap) || parseFloat(state.buy_market_cap) || (currentPrice * 1_000_000_000); // Fallback to buy market cap or estimate
+                const currentPrice = parseFloat(latestPriceLog.usd_price) || buyPrice;
+                const marketCap = parseFloat(latestPriceLog.marketcap) || parseFloat(state.buy_market_cap) || (currentPrice * 1_000_000_000);
                 const profitPercent = buyPrice !== 0 && currentPrice !== 0 ? (((currentPrice - buyPrice) / buyPrice) * 100).toFixed(2) : '0';
 
                 return {
@@ -1014,7 +1014,7 @@
         dataCache.funbags.active = activeTrades;
         const activeTotal = tokenCount || dataCache.funbags.active.length;
 
-        // Fetch completed trades (unchanged, as it’s not the focus)
+        // Fetch completed trades
         console.log('Fetching completed trades');
         const { data: sellLogsRaw, error: sellLogError, count: sellCount } = await withRetry(async () => await supabase
             .from('bot_logs')
@@ -1193,11 +1193,89 @@
             activeStatus.textContent = `Active trades loaded (${displayActiveTrades.length}/${activeTotal})`;
         }
 
+        // Render Completed Trades
+        let displayCompletedTrades = [...dataCache.funbags.completed];
+        const completedSort = { ...sortStates.funbags.completed };
+        if (Object.keys(completedSort).length > 0) {
+            const column = Object.keys(completedSort)[0];
+            const direction = completedSort[column];
+            displayCompletedTrades.sort((a, b) => {
+                let aValue = a[column];
+                let bValue = b[column];
+                if (['buy_price_usd', 'sell_price_usd', 'profit', 'total_profit_usd'].includes(column)) {
+                    aValue = parseFloat(aValue) || 0;
+                    bValue = parseFloat(bValue) || 0;
+                } else if (['buy_timestamp', 'sell_timestamp'].includes(column)) {
+                    aValue = aValue ? new Date(aValue).getTime() : 0;
+                    bValue = bValue ? new Date(bValue).getTime() : 0;
+                } else {
+                    aValue = aValue ? aValue.toString().toLowerCase() : '';
+                    bValue = bValue ? bValue.toString().toLowerCase() : '';
+                }
+                const comparison = aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+                return direction === 'asc' ? comparison : -comparison;
+            });
+        }
+
+        const completedStart = (completedPage - 1) * pageSizes.funbags.completed;
+        const completedEnd = completedStart + pageSizes.funbags.completed;
+        displayCompletedTrades = displayCompletedTrades.slice(completedStart, completedEnd);
+
+        completedTradesBody.innerHTML = '';
+        completedTradesCards.innerHTML = '';
+        if (displayCompletedTrades.length === 0) {
+            completedStatus.textContent = 'No completed trades found';
+            completedTradesCards.innerHTML = '<p>No completed trades available.</p>';
+        } else {
+            displayCompletedTrades.forEach(trade => {
+                const tokenAddress = trade.token_address || '-';
+                const tokenName = trade.token_name || '-';
+                const buyPrice = trade.buy_price_usd || 0;
+                const sellPrice = trade.sell_price_usd || 0;
+                const profit = trade.profit || '0';
+                const totalProfit = trade.total_profit_usd || 0;
+                const buyTime = trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-';
+                const sellTime = trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="token-cell">
+                        <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a>
+                        ${trade.iconUrl ? `<img src="${trade.iconUrl}" alt="${tokenName} icon" class="token-icon">` : ''}
+                    </td>
+                    <td>$${buyPrice.toFixed(8)}</td>
+                    <td>$${sellPrice.toFixed(8)}</td>
+                    <td class="${profit >= 0 ? 'profit-positive' : 'profit-negative'}">${profit}%</td>
+                    <td>$${totalProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td>${buyTime}</td>
+                    <td>${sellTime}</td>
+                `;
+                completedTradesBody.appendChild(row);
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <p class="card-token">
+                        <span class="card-label">Token:</span>
+                        <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a>
+                        ${trade.iconUrl ? `<img src="${trade.iconUrl}" alt="${tokenName} icon" class="token-icon">` : ''}
+                    </p>
+                    <p><span class="card-label">Buy Price:</span> $${buyPrice.toFixed(8)}</p>
+                    <p><span class="card-label">Sell Price:</span> $${sellPrice.toFixed(8)}</p>
+                    <p><span class="card-label">Profit:</span> <span class="${profit >= 0 ? 'profit-positive' : 'profit-negative'}">${profit}%</span></p>
+                    <p><span class="card-label">Total Profit:</span> $${totalProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p><span class="card-label">Buy Time:</span> ${buyTime}</p>
+                    <p><span class="card-label">Sell Time:</span> ${sellTime}</p>
+                `;
+                completedTradesCards.appendChild(card);
+            });
+            completedStatus.textContent = `Completed trades loaded (${displayCompletedTrades.length}/${completedTotal})`;
+        }
+
         activeCurrentPage.textContent = activePage;
         activePrevPage.classList.toggle('disabled', activePage === 1);
         activeNextPage.classList.toggle('disabled', activeEnd >= dataCache.funbags.active.length);
 
-        // Render Completed Trades (unchanged)
         completedCurrentPage.textContent = completedPage;
         completedPrevPage.classList.toggle('disabled', completedPage === 1);
         completedNextPage.classList.toggle('disabled', completedEnd >= dataCache.funbags.completed.length);
