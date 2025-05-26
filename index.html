@@ -1,4 +1,913 @@
-async function refreshTrades(activePage = 1, completedPage = 1) {
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Rich 1 Day</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+    <div class="container mx-auto p-6 max-w-7xl">
+        <div class="section-card">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-3xl sm:text-4xl text-navy">Rich 1 Day</h1>
+                <button id="sexyModeToggle" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                    <i class="fas fa-moon mr-2"></i> Sexy Mode
+                </button>
+            </div>
+            <div id="content-funbags" class="tab-content">
+                <div class="mb-6 section-card">
+                    <h2 class="text-xl text-navy mb-2">Summary</h2>
+                    <p class="text-gray-700">Total Completed Profit: <span id="funbags-totalProfit" class="font-semibold text-navy">Calculating...</span></p>
+                </div>
+                <!-- Active Trades Section -->
+                <div class="mb-6 section-card">
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                        <h2 class="text-xl text-navy">Active Trades</h2>
+                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                            <button id="funbags-topRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                                <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
+                            </button>
+                            <button id="funbags-exportBtn" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
+                                <i class="fas fa-file-export mr-2"></i> Export Trades
+                            </button>
+                        </div>
+                    </div>
+                    <p id="funbags-active-status" class="text-gray-700 text-sm mb-2 status">Loading active trades...</p>
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                        <input type="text" id="funbags-activeFilter" class="filter-input" placeholder="Filter by Token...">
+                        <select id="funbags-activePageSize" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                            <option value="10">10 per page</option>
+                            <option value="20">20 per page</option>
+                            <option value="30">30 per page</option>
+                            <option value="50">50 per page</option>
+                            <option value="100">100 per page</option>
+                        </select>
+                    </div>
+                    <div class="table-container">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr>
+                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
+                                    <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
+                                    <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
+                                    <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
+                                    <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
+                                    <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="funbags-activeTradesBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="card-container">
+                        <div id="funbags-activeTradesCards"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-4">
+                        <button id="funbags-middleRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                            <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
+                        </button>
+                        <div class="flex items-center space-x-2">
+                            <span id="funbags-activePrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
+                            <span class="pagination-text text-gray-700">Page <span id="funbags-activeCurrentPage">1</span></span>
+                            <span id="funbags-activeNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Monitored Coins Section -->
+                <div class="mb-6 section-card">
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                        <h2 class="text-xl text-navy">Monitored Coins</h2>
+                        <button id="funbags-monitoredRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                            <i class="fas fa-sync-alt mr-2"></i> Refresh Monitored
+                        </button>
+                    </div>
+                    <p id="funbags-monitored-status" class="text-gray-700 text-sm mb-2 status">Loading monitored coins...</p>
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                        <input type="text" id="funbags-monitoredFilter" class="filter-input" placeholder="Filter by Token...">
+                        <select id="funbags-monitoredPageSize" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                            <option value="10">10 per page</option>
+                            <option value="20">20 per page</option>
+                            <option value="30">30 per page</option>
+                            <option value="50">50 per page</option>
+                            <option value="100">100 per page</option>
+                        </select>
+                    </div>
+                    <div class="table-container">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr>
+                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
+                                    <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
+                                    <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
+                                    <th data-sort="lowest_market_cap">Lowest Market Cap (USD)<span class="sort-icon"></span></th>
+                                    <th data-sort="timestamp">Monitoring Start<span class="sort-icon"></span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="funbags-monitoredBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="card-container">
+                        <div id="funbags-monitoredCards"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-4">
+                        <div class="flex items-center space-x-2">
+                            <span id="funbags-monitoredPrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
+                            <span class="pagination-text text-gray-700">Page <span id="funbags-monitoredCurrentPage">1</span></span>
+                            <span id="funbags-monitoredNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Completed Trades Section -->
+                <div class="mb-6 section-card">
+                    <h2 class="text-xl text-navy mb-4">Completed Trades</h2>
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                        <p id="funbags-completed-status" class="text-gray-700 text-sm mb-2 sm:mb-0 status">Loading completed trades...</p>
+                        <select id="funbags-profitFilter" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                            <option value="all">All Trades</option>
+                            <option value="positive">Positive Profit</option>
+                            <option value="negative">Negative Profit</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                        <input type="text" id="funbags-completedFilter" class="filter-input" placeholder="Filter by Token...">
+                        <select id="funbags-completedPageSize" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                            <option value="10">10 per page</option>
+                            <option value="20">20 per page</option>
+                            <option value="30">30 per page</option>
+                            <option value="50">50 per page</option>
+                            <option value="100">100 per page</option>
+                        </select>
+                    </div>
+                    <div id="funbags-completedTableContainer" class="table-container">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr>
+                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
+                                    <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
+                                    <th data-sort="sell_price_usd">Sell Price (USD)<span class="sort-icon"></span></th>
+                                    <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
+                                    <th data-sort="total_profit_usd">Total Profit (USD)<span class="sort-icon"></span></th>
+                                    <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
+                                    <th data-sort="sell_timestamp">Sell Time<span class="sort-icon"></span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="funbags-completedTradesBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="card-container">
+                        <div id="funbags-completedTradesCards"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-4">
+                        <div class="flex items-center space-x-2">
+                            <span id="funbags-completedPrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
+                            <span class="pagination-text text-gray-700">Page <span id="funbags-completedCurrentPage">1</span></span>
+                            <span id="funbags-completedNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
+                        </div>
+                        <button id="funbags-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                            <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Open+Sans:wght@400;600&display=swap');
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: #f4f7fa;
+            color: #2d3748;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        h1, h2 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+        select {
+            font-family: 'Open Sans', sans-serif;
+            font-size: 0.875rem;
+        }
+        .sexy {
+            background-color: #1a0033;
+            color: #f8d1e9;
+        }
+        .sexy .bg-light {
+            background-color: #4b0082;
+        }
+        .sexy .text-gray-700 {
+            color: #f8d1e9;
+        }
+        .sexy select {
+            background-color: #4b0082;
+            color: #f8d1e9;
+            border-color: #ff69b4;
+        }
+        .sexy .bg-teal-600 {
+            background: linear-gradient(145deg, #ff69b4, #c71585);
+        }
+        .sexy .hover\:bg-teal-700:hover {
+            background: linear-gradient(145deg, #c71585, #ff69b4);
+        }
+        .sexy .profit-positive {
+            color: #98fb98;
+        }
+        .sexy .profit-negative {
+            color: #ff4040;
+        }
+        .sexy .card {
+            background-color: #4b0082;
+            border-color: #ff69b4;
+        }
+        .sexy .card:hover {
+            background-color: #6a0dad;
+            transform: translateY(-3px);
+        }
+        .sexy th {
+            background-color: #2e004f;
+        }
+        .sexy tr:nth-child(even) {
+            background-color: #4b0082;
+        }
+        .sexy tr:hover {
+            background-color: #6a0dad;
+            border-left: 3px solid #ff69b4;
+        }
+        .table-container {
+            overflow-x: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        .sexy .table-container {
+            box-shadow: 0 2px 10px rgba(255, 105, 180, 0.5);
+            border: 1px solid #ff69b4;
+        }
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #2c7a7b;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+        }
+        .sexy .loading::after {
+            border-color: #ff69b4;
+            border-top-color: transparent;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+        }
+        .sexy th, .sexy td {
+            border-color: #ff69b4;
+        }
+        th {
+            background-color: #1e2a44;
+            color: #ffffff;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            cursor: pointer;
+        }
+        th:hover {
+            background-color: #285e61;
+        }
+        .sexy th:hover {
+            background-color: #6a0dad;
+        }
+        tr:nth-child(even) {
+            background-color: #edf2f7;
+        }
+        tr:hover {
+            background-color: #e6fffa;
+            border-left: 3px solid #2c7a7b;
+            transition: all 0.2s ease;
+        }
+        .pagination-arrow {
+            cursor: pointer;
+            padding: 8px;
+            color: #2c7a7b;
+            font-size: 1.5rem;
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+        .sexy .pagination-arrow {
+            color: #ff69b4;
+        }
+        .pagination-arrow:hover:not(.disabled) {
+            color: #285e61;
+        }
+        .sexy .pagination-arrow:hover:not(.disabled) {
+            color: #c71585;
+        }
+        .pagination-arrow.disabled {
+            color: #a0aec0;
+            cursor: not-allowed;
+        }
+        a {
+            color: #2c7a7b;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .sexy a {
+            color: #ff69b4;
+        }
+        .profit-positive {
+            color: #38a169;
+            font-weight: 600;
+        }
+        .profit-negative {
+            color: #e53e3e;
+            font-weight: 600;
+        }
+        .card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            background-color: #ffffff;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+        .card-label {
+            font-weight: 600;
+            color: #1e2a44;
+            margin-right: 8px;
+        }
+        .sexy .card-label {
+            color: #f8d1e9;
+        }
+        .btn {
+            transition: transform BEFORE: 0.2s, background-color 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .section-card {
+            background: linear-gradient(145deg, #ffffff, #edf2f7);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .sexy .section-card {
+            background: linear-gradient(145deg, #4b0082, #1a0033);
+            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.5);
+        }
+        .filter-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+        .sexy .filter-input {
+            background-color: #4b0082;
+            color: #f8d1e9;
+            border-color: #ff69b4;
+        }
+        .sort-icon::after {
+            content: '↕';
+            margin-left: 5px;
+            font-size: 0.8rem;
+        }
+        .sort-asc::after {
+            content: '↑';
+        }
+        .sort-desc::after {
+            content: '↓';
+        }
+        /* New styles for token name and icon */
+        .token-cell {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .token-cell a {
+            flex-grow: 1;
+        }
+        .token-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            margin-left: 8px;
+            object-fit: cover;
+        }
+        .card-token {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .card-token a {
+            flex-grow: 1;
+        }
+        @media (max-width: 640px) {
+            .container {
+                padding: 1rem;
+            }
+            h1 {
+                font-size: 1.75rem;
+            }
+            .btn {
+                padding: 10px 16px;
+                font-size: 0.875rem;
+                min-height: 48px;
+                width: 100%;
+            }
+            .pagination-arrow {
+                padding: 6px;
+                font-size: 1.25rem;
+            }
+            .pagination-text {
+                font-size: 0.875rem;
+            }
+            .status {
+                font-size: 0.875rem;
+                margin-top: 1.5rem;
+            }
+            .table-container {
+                display: none;
+            }
+            .card-container {
+                display: block;
+            }
+            .filter-input {
+                font-size: 0.8rem;
+            }
+        }
+        @media (min-width: 641px) {
+            .card-container {
+                display: none;
+            }
+        }
+        @media (max-width: 400px) {
+            .card {
+                padding: 10px;
+                font-size: 0.8rem;
+            }
+            .card-label, .card-value {
+                font-size: 0.8rem;
+            }
+        }
+        @media (max-width: 1024px) and (min-width: 641px) {
+            th, td {
+                padding: 10px;
+                font-size: 0.875rem;
+            }
+            .btn {
+                padding: 10px 20px;
+                font-size: 0.875rem;
+            }
+            .filter-input {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+
+    <script>
+    console.log('Script loaded');
+
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('DOM loaded');
+
+        // Initialize Supabase client
+        let supabase;
+        try {
+            supabase = window.supabase.createClient(
+                'https://bprfbjsxbkitrbqszqpz.supabase.co',
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcmZianN4YmtpdHJicXN6cXB6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NTg5NDMzOSwiZXhwIjoyMDYxNDcwMzM5fQ.wtFixniNTzbObmwjI1R8OuIusXB95w5waoXBN4DiiNw'
+            );
+            console.log('Supabase client initialized');
+        } catch (error) {
+            console.error('Error initializing Supabase:', error);
+            alert('Failed to initialize Supabase. Check console for details.');
+            return;
+        }
+
+        // Moralis API configuration
+        const MORALIS_API = 'https://solana-gateway.moralis.io';
+        const MORALIS_API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjZhMjdlMWU0LWUwNGEtNGRiNC05ZjQ5LTU4MjFkNGU2MmEzMiIsIm9yZ0lkIjoiNDQ3NjY4IiwidXNlcklkIjoiNDYwNTkzIiwidHlwZUlkIjoiMGRjZmM0ZTctNzhkOC00YzRhLWE2YzgtYzc2OWRiMTdkMzk3IiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NDc1MjU1NjAsImV4cCI6NDkwMzI4NTU2MH0.2CVGa61MAN5zUvbh8yssfNZdNSTORl1GBYXXBs2nJbM';
+        const MORALIS_CACHE_KEY = 'moralisTokenCache';
+        let moralisTokenMap = new Map();
+
+        // Load Moralis cache from localStorage
+        function loadMoralisCache() {
+            try {
+                const cached = localStorage.getItem(MORALIS_CACHE_KEY);
+                return cached ? new Map(JSON.parse(cached)) : new Map();
+            } catch (error) {
+                console.error('Error loading Moralis cache:', error);
+                return new Map();
+            }
+        }
+
+        // Save Moralis cache to localStorage
+        function saveMoralisCache(cache) {
+            try {
+                const serialized = JSON.stringify(Array.from(cache.entries()));
+                localStorage.setItem(MORALIS_CACHE_KEY, serialized);
+            } catch (error) {
+                console.error('Error saving Moralis cache:', error);
+            }
+        }
+
+        // Fetch token data from Moralis
+        async function fetchMoralisTokenData() {
+            console.log('Fetching Moralis token data');
+            try {
+                const response = await fetch(`${MORALIS_API}/token/mainnet/exchange/pumpfun/bonding?limit=100`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-API-Key': MORALIS_API_KEY
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(`Moralis API error: HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                console.log('Moralis data fetched:', data.result?.length || 0, 'tokens');
+
+                const tokenMap = new Map();
+                (data.result || []).forEach(token => {
+                    if (token.tokenAddress) {
+                        tokenMap.set(token.tokenAddress, {
+                            name: token.name?.trim() || token.tokenAddress.slice(0, 8),
+                            iconUrl: token.logo || ''
+                        });
+                    }
+                });
+
+                // Upsert to Supabase
+                const upsertData = Array.from(tokenMap.entries()).map(([tokenAddress, { name, iconUrl }]) => ({
+                    token_address: tokenAddress,
+                    token_name: name,
+                    icon_url: iconUrl,
+                    updated_at: new Date().toISOString()
+                }));
+                try {
+                    const { error: upsertError } = await supabase
+                        .from('token_states')
+                        .upsert(upsertData, { onConflict: 'token_address' });
+                    if (upsertError) {
+                        console.error('Error upserting Moralis data to Supabase:', {
+                            message: upsertError.message,
+                            code: upsertError.code,
+                            details: upsertError.details
+                        });
+                    } else {
+                        console.log(`Upserted ${upsertData.length} tokens to Supabase`);
+                    }
+                } catch (error) {
+                    console.error('Error saving Moralis data to Supabase:', error);
+                }
+
+                // Update cache
+                moralisTokenMap = tokenMap;
+                saveMoralisCache(tokenMap);
+                return tokenMap;
+            } catch (error) {
+                console.error('Error fetching Moralis token data:', error);
+                return loadMoralisCache();
+            }
+        }
+
+        // Sorting and Filtering States
+        const sortStates = {
+            funbags: { active: {}, completed: {}, monitored: {} }
+        };
+
+        // Pagination States
+        const pageStates = {
+            funbags: { active: 1, completed: 1, monitored: 1 }
+        };
+        const pageSizes = {
+            funbags: { active: 10, completed: 10, monitored: 10 }
+        };
+
+        // Cache for full dataset
+        const dataCache = {
+            funbags: { monitored: [], active: [], completed: [] }
+        };
+
+        // Cache for token names
+        const tokenNameCache = new Map();
+
+        // Retry mechanism for Supabase queries
+        async function withRetry(fn, retries = 3, delay = 1000) {
+            for (let attempt = 1; attempt <= retries; attempt++) {
+                try {
+                    return await fn();
+                } catch (error) {
+                    if (attempt === retries) throw error;
+                    console.warn(`Attempt ${attempt} failed, retrying in ${delay}ms...`, error);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+        }
+
+        // Debounce function for button clicks
+        function debounce(func, wait) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        async function fetchTokenData(tokenAddress) {
+            console.log(`Fetching token data for ${tokenAddress}`);
+
+            // Check cache
+            if (tokenNameCache.has(tokenAddress)) {
+                const cached = tokenNameCache.get(tokenAddress);
+                console.log(`Cache hit for ${tokenAddress}: name=${cached.name}, iconUrl=${cached.iconUrl}`);
+                return cached;
+            }
+
+            // Check Moralis map
+            if (moralisTokenMap.has(tokenAddress)) {
+                const result = moralisTokenMap.get(tokenAddress);
+                console.log(`Moralis map hit for ${tokenAddress}: name=${result.name}, iconUrl=${result.iconUrl}`);
+                if (result.name && result.name !== tokenAddress.slice(0, 8)) {
+                    tokenNameCache.set(tokenAddress, result);
+                    return result;
+                }
+                console.warn(`Moralis map has invalid name for ${tokenAddress}, fetching fresh data`);
+            }
+
+            // Check Supabase
+            try {
+                const { data: tokenData, error } = await supabase
+                    .from('token_states')
+                    .select('token_name, icon_url')
+                    .eq('token_address', tokenAddress)
+                    .maybeSingle();
+                if (error) {
+                    console.error(`Supabase query error for ${tokenAddress}:`, error);
+                }
+                if (tokenData && tokenData.token_name && tokenData.token_name !== tokenAddress.slice(0, 8)) {
+                    const result = { name: tokenData.token_name, iconUrl: tokenData.icon_url || '' };
+                    console.log(`Supabase hit for ${tokenAddress}: name=${result.name}, iconUrl=${result.iconUrl}`);
+                    tokenNameCache.set(tokenAddress, result);
+                    return result;
+                }
+                console.log(`No valid token data in Supabase for ${tokenAddress}`);
+            } catch (error) {
+                console.error(`Error checking Supabase for ${tokenAddress}:`, error);
+            }
+
+            // Fetch from Moralis metadata endpoint
+            try {
+                const response = await fetch(`${MORALIS_API}/token/mainnet/${tokenAddress}/metadata`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-API-Key': MORALIS_API_KEY
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(`Moralis API error: HTTP ${response.status}`);
+                }
+                const token = await response.json();
+                const name = token.name?.trim() || tokenAddress.slice(0, 8);
+                const iconUrl = token.logo || '';
+                console.log(`Moralis metadata fetch for ${tokenAddress}: name=${name}, iconUrl=${iconUrl}`);
+
+                const result = { name, iconUrl };
+                tokenNameCache.set(tokenAddress, result);
+                moralisTokenMap.set(tokenAddress, result);
+                saveMoralisCache(moralisTokenMap);
+
+                // Upsert to Supabase
+                try {
+                    const { error: upsertError } = await supabase
+                        .from('token_states')
+                        .upsert({
+                            token_address: tokenAddress,
+                            token_name: name,
+                            icon_url: iconUrl,
+                            updated_at: new Date().toISOString()
+                        }, { onConflict: 'token_address' });
+                    if (upsertError) {
+                        console.error(`Error upserting token ${tokenAddress} to Supabase:`, upsertError);
+                    } else {
+                        console.log(`Upserted token ${tokenAddress} to Supabase: name=${name}, iconUrl=${iconUrl}`);
+                    }
+                } catch (error) {
+                    console.error(`Error saving ${tokenAddress} to Supabase:`, error);
+                }
+
+                return result;
+            } catch (error) {
+                console.warn(`Failed to fetch Moralis metadata for ${tokenAddress}:`, error);
+            }
+
+            // Fallback
+            console.warn(`No token data found for ${tokenAddress}, using fallback`);
+            const fallback = { name: tokenAddress.slice(0, 8), iconUrl: '' };
+            tokenNameCache.set(tokenAddress, fallback);
+            return fallback;
+        }
+
+        async function fetchMonitoredCoins() {
+            console.log(`Fetching all monitored coins`);
+            try {
+                const { data: monitoredCoins, error, count } = await withRetry(async () => await supabase
+                    .from('token_states')
+                    .select('token_address, max_market_cap, lowest_market_cap, within_range_start_time, is_bonding', { count: 'exact' })
+                    .eq('monitoring', true)
+                    .eq('bought', false)
+                    .order('within_range_start_time', { ascending: false })
+                );
+                if (error) throw new Error(`Failed to fetch monitored coins: ${error.message}`);
+                console.log('Monitored coins fetched:', monitoredCoins?.length || 'No coins');
+
+                const coinsWithData = await Promise.all((monitoredCoins || []).map(async coin => {
+                    const tokenData = await fetchTokenData(coin.token_address);
+                    const marketCap = parseFloat(coin.max_market_cap) || 0;
+                    const price = marketCap / 1_000_000_000 || 0;
+                    return {
+                        token_address: coin.token_address || '-',
+                        token_name: tokenData.name,
+                        iconUrl: tokenData.iconUrl,
+                        market_cap: marketCap,
+                        current_price_usd: price,
+                        lowest_market_cap: parseFloat(coin.lowest_market_cap) || 999999999,
+                        timestamp: coin.within_range_start_time ? new Date(parseInt(coin.within_range_start_time)).toISOString() : new Date().toISOString()
+                    };
+                }));
+
+                dataCache.funbags.monitored = coinsWithData;
+                return { coins: coinsWithData, total: count || coinsWithData.length };
+            } catch (error) {
+                console.error('Error in fetchMonitoredCoins:', error);
+                throw error;
+            }
+        }
+
+        async function refreshMonitoredCoins(page = 1) {
+            console.log(`Starting refreshMonitoredCoins, page ${page}`);
+            const monitoredStatus = document.getElementById('funbags-monitored-status');
+            const monitoredBody = document.getElementById('funbags-monitoredBody');
+            const monitoredCards = document.getElementById('funbags-monitoredCards');
+            const monitoredTable = monitoredBody?.closest('table');
+            const monitoredFilterInput = document.getElementById('funbags-monitoredFilter');
+            const prevPage = document.getElementById('funbags-monitoredPrevPage');
+            const nextPage = document.getElementById('funbags-monitoredNextPage');
+            const currentPageSpan = document.getElementById('funbags-monitoredCurrentPage');
+
+            if (!monitoredStatus || !monitoredBody || !monitoredCards || !monitoredTable || !monitoredFilterInput || !prevPage || !nextPage || !currentPageSpan) {
+                console.error('Missing DOM elements for monitored coins');
+                monitoredStatus.textContent = 'Error: Missing DOM elements';
+                return;
+            }
+
+            monitoredStatus.textContent = 'Loading monitored coins...';
+            monitoredStatus.classList.add('loading');
+
+            try {
+                const { coins: fetchedCoins, total } = await fetchMonitoredCoins();
+                console.log(`Fetched monitored coins: ${fetchedCoins.length}, total: ${total}`);
+
+                let displayCoins = [...dataCache.funbags.monitored];
+                const monitoredSort = { ...sortStates.funbags.monitored };
+                if (Object.keys(monitoredSort).length > 0) {
+                    const column = Object.keys(monitoredSort)[0];
+                    const direction = monitoredSort[column];
+                    console.log(`Sorting monitored coins by ${column} ${direction}`);
+                    displayCoins.sort((a, b) => {
+                        let aValue = a[column];
+                        let bValue = b[column];
+                        if (['market_cap', 'current_price_usd', 'lowest_market_cap'].includes(column)) {
+                            aValue = parseFloat(aValue) || 0;
+                            bValue = parseFloat(bValue) || 0;
+                        } else if (column === 'timestamp') {
+                            aValue = aValue ? new Date(aValue).getTime() : 0;
+                            bValue = bValue ? new Date(bValue).getTime() : 0;
+                        } else {
+                            aValue = aValue ? aValue.toString().toLowerCase() : '';
+                            bValue = bValue ? bValue.toString().toLowerCase() : '';
+                        }
+                        const comparison = aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+                        return direction === 'asc' ? comparison : -comparison;
+                    });
+                }
+
+                const start = (page - 1) * pageSizes.funbags.monitored;
+                const end = start + pageSizes.funbags.monitored;
+                displayCoins = displayCoins.slice(start, end);
+                console.log(`Paginated monitored coins: start=${start}, end=${end}, coins=${displayCoins.length}`);
+
+                monitoredBody.innerHTML = '';
+                monitoredCards.innerHTML = '';
+                if (displayCoins.length === 0) {
+                    monitoredStatus.textContent = 'No monitored coins found';
+                    monitoredCards.innerHTML = '<p>No monitored coins available.</p>';
+                } else {
+                    displayCoins.forEach(coin => {
+                        const tokenAddress = coin.token_address || '-';
+                        const tokenName = coin.token_name || '-';
+                        const marketCap = coin.market_cap || 0;
+                        const currentPrice = coin.current_price_usd || 0;
+                        const lowestMarketCap = coin.lowest_market_cap || 999999999;
+                        const timestamp = coin.timestamp ? new Date(coin.timestamp).toLocaleString() : '-';
+
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="token-cell">
+                                <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a>
+                                ${coin.iconUrl ? `<img src="${coin.iconUrl}" alt="${tokenName} icon" class="token-icon">` : ''}
+                            </td>
+                            <td>$${marketCap.toLocaleString()}</td>
+                            <td>$${currentPrice.toFixed(8)}</td>
+                            <td>$${lowestMarketCap.toLocaleString()}</td>
+                            <td>${timestamp}</td>
+                        `;
+                        monitoredBody.appendChild(row);
+
+                        const card = document.createElement('div');
+                        card.className = 'card';
+                        card.innerHTML = `
+                            <p class="card-token">
+                                <span class="card-label">Token:</span>
+                                <a href="https://dexscreener.com/solana/${tokenAddress}" target="_blank" rel="noopener noreferrer">${tokenName}</a>
+                                ${coin.iconUrl ? `<img src="${coin.iconUrl}" alt="${tokenName} icon" class="token-icon">` : ''}
+                            </p>
+                            <p><span class="card-label">Market Cap:</span> $${marketCap.toLocaleString()}</p>
+                            <p><span class="card-label">Current Price:</span> $${currentPrice.toFixed(8)}</p>
+                            <p><span class="card-label">Lowest Market Cap:</span> $${lowestMarketCap.toLocaleString()}</p>
+                            <p><span class="card-label">Monitoring Start:</span> ${timestamp}</p>
+                        `;
+                        monitoredCards.appendChild(card);
+                    });
+                    monitoredStatus.textContent = `Monitored coins loaded (${displayCoins.length}/${total})`;
+                }
+
+                currentPageSpan.textContent = page;
+                prevPage.classList.toggle('disabled', page === 1);
+                nextPage.classList.toggle('disabled', end >= dataCache.funbags.monitored.length);
+                console.log(`Monitored pagination: page=${page}, total=${dataCache.funbags.monitored.length}`);
+
+                const headers = monitoredTable.querySelectorAll('th[data-sort]');
+                headers.forEach(header => {
+                    header.classList.remove('sort-asc', 'sort-desc');
+                    const icon = header.querySelector('.sort-icon');
+                    if (icon) icon.innerHTML = '↕';
+                });
+                if (Object.keys(monitoredSort).length > 0) {
+                    const column = Object.keys(monitoredSort)[0];
+                    const direction = monitoredSort[column];
+                    const header = monitoredTable.querySelector(`th[data-sort="${column}"]`);
+                    if (header) {
+                        header.classList.add(`sort-${direction}`);
+                        header.querySelector('.sort-icon').innerHTML = direction === 'asc' ? '↑' : '↓';
+                    }
+                }
+
+                const monitoredFilterValue = monitoredFilterInput.value || '';
+                if (monitoredFilterValue) {
+                    monitoredFilterInput.value = monitoredFilterValue;
+                    monitoredFilterInput.dispatchEvent(new Event('input'));
+                }
+            } catch (error) {
+                console.error('Error in refreshMonitoredCoins:', error);
+                monitoredStatus.textContent = `Error loading monitored coins: ${error.message}`;
+            } finally {
+                monitoredStatus.classList.remove('loading');
+            }
+        }
+
+        async function refreshTrades(activePage = 1, completedPage = 1) {
     console.log(`Starting refreshTrades, activePage: ${activePage}, completedPage: ${completedPage}`);
     const prefix = 'funbags';
     const activeStatus = document.getElementById(`${prefix}-active-status`);
@@ -334,3 +1243,195 @@ async function refreshTrades(activePage = 1, completedPage = 1) {
         completedStatus.classList.remove('loading');
     }
 }
+
+        // Event Listeners
+        document.getElementById('funbags-monitoredRefreshBtn').addEventListener('click', debounce(() => refreshMonitoredCoins(1), 300));
+        document.getElementById('funbags-topRefreshBtn').addEventListener('click', debounce(() => refreshTrades(1, 1), 300));
+        document.getElementById('funbags-middleRefreshBtn').addEventListener('click', debounce(() => refreshTrades(1, 1), 300));
+        document.getElementById('funbags-bottomRefreshBtn').addEventListener('click', debounce(() => refreshTrades(1, 1), 300));
+
+        document.getElementById('funbags-monitoredPageSize').addEventListener('change', (e) => {
+            pageSizes.funbags.monitored = parseInt(e.target.value);
+            refreshMonitoredCoins(1);
+        });
+        document.getElementById('funbags-activePageSize').addEventListener('change', (e) => {
+            pageSizes.funbags.active = parseInt(e.target.value);
+            refreshTrades(1, pageStates.funbags.completed);
+        });
+        document.getElementById('funbags-completedPageSize').addEventListener('change', (e) => {
+            pageSizes.funbags.completed = parseInt(e.target.value);
+            refreshTrades(pageStates.funbags.active, 1);
+        });
+
+        document.getElementById('funbags-monitoredPrevPage').addEventListener('click', () => {
+            if (pageStates.funbags.monitored > 1) {
+                pageStates.funbags.monitored--;
+                refreshMonitoredCoins(pageStates.funbags.monitored);
+            }
+        });
+        document.getElementById('funbags-monitoredNextPage').addEventListener('click', () => {
+            pageStates.funbags.monitored++;
+            refreshMonitoredCoins(pageStates.funbags.monitored);
+        });
+
+        document.getElementById('funbags-activePrevPage').addEventListener('click', () => {
+            if (pageStates.funbags.active > 1) {
+                pageStates.funbags.active--;
+                refreshTrades(pageStates.funbags.active, pageStates.funbags.completed);
+            }
+        });
+        document.getElementById('funbags-activeNextPage').addEventListener('click', () => {
+            pageStates.funbags.active++;
+            refreshTrades(pageStates.funbags.active, pageStates.funbags.completed);
+        });
+
+        document.getElementById('funbags-completedPrevPage').addEventListener('click', () => {
+            if (pageStates.funbags.completed > 1) {
+                pageStates.funbags.completed--;
+                refreshTrades(pageStates.funbags.active, pageStates.funbags.completed);
+            }
+        });
+        document.getElementById('funbags-completedNextPage').addEventListener('click', () => {
+            pageStates.funbags.completed++;
+            refreshTrades(pageStates.funbags.active, pageStates.funbags.completed);
+        });
+
+        document.getElementById('funbags-monitoredBody').closest('table').addEventListener('click', (e) => {
+            const header = e.target.closest('th[data-sort]');
+            if (header) {
+                const column = header.dataset.sort;
+                const currentDirection = sortStates.funbags.monitored[column];
+                sortStates.funbags.monitored = {};
+                sortStates.funbags.monitored[column] = currentDirection === 'asc' ? 'desc' : 'asc';
+                refreshMonitoredCoins(pageStates.funbags.monitored);
+            }
+        });
+
+        document.getElementById('funbags-activeTradesBody').closest('table').addEventListener('click', (e) => {
+            const header = e.target.closest('th[data-sort]');
+            if (header) {
+                const column = header.dataset.sort;
+                const currentDirection = sortStates.funbags.active[column];
+                sortStates.funbags.active = {};
+                sortStates.funbags.active[column] = currentDirection === 'asc' ? 'desc' : 'asc';
+                refreshTrades(pageStates.funbags.active, pageStates.funbags.completed);
+            }
+        });
+
+        document.getElementById('funbags-completedTradesBody').closest('table').addEventListener('click', (e) => {
+            const header = e.target.closest('th[data-sort]');
+            if (header) {
+                const column = header.dataset.sort;
+                const currentDirection = sortStates.funbags.completed[column];
+                sortStates.funbags.completed = {};
+                sortStates.funbags.completed[column] = currentDirection === 'asc' ? 'desc' : 'asc';
+                refreshTrades(pageStates.funbags.active, pageStates.funbags.completed);
+            }
+        });
+
+        document.getElementById('funbags-monitoredFilter').addEventListener('input', (e) => {
+            const filter = e.target.value.toLowerCase();
+            const rows = document.getElementById('funbags-monitoredBody').querySelectorAll('tr');
+            const cards = document.getElementById('funbags-monitoredCards').querySelectorAll('.card');
+            rows.forEach(row => {
+                const tokenName = row.querySelector('td:first-child a').textContent.toLowerCase();
+                row.style.display = tokenName.includes(filter) ? '' : 'none';
+            });
+            cards.forEach(card => {
+                const tokenName = card.querySelector('a').textContent.toLowerCase();
+                card.style.display = tokenName.includes(filter) ? '' : 'none';
+            });
+        });
+
+        document.getElementById('funbags-activeFilter').addEventListener('input', (e) => {
+            const filter = e.target.value.toLowerCase();
+            const rows = document.getElementById('funbags-activeTradesBody').querySelectorAll('tr');
+            const cards = document.getElementById('funbags-activeTradesCards').querySelectorAll('.card');
+            rows.forEach(row => {
+                const tokenName = row.querySelector('td:first-child a').textContent.toLowerCase();
+                row.style.display = tokenName.includes(filter) ? '' : 'none';
+            });
+            cards.forEach(card => {
+                const tokenName = card.querySelector('a').textContent.toLowerCase();
+                card.style.display = tokenName.includes(filter) ? '' : 'none';
+            });
+        });
+
+        document.getElementById('funbags-completedFilter').addEventListener('input', (e) => {
+            const filter = e.target.value.toLowerCase();
+            const rows = document.getElementById('funbags-completedTradesBody').querySelectorAll('tr');
+            const cards = document.getElementById('funbags-completedTradesCards').querySelectorAll('.card');
+            rows.forEach(row => {
+                const tokenName = row.querySelector('td:first-child a').textContent.toLowerCase();
+                row.style.display = tokenName.includes(filter) ? '' : 'none';
+            });
+            cards.forEach(card => {
+                const tokenName = card.querySelector('a').textContent.toLowerCase();
+                card.style.display = tokenName.includes(filter) ? '' : 'none';
+            });
+        });
+
+        document.getElementById('funbags-profitFilter').addEventListener('change', (e) => {
+            const filter = e.target.value;
+            const rows = document.getElementById('funbags-completedTradesBody').querySelectorAll('tr');
+            const cards = document.getElementById('funbags-completedTradesCards').querySelectorAll('.card');
+            rows.forEach(row => {
+                const profitCell = row.querySelector('td:nth-child(4)');
+                const profit = parseFloat(profitCell.textContent.replace('%', '')) || 0;
+                if (filter === 'positive' && profit <= 0) {
+                    row.style.display = 'none';
+                } else if (filter === 'negative' && profit >= 0) {
+                    row.style.display = 'none';
+                } else {
+                    row.style.display = '';
+                }
+            });
+            cards.forEach(card => {
+                const profitText = card.querySelector('.profit-positive, .profit-negative').textContent.replace('%', '');
+                const profit = parseFloat(profitText) || 0;
+                if (filter === 'positive' && profit <= 0) {
+                    card.style.display = 'none';
+                } else if (filter === 'negative' && profit >= 0) {
+                    card.style.display = 'none';
+                } else {
+                    card.style.display = '';
+                }
+            });
+        });
+
+        document.getElementById('sexyModeToggle').addEventListener('click', () => {
+            document.body.classList.toggle('sexy');
+            const button = document.getElementById('sexyModeToggle');
+            if (document.body.classList.contains('sexy')) {
+                button.innerHTML = '<i class="fas fa-sun mr-2"></i> Normal Mode';
+            } else {
+                button.innerHTML = '<i class="fas fa-moon mr-2"></i> Sexy Mode';
+            }
+        });
+
+        document.getElementById('funbags-exportBtn').addEventListener('click', () => {
+            const csvRows = [];
+            csvRows.push('Token,Buy Price (USD),Sell Price (USD),Profit (%),Total Profit (USD),Buy Time,Sell Time');
+            dataCache.funbags.completed.forEach(trade => {
+                const buyTime = trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-';
+                const sellTime = trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-';
+                csvRows.push(`"${trade.token_name || '-'}",${trade.buy_price_usd.toFixed(8)},${trade.sell_price_usd.toFixed(8)},${trade.profit},${trade.total_profit_usd.toFixed(2)},"${buyTime}","${sellTime}"`);
+            });
+            const csvContent = csvRows.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'completed_trades.csv');
+            a.click();
+            window.URL.revokeObjectURL(url);
+        });
+
+        // Initial load
+        (async () => {
+            await fetchMoralisTokenData();
+            await refreshMonitoredCoins(1);
+            await refreshTrades(1, 1);
+        })();
+    });
+</script>
