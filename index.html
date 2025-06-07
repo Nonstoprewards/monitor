@@ -3,14 +3,348 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
     <title>Rich 1 Day</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Open+Sans:wght@400;600&display=swap');
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: #f4f7fa;
+            color: #2d3748;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        h1, h2 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+        select, input {
+            font-family: 'Open Sans', sans-serif;
+            font-size: 0.875rem;
+        }
+        .sexy {
+            background-color: #1a0033;
+            color: #f8d1e9;
+        }
+        .sexy .bg-light {
+            background-color: #4b0082;
+        }
+        .sexy .text-gray-700 {
+            color: #f8d1e9;
+        }
+        .sexy select, .sexy input {
+            background-color: #4b0082;
+            color: #f8d1e9;
+            border-color: #ff69b4;
+        }
+        .sexy .bg-teal-600 {
+            background: linear-gradient(145deg, #ff69b4, #c71585);
+        }
+        .sexy .hover\:bg-teal-700:hover {
+            background: linear-gradient(145deg, #c71585, #ff69b4);
+        }
+        .sexy .profit-positive {
+            color: #98fb98;
+        }
+        .sexy .profit-negative {
+            color: #ff4040;
+        }
+        .sexy .card {
+            background-color: #4b0082;
+            border-color: #ff69b4;
+        }
+        .sexy .card:hover {
+            background-color: #6a0dad;
+            transform: translateY(-3px);
+        }
+        .sexy th {
+            background-color: #2e004f;
+        }
+        .sexy tr:nth-child(even) {
+            background-color: #4b0082;
+        }
+        .sexy tr:hover {
+            background-color: #6a0dad;
+            border-left: 3px solid #ff69b4;
+        }
+        .table-container {
+            overflow-x: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        .sexy .table-container {
+            box-shadow: 0 2px 10px rgba(255, 105, 180, 0.5);
+            border: 1px solid #ff69b4;
+        }
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #2c7a7b;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+        }
+        .sexy .loading::after {
+            border-color: #ff69b4;
+            border-top-color: transparent;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+        }
+        .sexy th, .sexy td {
+            border-color: #ff69b4;
+        }
+        th {
+            background-color: #1e2a44;
+            color: #ffffff;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            cursor: pointer;
+        }
+        th:hover {
+            background-color: #285e61;
+        }
+        .sexy th:hover {
+            background-color: #6a0dad;
+        }
+        tr:nth-child(even) {
+            background-color: #edf2f7;
+        }
+        tr:hover {
+            background-color: #e6fffa;
+            border-left: 3px solid #2c7a7b;
+            transition: all 0.2s ease;
+        }
+        .pagination-arrow {
+            cursor: pointer;
+            padding: 8px;
+            color: #2c7a7b;
+            font-size: 1.5rem;
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+        .sexy .pagination-arrow {
+            color: #ff69b4;
+        }
+        .pagination-arrow:hover:not(.disabled) {
+            color: #285e61;
+        }
+        .sexy .pagination-arrow:hover:not(.disabled) {
+            color: #c71585;
+        }
+        .pagination-arrow.disabled {
+            color: #a0aec0;
+            cursor: not-allowed;
+        }
+        a {
+            color: #2c7a7b;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .sexy a {
+            color: #ff69b4;
+        }
+        .profit-positive {
+            color: #38a169;
+            font-weight: 600;
+        }
+        .profit-negative {
+            color: #e53e3e;
+            font-weight: 600;
+        }
+        .card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            background-color: #ffffff;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+        .card-label {
+            font-weight: 600;
+            color: #1e2a44;
+            margin-right: 8px;
+        }
+        .sexy .card-label {
+            color: #f8d1e9;
+        }
+        .btn {
+            transition: transform 0.2s, background-color 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .section-card {
+            background: linear-gradient(145deg, #ffffff, #edf2f7);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .sexy .section-card {
+            background: linear-gradient(145deg, #4b0082, #1a0033);
+            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.5);
+        }
+        .filter-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+        .sexy .filter-input {
+            background-color: #4b0082;
+            color: #f8d1e9;
+            border-color: #ff69b4;
+        }
+        .sort-icon::after {
+            content: '';
+            margin-left: 5px;
+            font-size: 0.8rem;
+        }
+        .sort-asc::after {
+            content: '↑';
+        }
+        .sort-desc::after {
+            content: '↓';
+        }
+        .token-cell {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .token-cell a {
+            flex-grow: 1;
+        }
+        .token-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            margin-left: 8px;
+            object-fit: cover;
+        }
+        .card-token {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .card-token a {
+            flex-grow: 1;
+        }
+        .tab-btn.active {
+            background-color: #2c7a7b;
+            color: #ffffff;
+        }
+        .sexy .tab-btn.active {
+            background: linear-gradient(145deg, #c71585, #ff69b4);
+        }
+        .tab-pane {
+            display: block;
+        }
+        .tab-pane.hidden {
+            display: none;
+        }
+        .table-container.visible {
+            display: block;
+        }
+        .table-container.hidden {
+            display: none;
+        }
+        .card-container.visible {
+            display: block;
+        }
+        .card-container.hidden {
+            display: none;
+        }
+        @media (max-width: 640px) {
+            .container {
+                padding: 1rem;
+            }
+            h1 {
+                font-size: 1.75rem;
+            }
+            .btn {
+                padding: 10px 16px;
+                font-size: 0.875rem;
+                min-height: 48px;
+                width: 100%;
+            }
+            .pagination-arrow {
+                padding: 6px;
+                font-size: 1.25rem;
+            }
+            .pagination-text {
+                font-size: 0.875rem;
+            }
+            .status {
+                font-size: 0.875rem;
+                margin-top: 1.5rem;
+            }
+            .table-container {
+                display: none;
+            }
+            .card-container {
+                display: block;
+            }
+            .filter-input {
+                font-size: 0.8rem;
+            }
+        }
+        @media (min-width: 641px) {
+            .card-container {
+                display: none;
+            }
+        }
+        @media (max-width: 400px) {
+            .card {
+                padding: 10px;
+                font-size: 0.8rem;
+            }
+            .card-label, .card-value {
+                font-size: 0.8rem;
+            }
+        }
+        @media (max-width: 1024px) and (min-width: 641px) {
+            th, td {
+                padding: 10px;
+                font-size: 0.875rem;
+            }
+            .btn {
+                padding: 10px 20px;
+                font-size: 0.875rem;
+            }
+            .filter-input {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
 </head>
 <body class="flex items-center justify-center min-h-screen">
     <div class="container mx-auto p-6 max-w-7xl">
@@ -21,431 +355,270 @@
                     <i class="fas fa-moon mr-2"></i> Sexy Mode
                 </button>
             </div>
+            <div class="mb-6 section-card">
+                <h2 class="text-xl text-navy mb-2">Summary</h2>
+                <p class="text-gray-700">Total Completed Profit: <span id="funbags-totalProfit" class="font-semibold text-navy">Calculating...</span></p>
+            </div>
+            <!-- Tab Navigation -->
+            <div class="flex space-x-4 mb-6">
+                <button id="tab-active" class="tab-btn btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 active">Active Trades</button>
+                <button id="tab-completed" class="tab-btn btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700">Completed Trades</button>
+                <button id="tab-bot" class="tab-btn btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700">Token Info</button>
+                <button id="tab-prebuy" class="tab-btn btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700">Pre Buy Thinking</button>
+            </div>
+            <!-- Tab Content -->
             <div id="content-funbags" class="tab-content">
-                <div class="mb-6 section-card">
-                    <h2 class="text-xl text-navy mb-2">Summary</h2>
-                    <p class="text-gray-700">Total Completed Profit: <span id="funbags-totalProfit" class="font-semibold text-navy">Calculating...</span></p>
-                </div>
-                <div class="mb-6 section-card">
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <h2 class="text-xl text-navy">Active Trades</h2>
+                <!-- Active Trades Tab -->
+                <div id="tab-content-active" class="tab-pane">
+                    <div class="mb-6 section-card">
+                        <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                            <h2 class="text-xl text-navy">Active Trades</h2>
+                            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                                <button id="funbags-active-refresh" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                                    <i class="fas fa-sync-alt mr-2"></i> Refresh
+                                </button>
+                                <button id="funbags-active-export" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
+                                    <i class="fas fa-file-export mr-2"></i> Export
+                                </button>
+                                <button id="funbags-active-toggleView" class="btn bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center">
+                                    <i class="fas fa-table"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <p id="funbags-active-status" class="text-gray-700 text-sm mb-2 status">Loading active trades...</p>
                         <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                            <button id="funbags-topRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                                <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                            </button>
-                            <button id="funbags-exportBtn" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
-                                <i class="fas fa-file-export mr-2"></i> Export Trades
-                            </button>
+                            <input type="text" id="funbags-active-filter" class="filter-input" placeholder="Filter by Token...">
+                            <select id="funbags-active-pageSize" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                                <option value="10">10 per page</option>
+                                <option value="20">20 per page</option>
+                                <option value="30">30 per page</option>
+                                <option value="50">50 per page</option>
+                                <option value="100">100 per page</option>
+                            </select>
                         </div>
-                    </div>
-                    <p id="funbags-active-status" class="text-gray-700 text-sm mb-2 status">Loading active trades...</p>
-                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                        <input type="text" id="funbags-activeFilter" class="filter-input" placeholder="Filter by Token...">
-                        <select id="funbags-activePageSize" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                            <option value="10">10 per page</option>
-                            <option value="20">20 per page</option>
-                            <option value="30">30 per page</option>
-                            <option value="50">50 per page</option>
-                            <option value="100">100 per page</option>
-                        </select>
-                    </div>
-                    <div class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="funbags-activeTradesBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="funbags-activeTradesCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <button id="funbags-middleRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                        </button>
-                        <div class="flex items-center space-x-2">
-                            <span id="funbags-activePrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
-                            <span class="pagination-text text-gray-700">Page <span id="funbags-activeCurrentPage">1</span></span>
-                            <span id="funbags-activeNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
+                        <div class="table-container visible">
+                            <table id="funbags-activeTradesTable" class="min-w-full">
+                                <thead>
+                                    <tr>
+                                        <th data-sort="token_name">Token<span class="sort-icon"></span></th>
+                                        <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
+                                        <th data-sort="current_price_usd">Current Price (USD)<span class="sort-icon"></span></th>
+                                        <th data-sort="market_cap">Market Cap (USD)<span class="sort-icon"></span></th>
+                                        <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
+                                        <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="funbags-activeTradesBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="card-container hidden">
+                            <div id="funbags-activeTradesCards"></div>
+                        </div>
+                        <div class="flex justify-between items-center mt-4">
+                            <div class="flex items-center space-x-2">
+                                <span id="funbags-active-prevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
+                                <span class="pagination-text text-gray-700">Page <span id="funbags-active-currentPage">1</span></span>
+                                <span id="funbags-active-nextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="mb-6 section-card">
-                    <h2 class="text-xl text-navy mb-4">Completed Trades</h2>
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <p id="funbags-completed-status" class="text-gray-700 text-sm mb-2 sm:mb-0 status">Loading completed trades...</p>
-                        <select id="funbags-profitFilter" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                            <option value="all">All Trades</option>
-                            <option value="positive">Positive Profit</option>
-                            <option value="negative">Negative Profit</option>
-                        </select>
-                    </div>
-                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                        <input type="text" id="funbags-completedFilter" class="filter-input" placeholder="Filter by Token...">
-                        <select id="funbags-completedPageSize" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                            <option value="10">10 per page</option>
-                            <option value="20">20 per page</option>
-                            <option value="30">30 per page</option>
-                            <option value="50">50 per page</option>
-                            <option value="100">100 per page</option>
-                        </select>
-                    </div>
-                    <div id="funbags-completedTableContainer" class="table-container">
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th data-sort="token_name">Token<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="sell_price_usd">Sell Price (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
-                                    <th data-sort="total_profit_usd">Total Profit (USD)<span class="sort-icon"></span></th>
-                                    <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
-                                    <th data-sort="sell_timestamp">Sell Time<span class="sort-icon"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="funbags-completedTradesBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="card-container">
-                        <div id="funbags-completedTradesCards"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-4">
-                        <div class="flex items-center space-x-2">
-                            <span id="funbags-completedPrevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
-                            <span class="pagination-text text-gray-700">Page <span id="funbags-completedCurrentPage">1</span></span>
-                            <span id="funbags-completedNextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
+                <!-- Completed Trades Tab -->
+                <div id="tab-content-completed" class="tab-pane hidden">
+                    <div class="mb-6 section-card">
+                        <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                            <h2 class="text-xl text-navy">Completed Trades</h2>
+                            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                                <button id="funbags-completed-refresh" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                                    <i class="fas fa-sync-alt mr-2"></i> Refresh
+                                </button>
+                                <button id="funbags-completed-export" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
+                                    <i class="fas fa-file-export mr-2"></i> Export
+                                </button>
+                                <button id="funbags-completed-toggleView" class="btn bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center">
+                                    <i class="fas fa-table"></i>
+                                </button>
+                            </div>
                         </div>
-                        <button id="funbags-bottomRefreshBtn" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i> Refresh Trades
-                        </button>
+                        <p id="funbags-completed-status" class="text-gray-700 text-sm mb-2 status">Loading completed trades...</p>
+                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                            <input type="text" id="funbags-completed-filter" class="filter-input" placeholder="Filter by Token...">
+                            <select id="funbags-completed-profitFilter" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                                <option value="all">All Trades</option>
+                                <option value="positive">Positive Profit</option>
+                                <option value="negative">Negative Profit</option>
+                            </select>
+                            <select id="funbags-completed-pageSize" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                                <option value="10">10 per page</option>
+                                <option value="20">20 per page</option>
+                                <option value="30">30 per page</option>
+                                <option value="50">50 per page</option>
+                                <option value="100">100 per page</option>
+                            </select>
+                        </div>
+                        <div class="table-container visible">
+                            <table id="funbags-completedTradesTable" class="min-w-full">
+                                <thead>
+                                    <tr>
+                                        <th data-sort="token_name">Token<span class="sort-icon"></span></th>
+                                        <th data-sort="buy_price_usd">Buy Price (USD)<span class="sort-icon"></span></th>
+                                        <th data-sort="sell_price_usd">Sell Price (USD)<span class="sort-icon"></span></th>
+                                        <th data-sort="profit">Profit (%)<span class="sort-icon"></span></th>
+                                        <th data-sort="total_profit_usd">Total Profit (USD)<span class="sort-icon"></span></th>
+                                        <th data-sort="buy_timestamp">Buy Time<span class="sort-icon"></span></th>
+                                        <th data-sort="sell_timestamp">Sell Time<span class="sort-icon"></span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="funbags-completedTradesBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="card-container hidden">
+                            <div id="funbags-completedTradesCards"></div>
+                        </div>
+                        <div class="flex justify-between items-center mt-4">
+                            <div class="flex items-center space-x-2">
+                                <span id="funbags-completed-prevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
+                                <span class="pagination-text text-gray-700">Page <span id="funbags-completed-currentPage">1</span></span>
+                                <span id="funbags-completed-nextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Bot Activity Tab -->
+                <div id="tab-content-bot" class="tab-pane hidden">
+                    <div class="mb-6 section-card">
+                        <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                            <h2 class="text-xl text-navy">Token Info</h2>
+                            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                                <button id="funbags-bot-refresh" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                                    <i class="fas fa-sync-alt mr-2"></i> Refresh
+                                </button>
+                                <button id="funbags-bot-toggleView" class="btn bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center">
+                                    <i class="fas fa-table"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <p id="funbags-bot-status" class="text-gray-700 text-sm mb-2 status">Loading bot activity...</p>
+                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                            <input type="text" id="funbags-bot-filter" class="filter-input" placeholder="Filter by Token...">
+                            <select id="funbags-bot-pageSize" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                                <option value="10">10 per page</option>
+                                <option value="20">20 per page</option>
+                                <option value="30">30 per page</option>
+                                <option value="50">50 per page</option>
+                                <option value="100">100 per page</option>
+                            </select>
+                        </div>
+                        <div class="table-container visible">
+                            <table id="funbags-botActivityTable" class="min-w-full">
+                                <thead>
+                                    <tr>
+                                        <th data-sort="token_name">Token<span class="sort-icon"></span></th>
+                                        <th data-sort="bonding_progress">Bonding Progress (%)<span class="sort-icon"></span></th>
+                                        <th data-sort="buy_volume_sol">Buy Volume (SOL)<span class="sort-icon"></span></th>
+                                        <th data-sort="buy_sell_ratio">Buy/Sell Ratio<span class="sort-icon"></span></th>
+                                        <th data-sort="holder_growth">Holder Growth<span class="sort-icon"></span></th>
+                                        <th data-sort="dev_sell_detected">Dev Sell<span class="sort-icon"></span></th>
+                                        <th data-sort="sniper_count">Sniper Count<span class="sort-icon"></span></th>
+                                        <th data-sort="rsi">RSI<span class="sort-icon"></span></th>
+                                        <th data-sort="volume_spike_ratio">Volume Spike<span class="sort-icon"></span></th>
+                                        <th data-sort="dex_volume_24h">DEX Volume (USD)<span class="sort-icon"></span></th>
+                                        <th data-sort="dex_buy_sell_ratio">DEX B/S Ratio<span class="sort-icon"></span></th>
+                                        <th data-sort="dex_liquidity_usd">DEX Liquidity (USD)<span class="sort-icon"></span></th>
+                                        <th data-sort="dex_pair_age_minutes">Pair Age (Min)<span class="sort-icon"></span></th>
+                                        <th data-sort="price_usd">Price (USD)<span class="sort-icon"></span></th>
+                                        <th data-sort="timestamp">Timestamp<span class="sort-icon"></span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="funbags-botActivityBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="card-container hidden">
+                            <div id="funbags-botActivityCards"></div>
+                        </div>
+                        <div class="flex justify-between items-center mt-4">
+                            <div class="flex items-center space-x-2">
+                                <span id="funbags-bot-prevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
+                                <span class="pagination-text text-gray-700">Page <span id="funbags-bot-currentPage">1</span></span>
+                                <span id="funbags-bot-nextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Pre Buy Thinking Tab -->
+                <div id="tab-content-prebuy" class="tab-pane hidden">
+                    <div class="mb-6 section-card">
+                        <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                            <h2 class="text-xl text-navy">Pre Buy Thinking</h2>
+                            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                                <button id="funbags-prebuy-refresh" class="btn bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 flex items-center">
+                                    <i class="fas fa-sync-alt mr-2"></i> Refresh
+                                </button>
+                                <button id="funbags-prebuy-export" class="btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
+                                    <i class="fas fa-file-export mr-2"></i> Export
+                                </button>
+                                <button id="funbags-prebuy-toggleView" class="btn bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center">
+                                    <i class="fas fa-table"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <p id="funbags-prebuy-status" class="text-gray-700 text-sm mb-2 status">Loading pre-buy evaluations...</p>
+                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                            <input type="text" id="funbags-prebuy-filter" class="filter-input" placeholder="Filter by Token...">
+                            <select id="funbags-prebuy-passFilter" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                                <option value="all">All Evaluations</option>
+                                <option value="passed">Passed</option>
+                                <option value="failed">Failed</option>
+                            </select>
+                            <select id="funbags-prebuy-pageSize" class="bg-light text-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                                <option value="10">10 per page</option>
+                                <option value="20">20 per page</option>
+                                <option value="30">30 per page</option>
+                                <option value="50">50 per page</option>
+                                <option value="100">100 per page</option>
+                            </select>
+                        </div>
+                        <div class="table-container visible">
+                            <table id="funbags-prebuyEvaluationsTable" class="min-w-full">
+                                <thead>
+                                    <tr>
+                                        <th data-sort="token_name">Token<span class="sort-icon"></span></th>
+                                        <th data-sort="bonding_progress">Bonding Progress (%)<span class="sort-icon"></span></th>
+                                        <th data-sort="buy_volume_sol">Buy Volume (SOL)<span class="sort-icon"></span></th>
+                                        <th data-sort="buy_sell_ratio">Buy/Sell Ratio<span class="sort-icon"></span></th>
+                                        <th data-sort="holder_count">Holder Count<span class="sort-icon"></span></th>
+                                        <th data-sort="dev_sell_detected">Dev Sell<span class="sort-icon"></span></th>
+                                        <th data-sort="sniper_count">Sniper Count<span class="sort-icon"></span></th>
+                                        <th data-sort="dex_volume_24h">DEX Volume (USD)<span class="sort-icon"></span></th>
+                                        <th data-sort="dex_buy_sell_ratio">DEX B/S Ratio<span class="sort-icon"></span></th>
+                                        <th data-sort="dex_liquidity_usd">DEX Liquidity (USD)<span class="sort-icon"></span></th>
+                                        <th data-sort="dex_pair_age_minutes">Pair Age (Min)<span class="sort-icon"></span></th>
+                                        <th data-sort="price_usd">Price (USD)<span class="sort-icon"></span></th>
+                                        <th data-sort="passed">Passed<span class="sort-icon"></span></th>
+                                        <th data-sort="reasons_failed">Reasons Failed<span class="sort-icon"></span></th>
+                                        <th data-sort="timestamp">Timestamp<span class="sort-icon"></span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="funbags-prebuyEvaluationsBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="card-container hidden">
+                            <div id="funbags-prebuyEvaluationsCards"></div>
+                        </div>
+                        <div class="flex justify-between items-center mt-4">
+                            <div class="flex items-center space-x-2">
+                                <span id="funbags-prebuy-prevPage" class="pagination-arrow disabled"><i class="fas fa-chevron-left"></i></span>
+                                <span class="pagination-text text-gray-700">Page <span id="funbags-prebuy-currentPage">1</span></span>
+                                <span id="funbags-prebuy-nextPage" class="pagination-arrow disabled"><i class="fas fa-chevron-right"></i></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         <div id="error-message" class="hidden text-red-600 text-center mt-4">An error occurred while loading the dashboard. Please check the console for details.</div>
     </div>
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Open+Sans:wght@400;600&display=swap');
-    body {
-        font-family: 'Open Sans', sans-serif;
-        background-color: #f4f7fa;
-        color: #2d3748;
-        transition: background-color 0.3s, color 0.3s;
-    }
-    h1, h2 {
-        font-family: 'Poppins', sans-serif;
-        font-weight: 600;
-    }
-    select {
-        font-family: 'Open Sans', sans-serif;
-        font-size: 0.875rem;
-    }
-    .sexy {
-        background-color: #1a0033;
-        color: #f8d1e9;
-    }
-    .sexy .bg-light {
-        background-color: #4b0082;
-    }
-    .sexy .text-gray-700 {
-        color: #f8d1e9;
-    }
-    .sexy select {
-        background-color: #4b0082;
-        color: #f8d1e9;
-        border-color: #ff69b4;
-    }
-    .sexy .bg-teal-600 {
-        background: linear-gradient(145deg, #ff69b4, #c71585);
-    }
-    .sexy .hover\:bg-teal-700:hover {
-        background: linear-gradient(145deg, #c71585, #ff69b4);
-    }
-    .sexy .profit-positive {
-        color: #98fb98;
-    }
-    .sexy .profit-negative {
-        color: #ff4040;
-    }
-    .sexy .card {
-        background-color: #4b0082;
-        border-color: #ff69b4;
-    }
-    .sexy .card:hover {
-        background-color: #6a0dad;
-        transform: translateY(-3px);
-    }
-    .sexy th {
-        background-color: #2e004f;
-    }
-    .sexy tr:nth-child(even) {
-        background-color: #4b0082;
-    }
-    .sexy tr:hover {
-        background-color: #6a0dad;
-        border-left: 3px solid #ff69b4;
-    }
-    .table-container {
-        overflow-x: auto;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        position: relative;
-    }
-    .sexy .table-container {
-        box-shadow: 0 2px 10px rgba(255, 105, 180, 0.5);
-        border: 1px solid #ff69b4;
-    }
-    .loading::after {
-        content: '';
-        display: inline-block;
-        width: 16px;
-        height: 16px;
-        border: 2px solid #2c7a7b;
-        border-top-color: transparent;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin-left: 8px;
-    }
-    .sexy .loading::after {
-        border-color: #ff69b4;
-        border-top-color: transparent;
-    }
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-    table {
-        border-collapse: collapse;
-        width: 100%;
-    }
-    th, td {
-        text-align: left;
-        padding: 12px;
-        border: 1px solid #e2e8f0;
-    }
-    .sexy th, .sexy td {
-        border-color: #ff69b4;
-    }
-    th {
-        background-color: #1e2a44;
-        color: #ffffff;
-        font-size: 0.85rem;
-        white-space: nowrap;
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        cursor: pointer;
-    }
-    th:hover {
-        background-color: #285e61;
-    }
-    .sexy th:hover {
-        background-color: #6a0dad;
-    }
-    tr:nth-child(even) {
-        background-color: #edf2f7;
-    }
-    tr:hover {
-        background-color: #e6fffa;
-        border-left: 3px solid #2c7a7b;
-        transition: all 0.2s ease;
-    }
-    .pagination-arrow {
-        cursor: pointer;
-        padding: 8px;
-        color: #2c7a7b;
-        font-size: 1.5rem;
-        min-width: 44px;
-        min-height: 44px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: color 0.2s;
-    }
-    .sexy .pagination-arrow {
-        color: #ff69b4;
-    }
-    .pagination-arrow:hover:not(.disabled) {
-        color: #285e61;
-    }
-    .sexy .pagination-arrow:hover:not(.disabled) {
-        color: #c71585;
-    }
-    .pagination-arrow.disabled {
-        color: #a0aec0;
-        cursor: not-allowed;
-    }
-    a {
-        color: #2c7a7b;
-        text-decoration: none;
-    }
-    a:hover {
-        text-decoration: underline;
-    }
-    .sexy a {
-        color: #ff69b4;
-    }
-    .profit-positive {
-        color: #38a169;
-        font-weight: 600;
-    }
-    .profit-negative {
-        color: #e53e3e;
-        font-weight: 600;
-    }
-    .card {
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 12px;
-        margin-bottom: 12px;
-        background-color: #ffffff;
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-    }
-    .card-label {
-        font-weight: 600;
-        color: #1e2a44;
-        margin-right: 8px;
-    }
-    .sexy .card-label {
-        color: #f8d1e9;
-    }
-    .btn {
-        transition: transform 0.2s, background-color 0.2s;
-    }
-    .btn:hover {
-        transform: translateY(-2px);
-    }
-    .section-card {
-        background: linear-gradient(145deg, #ffffff, #edf2f7);
-        border-radius: 12px;
-        padding: 24px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    }
-    .sexy .section-card {
-        background: linear-gradient(145deg, #4b0082, #1a0033);
-        box-shadow: 0 4px 20px rgba(255, 105, 180, 0.5);
-    }
-    .filter-input {
-        width: 100%;
-        padding: 8px;
-        margin-bottom: 12px;
-        border: 1px solid #e2e8f0;
-        border-radius: 4px;
-        font-size: 0.875rem;
-    }
-    .sexy .filter-input {
-        background-color: #4b0082;
-        color: #f8d1e9;
-        border-color: #ff69b4;
-    }
-    .sort-icon::after {
-        content: '';
-        margin-left: 5px;
-        font-size: 0.8rem;
-    }
-    .sort-asc::after {
-        content: '↑';
-    }
-    .sort-desc::after {
-        content: '↓';
-    }
-    .token-cell {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    .token-cell a {
-        flex-grow: 1;
-    }
-    .token-icon {
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        margin-left: 8px;
-        object-fit: cover;
-    }
-    .card-token {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    .card-token a {
-        flex-grow: 1;
-    }
-    @media (max-width: 640px) {
-        .container {
-            padding: 1rem;
-        }
-        h1 {
-            font-size: 1.75rem;
-        }
-        .btn {
-            padding: 10px 16px;
-            font-size: 0.875rem;
-            min-height: 48px;
-            width: 100%;
-        }
-        .pagination-arrow {
-            padding: 6px;
-            font-size: 1.25rem;
-        }
-        .pagination-text {
-            font-size: 0.875rem;
-        }
-        .status {
-            font-size: 0.875rem;
-            margin-top: 1.5rem;
-        }
-        .table-container {
-            display: none;
-        }
-        .card-container {
-            display: block;
-        }
-        .filter-input {
-            font-size: 0.8rem;
-        }
-    }
-    @media (min-width: 641px) {
-        .card-container {
-            display: none;
-        }
-    }
-    @media (max-width: 400px) {
-        .card {
-            padding: 10px;
-            font-size: 0.8rem;
-        }
-        .card-label, .card-value {
-            font-size: 0.8rem;
-        }
-    }
-    @media (max-width: 1024px) and (min-width: 641px) {
-        th, td {
-            padding: 10px;
-            font-size: 0.875rem;
-        }
-        .btn {
-            padding: 10px 20px;
-            font-size: 0.875rem;
-        }
-        .filter-input {
-            font-size: 0.85rem;
-        }
-    }
-</style>
-<script>
+    <script>
     console.log('Script loaded at', new Date().toISOString());
 
     // Initialize Supabase client with retry
@@ -477,82 +650,29 @@
         }
     }
 
-    // Moralis API configuration
-    const MORALIS_API = 'https://solana-gateway.moralis.io';
-    const MORALIS_API_KEY = 'YOUR_MORALIS_API_KEY_HERE'; // Replace with a valid key
-    const MORALIS_CACHE_KEY = 'moralisTokenCache';
-    let moralisTokenMap = new Map();
-
-    // Load Moralis cache
-    function loadMoralisCache() {
+    // Fetch token data
+    async function fetchTokenData(tokenAddress) {
+        if (!tokenAddress) {
+            console.warn('fetchTokenData: No token address provided');
+            return { name: 'Unknown', iconUrl: '' };
+        }
+        if (!supabase) {
+            console.error('Supabase not initialized');
+            return { name: tokenAddress.slice(0, 8), iconUrl: '' };
+        }
         try {
-            const cached = localStorage.getItem(MORALIS_CACHE_KEY);
-            return cached ? new Map(JSON.parse(cached)) : new Map();
+            const { data, error } = await supabase
+                .from('token_states')
+                .select('token_name, icon_url')
+                .eq('token_address', tokenAddress)
+                .maybeSingle();
+            if (error) throw error;
+            return { name: data?.token_name || tokenAddress.slice(0, 8), iconUrl: data?.icon_url || '' };
         } catch (error) {
-            console.error('Error loading Moralis cache:', error);
-            return new Map();
+            console.error('Supabase token fetch error:', error.message);
+            return { name: tokenAddress.slice(0, 8), iconUrl: '' };
         }
     }
-
-    // Save Moralis cache
-    function saveMoralisCache(cache) {
-        try {
-            localStorage.setItem(MORALIS_CACHE_KEY, JSON.stringify(Array.from(cache.entries())));
-        } catch (error) {
-            console.error('Error saving Moralis cache:', error);
-        }
-    }
-
-    // Fetch Moralis token data
-    async function fetchMoralisTokenData() {
-        console.log('Fetching Moralis token data');
-        try {
-            const response = await fetch(`${MORALIS_API}/token/mainnet/exchange/pumpfun/bonding?limit=100`, {
-                headers: { 'Accept': 'application/json', 'X-API-Key': MORALIS_API_KEY }
-            });
-            if (!response.ok) throw new Error(`Moralis API error: ${response.status}`);
-            const data = await response.json();
-            console.log('Moralis data fetched:', data.result?.length || 0, 'tokens');
-
-            const tokenMap = new Map();
-            (data.result || []).forEach(token => {
-                if (token.tokenAddress) {
-                    tokenMap.set(token.tokenAddress, {
-                        name: token.name?.trim() || token.tokenAddress.slice(0, 8),
-                        iconUrl: token.logo || ''
-                    });
-                }
-            });
-
-            if (supabase) {
-                const tokensData = Array.from(tokenMap.entries()).map(([tokenAddress, tokenData]) => ({
-                    token_address: tokenAddress,
-                    token_name: tokenData.name,
-                    icon_url: tokenData.iconUrl,
-                    updated_at: new Date().toISOString()
-                }));
-
-                const { error } = await supabase
-                    .from('token_states')
-                    .upsert(tokensData, { onConflict: 'token_address' });
-                if (error) console.error('Error upserting Moralis data:', error.message, error.details);
-            }
-
-            moralisTokenMap = tokenMap;
-            saveMoralisCache(tokenMap);
-            return tokenMap;
-        } catch (error) {
-            console.error('Error fetching Moralis data:', error.message);
-            return loadMoralisCache();
-        }
-    }
-
-    // Sorting and Pagination States
-    const sortStates = { funbags: { active: {}, completed: {} } };
-    const pageStates = { funbags: { active: 1, completed: 1 } };
-    const pageSizes = { funbags: { active: 10, completed: 10 } };
-    const dataCache = { funbags: { active: [], completed: [] } };
-    const tokenNameCache = new Map();
 
     // Retry mechanism
     async function withRetry(fn, retries = 3, delay = 1000) {
@@ -567,70 +687,6 @@
         }
     }
 
-    // Fetch token data
-    async function fetchTokenData(tokenAddress) {
-        if (!tokenAddress) {
-            console.warn('fetchTokenData: No token address provided');
-            return { name: 'Unknown', iconUrl: '' };
-        }
-        if (tokenNameCache.has(tokenAddress)) return tokenNameCache.get(tokenAddress);
-
-        if (moralisTokenMap.has(tokenAddress)) {
-            const result = moralisTokenMap.get(tokenAddress);
-            if (result.name && result.name !== tokenAddress.slice(0, 8)) {
-                tokenNameCache.set(tokenAddress, result);
-                return result;
-            }
-        }
-
-        if (supabase) {
-            try {
-                const { data, error } = await supabase
-                    .from('token_states')
-                    .select('token_name, icon_url')
-                    .eq('token_address', tokenAddress)
-                    .maybeSingle();
-                if (error) console.error('Supabase token error:', error.message, error.details);
-                if (data?.token_name && data.token_name !== tokenAddress.slice(0, 8)) {
-                    const result = { name: data.token_name, iconUrl: data.icon_url || '' };
-                    tokenNameCache.set(tokenAddress, result);
-                    return result;
-                }
-            } catch (error) {
-                console.error('Supabase token fetch error:', error.message);
-            }
-        }
-
-        try {
-            const response = await fetch(`${MORALIS_API}/token/mainnet/${tokenAddress}/metadata`, {
-                headers: { 'Accept': 'application/json', 'X-API-Key': MORALIS_API_KEY }
-            });
-            if (!response.ok) throw new Error(`Moralis metadata error: ${response.status}`);
-            const token = await response.json();
-            const result = { name: token.name?.trim() || tokenAddress.slice(0, 8), iconUrl: token.logo || '' };
-            tokenNameCache.set(tokenAddress, result);
-            moralisTokenMap.set(tokenAddress, result);
-            saveMoralisCache(moralisTokenMap);
-
-            if (supabase) {
-                const { error } = await supabase.from('token_states').upsert({
-                    token_address: tokenAddress,
-                    token_name: result.name,
-                    icon_url: result.iconUrl,
-                    updated_at: new Date().toISOString()
-                }, { onConflict: 'token_address' });
-                if (error) console.error('Error upserting token:', error.message, error.details);
-            }
-
-            return result;
-        } catch (error) {
-            console.warn('Token fetch failed for address:', tokenAddress, error.message);
-            const fallback = { name: tokenAddress.slice(0, 8), iconUrl: '' };
-            tokenNameCache.set(tokenAddress, fallback);
-            return fallback;
-        }
-    }
-
     // Debounce function
     function debounce(func, wait = 300) {
         let timeout;
@@ -639,40 +695,73 @@
             timeout = setTimeout(() => func.apply(this, args), wait);
         };
     }
-    // Refresh trades function
-    async function refreshTrades(activePage = 1, completedPage = 1) {
-        console.log('Refreshing trades, activePage:', activePage, 'completedPage:', completedPage);
-        const prefix = 'funbags';
-        const elements = {
-            activeStatus: document.getElementById(`${prefix}-active-status`),
-            completedStatus: document.getElementById(`${prefix}-completed-status`),
-            activeBody: document.getElementById(`${prefix}-activeTradesBody`),
-            activeCards: document.getElementById(`${prefix}-activeTradesCards`),
-            completedBody: document.getElementById(`${prefix}-completedTradesBody`),
-            completedCards: document.getElementById(`${prefix}-completedTradesCards`),
-            totalProfit: document.getElementById(`${prefix}-totalProfit`),
-            activePrev: document.getElementById(`${prefix}-activePrevPage`),
-            activeNext: document.getElementById(`${prefix}-activeNextPage`),
-            completedPrev: document.getElementById(`${prefix}-completedPrevPage`),
-            completedNext: document.getElementById(`${prefix}-completedNextPage`),
-            activeCurrent: document.getElementById(`${prefix}-activeCurrentPage`),
-            completedCurrent: document.getElementById(`${prefix}-completedCurrentPage`)
-        };
-        const activeTable = elements.activeBody?.closest('table');
-        const completedTable = elements.completedBody?.closest('table');
 
-        if (!Object.values(elements).every(el => el) || !activeTable || !completedTable) {
-            console.error('Missing trade DOM elements');
-            if (elements.activeStatus) elements.activeStatus.textContent = 'Error: Missing DOM elements';
-            if (elements.completedStatus) elements.completedStatus.textContent = 'Error: Missing DOM elements';
+    // Export data to CSV
+    function exportToCSV(data, filename) {
+        const headers = Object.keys(data[0]).join(',');
+        const rows = data.map(item => Object.values(item).map(val => `"${val}"`).join(','));
+        const csv = [headers, ...rows].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(link.href);
+    }
+
+    // Sorting and Pagination States
+    const sortStates = { active: {}, completed: {}, bot: {}, prebuy: {} };
+    const pageStates = { active: 1, completed: 1, bot: 1, prebuy: 1 };
+    const pageSizes = { active: 10, completed: 10, bot: 10, prebuy: 10 };
+    const dataCache = { active: [], completed: [], bot: [], prebuy: [] };
+    const viewStates = { active: 'table', completed: 'table', bot: 'table', prebuy: 'table' };
+
+    // Refresh data function
+    async function refreshData(activePage = 1, completedPage = 1, botPage = 1, prebuyPage = 1) {
+        console.log('Refreshing data, activePage:', activePage, 'completedPage:', completedPage, 'botPage:', botPage, 'prebuyPage:', prebuyPage);
+        const elements = {
+            activeStatus: document.getElementById('funbags-active-status'),
+            completedStatus: document.getElementById('funbags-completed-status'),
+            botStatus: document.getElementById('funbags-bot-status'),
+            prebuyStatus: document.getElementById('funbags-prebuy-status'),
+            activeBody: document.getElementById('funbags-activeTradesBody'),
+            activeCards: document.getElementById('funbags-activeTradesCards'),
+            completedBody: document.getElementById('funbags-completedTradesBody'),
+            completedCards: document.getElementById('funbags-completedTradesCards'),
+            botBody: document.getElementById('funbags-botActivityBody'),
+            botCards: document.getElementById('funbags-botActivityCards'),
+            prebuyBody: document.getElementById('funbags-prebuyEvaluationsBody'),
+            prebuyCards: document.getElementById('funbags-prebuyEvaluationsCards'),
+            totalProfit: document.getElementById('funbags-totalProfit'),
+            activePrev: document.getElementById('funbags-active-prevPage'),
+            activeNext: document.getElementById('funbags-active-nextPage'),
+            completedPrev: document.getElementById('funbags-completed-prevPage'),
+            completedNext: document.getElementById('funbags-completed-nextPage'),
+            botPrev: document.getElementById('funbags-bot-prevPage'),
+            botNext: document.getElementById('funbags-bot-nextPage'),
+            prebuyPrev: document.getElementById('funbags-prebuy-prevPage'),
+            prebuyNext: document.getElementById('funbags-prebuy-nextPage'),
+            activeCurrent: document.getElementById('funbags-active-currentPage'),
+            completedCurrent: document.getElementById('funbags-completed-currentPage'),
+            botCurrent: document.getElementById('funbags-bot-currentPage'),
+            prebuyCurrent: document.getElementById('funbags-prebuy-currentPage'),
+        };
+
+        if (!Object.values(elements).every(el => el)) {
+            console.error('Missing DOM elements');
+            Object.values(elements).forEach(el => el && (el.textContent = 'Error: Missing DOM elements'));
             document.getElementById('error-message').classList.remove('hidden');
             return;
         }
 
         elements.activeStatus.textContent = 'Loading active trades...';
         elements.completedStatus.textContent = 'Loading completed trades...';
+        elements.botStatus.textContent = 'Loading bot activity...';
+        elements.prebuyStatus.textContent = 'Loading pre-buy evaluations...';
         elements.activeStatus.classList.add('loading');
         elements.completedStatus.classList.add('loading');
+        elements.botStatus.classList.add('loading');
+        elements.prebuyStatus.classList.add('loading');
         elements.totalProfit.textContent = 'Calculating...';
 
         try {
@@ -681,26 +770,27 @@
             let activeTotal = 0;
             if (supabase) {
                 try {
-                    const { data: tokenStates, error: tokenError, count } = await withRetry(() => supabase
-                        .from('token_states')
-                        .select('token_address, purchase_price, highest_price, decimals, amount, updated_at, total_supply', { count: 'exact' })
-                        .eq('bought', true)
-                        .gt('amount', 0)
+                    const { data: tokenStates, error: tokenError, count } = await withRetry(() =>
+                        supabase
+                            .from('token_states')
+                            .select('token_address, purchase_price, decimals, amount, updated_at, total_supply, token_name, icon_url', { count: 'exact' })
+                            .eq('bought', true)
+                            .gt('amount', 0)
+                            .range((activePage - 1) * pageSizes.active, activePage * pageSizes.active - 1)
                     );
                     if (tokenError) throw new Error(`Active trades query error: ${tokenError.message}`);
 
                     console.log('Active trades fetched:', tokenStates?.length || 0, 'records');
 
                     activeTrades = await Promise.all((tokenStates || []).map(async state => {
-                        if (!state.token_address) {
-                            console.warn('Skipping active trade with missing token_address');
+                        if (!state.token_address || !state.total_supply || state.amount <= 0) {
+                            console.warn('Skipping invalid active trade:', state.token_address);
                             return null;
                         }
-                        const tokenData = await fetchTokenData(state.token_address);
                         const buyPrice = parseFloat(state.purchase_price) || 0;
-                        let currentPrice;
+                        let currentPrice = 0;
                         try {
-                            const { data: priceLog } = await supabase
+                            const { data: priceLog, error } = await supabase
                                 .from('bot_logs')
                                 .select('usd_price')
                                 .eq('event_type', 'price_check')
@@ -708,48 +798,51 @@
                                 .order('timestamp', { ascending: false })
                                 .limit(1)
                                 .single();
-                            currentPrice = priceLog?.usd_price ? parseFloat(priceLog.usd_price) : parseFloat(state.highest_price) || buyPrice;
+                            if (error) throw error;
+                            currentPrice = priceLog?.usd_price ? parseFloat(priceLog.usd_price) : 0;
                         } catch (error) {
                             console.warn('Error fetching price_check for token:', state.token_address, error.message);
-                            currentPrice = parseFloat(state.highest_price) || buyPrice;
                         }
                         const profitPercent = buyPrice ? (((currentPrice - buyPrice) / buyPrice) * 100).toFixed(2) : '0';
-                        const marketCap = currentPrice * (state.total_supply || 1_000_000_000);
+                        const marketCap = currentPrice * parseFloat(state.total_supply);
 
-                        let buyTimestamp = state.updated_at;
+                        let buyTimestamp;
                         try {
-                            const { data: buyLog } = await supabase
+                            const { data: buyLog, error } = await supabase
                                 .from('bot_logs')
                                 .select('timestamp')
                                 .eq('event_type', 'buy')
                                 .eq('token_address', state.token_address)
+                                .order('timestamp', { ascending: false })
                                 .limit(1)
                                 .single();
-                            if (buyLog?.timestamp) buyTimestamp = buyLog.timestamp;
+                            if (error) throw error;
+                            buyTimestamp = buyLog?.timestamp || state.updated_at;
                         } catch (error) {
                             console.warn('Error fetching buy timestamp for token:', state.token_address, error.message);
+                            buyTimestamp = state.updated_at;
                         }
 
                         return {
                             token_address: state.token_address,
-                            token_name: tokenData.name,
-                            iconUrl: tokenData.iconUrl,
+                            token_name: state.token_name || state.token_address.slice(0, 8),
+                            iconUrl: state.icon_url || '',
                             buy_price_usd: buyPrice,
                             current_price_usd: currentPrice,
                             market_cap: marketCap,
                             profit: profitPercent,
-                            buy_timestamp: buyTimestamp
+                            buy_timestamp: buyTimestamp,
                         };
                     }));
                     activeTrades = activeTrades.filter(Boolean);
                     activeTotal = count || activeTrades.length;
-                    dataCache.funbags.active = activeTrades;
+                    dataCache.active = activeTrades;
                 } catch (error) {
                     console.error('Error fetching active trades:', error.message);
                     elements.activeStatus.textContent = `Failed to load active trades: ${error.message}`;
                 }
             } else {
-                elements.activeStatus.textContent = 'Supabase not initialized, cannot load active trades';
+                elements.activeStatus.textContent = 'Supabase not initialized';
             }
 
             // Fetch Completed Trades
@@ -758,98 +851,222 @@
             let totalProfitUsd = 0;
             if (supabase) {
                 try {
-                    const { data: sellLogs, error: sellError, count } = await withRetry(() => supabase
-                        .from('bot_logs')
-                        .select('token_address, amount, timestamp, sell_price', { count: 'exact' })
-                        .eq('event_type', 'trailing_stop')
-                        .order('timestamp', { ascending: false })
+                    const { data: purchasedTokens, error: purchasedError } = await supabase
+                        .from('purchased_tokens')
+                        .select('token_address');
+                    if (purchasedError) throw purchasedError;
+                    const purchasedSet = new Set(purchasedTokens?.map(t => t.token_address) || []);
+
+                    const { data: sellLogs, error: sellError, count } = await withRetry(() =>
+                        supabase
+                            .from('bot_logs')
+                            .select('token_address, amount, timestamp, sell_price', { count: 'exact' })
+                            .eq('event_type', 'trailing_stop')
+                            .order('timestamp', { ascending: false })
+                            .range((completedPage - 1) * pageSizes.completed, completedPage * pageSizes.completed - 1)
                     );
                     if (sellError) throw new Error(`Completed trades query error: ${sellError.message}`);
 
                     console.log('Completed trades sell logs fetched:', sellLogs?.length || 0, 'records');
 
                     const sellGroups = (sellLogs || []).reduce((acc, sell) => {
-                        if (!sell.token_address) return acc;
+                        if (!sell.token_address || !purchasedSet.has(sell.token_address)) return acc;
                         acc[sell.token_address] = acc[sell.token_address] || [];
                         acc[sell.token_address].push(sell);
                         return acc;
                     }, {});
 
-                    completedTrades = await Promise.all(Object.entries(sellGroups).map(async ([tokenAddress, sells]) => {
-                        if (!tokenAddress) {
-                            console.warn('Skipping sell group with missing token_address');
-                            return null;
-                        }
-                        const tokenData = await fetchTokenData(tokenAddress);
-
-                        const { data: buyLog, error: buyError } = await supabase
-                            .from('bot_logs')
-                            .select('purchase_price, timestamp')
-                            .eq('event_type', 'buy')
-                            .eq('token_address', tokenAddress)
-                            .lte('timestamp', sells[0].timestamp)
-                            .order('timestamp', { ascending: false })
-                            .limit(1)
-                            .single();
-                        if (buyError || !buyLog) {
-                            console.warn('No buy log found for token:', tokenAddress, buyError?.message);
-                            return null;
-                        }
-
-                        const buyPrice = parseFloat(buyLog.purchase_price) || 0;
-                        if (!buyPrice) {
-                            console.warn('Invalid buy price for token:', tokenAddress);
-                            return null;
-                        }
-
-                        let totalAmount = 0, weightedSellPrice = 0;
-                        for (const sell of sells) {
-                            const sellPrice = parseFloat(sell.sell_price) || 0;
-                            const amount = parseFloat(sell.amount) || 0;
-                            if (amount > 0 && sellPrice > 0) {
-                                totalAmount += amount;
-                                weightedSellPrice += amount * sellPrice;
+                    completedTrades = await Promise.all(
+                        Object.entries(sellGroups).map(async ([tokenAddress, sells]) => {
+                            const { data: tokenData, error } = await supabase
+                                .from('token_states')
+                                .select('token_name, icon_url')
+                                .eq('token_address', tokenAddress)
+                                .maybeSingle();
+                            if (error) {
+                                console.warn('Error fetching token data for:', tokenAddress, error.message);
                             }
-                        }
 
-                        if (!totalAmount) {
-                            console.warn('No valid sell amounts for token:', tokenAddress);
-                            return null;
-                        }
+                            const { data: buyLogs, error: buyError } = await supabase
+                                .from('bot_logs')
+                                .select('purchase_price, timestamp, amount')
+                                .eq('event_type', 'buy')
+                                .eq('token_address', tokenAddress)
+                                .lte('timestamp', sells[0].timestamp)
+                                .order('timestamp', { ascending: false });
+                            if (buyError || !buyLogs?.length) {
+                                console.warn('No buy logs found for token:', tokenAddress, buyError?.message);
+                                return null;
+                            }
 
-                        const avgSellPrice = weightedSellPrice / totalAmount;
-                        const profitPercent = buyPrice ? (((avgSellPrice - buyPrice) / buyPrice) * 100).toFixed(2) : '0';
-                        const profitUsd = totalAmount * (avgSellPrice - buyPrice);
-                        totalProfitUsd += profitUsd;
+                            let totalBuyAmount = 0, weightedBuyPrice = 0;
+                            for (const buy of buyLogs) {
+                                const buyPrice = parseFloat(buy.purchase_price) || 0;
+                                const amount = parseFloat(buy.amount) || 0;
+                                if (amount > 0 && buyPrice > 0) {
+                                    totalBuyAmount += amount;
+                                    weightedBuyPrice += amount * buyPrice;
+                                }
+                            }
+                            if (!totalBuyAmount) {
+                                console.warn('No valid buy amounts for token:', tokenAddress);
+                                return null;
+                            }
+                            const avgBuyPrice = weightedBuyPrice / totalBuyAmount;
 
-                        return {
-                            token_address: tokenAddress,
-                            token_name: tokenData.name,
-                            iconUrl: tokenData.iconUrl,
-                            buy_price_usd: buyPrice,
-                            sell_price_usd: avgSellPrice,
-                            profit: profitPercent,
-                            total_profit_usd: profitUsd,
-                            buy_timestamp: buyLog.timestamp || null,
-                            sell_timestamp: sells[0].timestamp || null
-                        };
-                    }));
+                            let totalSellAmount = 0, weightedSellPrice = 0;
+                            for (const sell of sells) {
+                                const sellPrice = parseFloat(sell.sell_price) || 0;
+                                const amount = parseFloat(sell.amount) || 0;
+                                if (amount > 0 && sellPrice > 0) {
+                                    totalSellAmount += amount;
+                                    weightedSellPrice += amount * sellPrice;
+                                }
+                            }
+                            if (!totalSellAmount) {
+                                console.warn('No valid sell amounts for token:', tokenAddress);
+                                return null;
+                            }
+                            const avgSellPrice = weightedSellPrice / totalSellAmount;
+
+                            const profitPercent = avgBuyPrice ? (((avgSellPrice - avgBuyPrice) / avgBuyPrice) * 100).toFixed(2) : '0';
+                            const profitUsd = totalSellAmount * (avgSellPrice - avgBuyPrice);
+                            totalProfitUsd += profitUsd;
+
+                            return {
+                                token_address: tokenAddress,
+                                token_name: tokenData?.token_name || tokenAddress.slice(0, 8),
+                                iconUrl: tokenData?.icon_url || '',
+                                buy_price_usd: avgBuyPrice,
+                                sell_price_usd: avgSellPrice,
+                                profit: profitPercent,
+                                total_profit_usd: profitUsd,
+                                buy_timestamp: buyLogs[0].timestamp || null,
+                                sell_timestamp: sells[0].timestamp || null,
+                            };
+                        })
+                    );
                     completedTrades = completedTrades.filter(Boolean);
                     completedTotal = count || sellLogs.length;
-                    dataCache.funbags.completed = completedTrades;
+                    dataCache.completed = completedTrades;
                 } catch (error) {
                     console.error('Error fetching completed trades:', error.message);
                     elements.completedStatus.textContent = `Failed to load completed trades: ${error.message}`;
                 }
             } else {
-                elements.completedStatus.textContent = 'Supabase not initialized, cannot load completed trades';
+                elements.completedStatus.textContent = 'Supabase not initialized';
+            }
+
+            // Fetch Bot Activity
+            let botActivity = [];
+            let botTotal = 0;
+            if (supabase) {
+                try {
+                    const { data: signals, error: signalError, count } = await withRetry(() =>
+                        supabase
+                            .from('token_evaluation_logs')
+                            .select('*, token_states!inner(token_name, icon_url)', { count: 'exact' })
+                            .eq('signal_type', 'buy_evaluation')
+                            .order('timestamp', { ascending: false })
+                            .range((botPage - 1) * pageSizes.bot, botPage * pageSizes.bot - 1)
+                            .limit(100)
+                    );
+                    if (signalError) throw new Error(`Bot activity query error: ${signalError.message}`);
+
+                    console.log('Bot activity fetched:', signals?.length || 0, 'records');
+
+                    botActivity = (signals || []).map(signal => {
+                        if (!signal.token_address) {
+                            console.warn('Skipping invalid signal:', signal.token_address);
+                            return null;
+                        }
+                        return {
+                            token_address: signal.token_address,
+                            token_name: signal.token_states?.token_name || signal.token_address.slice(0, 8),
+                            iconUrl: signal.token_states?.icon_url || '',
+                            bonding_progress: signal.bonding_progress || 0,
+                            buy_volume_sol: signal.buy_volume_sol || 0,
+                            buy_sell_ratio: signal.buy_sell_ratio || 0,
+                            holder_growth: signal.holder_count || 0,
+                            dev_sell_detected: signal.dev_sell_detected ? 'Yes' : 'No',
+                            sniper_count: signal.sniper_count || 0,
+                            rsi: signal.rsi || 0,
+                            volume_spike_ratio: signal.volume_spike_ratio || 0,
+                            dex_volume_24h: signal.dex_volume_24h || 0,
+                            dex_buy_sell_ratio: signal.dex_buy_sell_ratio || 0,
+                            dex_liquidity_usd: signal.dex_liquidity_usd || 0,
+                            dex_pair_age_minutes: signal.dex_pair_age_minutes || 0,
+                            price_usd: signal.price_usd || 0,
+                            timestamp: signal.timestamp,
+                        };
+                    }).filter(Boolean);
+                    botTotal = count || botActivity.length;
+                    dataCache.bot = botActivity;
+                } catch (error) {
+                    console.error('Error fetching bot activity:', error.message);
+                    elements.botStatus.textContent = `Failed to load bot activity: ${error.message}`;
+                }
+            } else {
+                elements.botStatus.textContent = 'Supabase not initialized';
+            }
+
+            // Fetch Pre Buy Evaluations
+            let prebuyEvaluations = [];
+            let prebuyTotal = 0;
+            if (supabase) {
+                try {
+                    const { data: evaluations, error: evalError, count } = await withRetry(() =>
+                        supabase
+                            .from('token_evaluation_logs')
+                            .select('*, token_states!inner(token_name, icon_url)', { count: 'exact' })
+                            .eq('signal_type', 'buy_evaluation')
+                            .order('timestamp', { ascending: false })
+                            .range((prebuyPage - 1) * pageSizes.prebuy, prebuyPage * pageSizes.prebuy - 1)
+                    );
+                    if (evalError) throw new Error(`Pre-buy evaluations query error: ${evalError.message}`);
+
+                    console.log('Pre-buy evaluations fetched:', evaluations?.length || 0, 'records');
+
+                    prebuyEvaluations = (evaluations || []).map(eval => {
+                        if (!eval.token_address) {
+                            console.warn('Skipping invalid evaluation:', eval.token_address);
+                            return null;
+                        }
+                        return {
+                            token_address: eval.token_address,
+                            token_name: eval.token_states?.token_name || eval.token_address.slice(0, 8),
+                            iconUrl: eval.token_states?.icon_url || '',
+                            bonding_progress: eval.bonding_progress || 0,
+                            buy_volume_sol: eval.buy_volume_sol || 0,
+                            buy_sell_ratio: eval.buy_sell_ratio || 0,
+                            holder_count: eval.holder_count || 0,
+                            dev_sell_detected: eval.dev_sell_detected ? 'Yes' : 'No',
+                            sniper_count: eval.sniper_count || 0,
+                            dex_volume_24h: eval.dex_volume_24h || 0,
+                            dex_buy_sell_ratio: eval.dex_buy_sell_ratio || 0,
+                            dex_liquidity_usd: eval.dex_liquidity_usd || 0,
+                            dex_pair_age_minutes: eval.dex_pair_age_minutes || 0,
+                            price_usd: eval.price_usd || 0,
+                            passed: eval.passed ? 'Yes' : 'No',
+                            reasons_failed: eval.reasons_failed ? eval.reasons_failed.join('; ') : '',
+                            timestamp: eval.timestamp,
+                        };
+                    }).filter(Boolean);
+                    prebuyTotal = count || prebuyEvaluations.length;
+                    dataCache.prebuy = prebuyEvaluations;
+                } catch (error) {
+                    console.error('Error fetching pre-buy evaluations:', error.message);
+                    elements.prebuyStatus.textContent = `Failed to load pre-buy evaluations: ${error.message}`;
+                }
+            } else {
+                elements.prebuyStatus.textContent = 'Supabase not initialized';
             }
 
             elements.totalProfit.textContent = `$${totalProfitUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
             // Display Active Trades
             let displayActiveTrades = [...activeTrades];
-            const activeSort = sortStates.funbags.active;
+            const activeSort = sortStates.active;
             if (Object.keys(activeSort).length) {
                 const column = Object.keys(activeSort)[0];
                 const direction = activeSort[column];
@@ -865,31 +1082,33 @@
                         aValue = aValue?.toLowerCase() || '';
                         bValue = bValue?.toLowerCase() || '';
                     }
-                    const comparison = aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-                    return direction === 'asc' ? comparison : -comparison;
+                    return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
                 });
             }
-
-            const activeStart = (activePage - 1) * pageSizes.funbags.active;
-            const activeEnd = activeStart + pageSizes.funbags.active;
+            const activeFilter = document.getElementById('funbags-active-filter').value.toLowerCase();
+            if (activeFilter) {
+                displayActiveTrades = displayActiveTrades.filter(trade => trade.token_name.toLowerCase().includes(activeFilter));
+            }
+            const activeStart = (activePage - 1) * pageSizes.active;
+            const activeEnd = activeStart + pageSizes.active;
             displayActiveTrades = displayActiveTrades.slice(activeStart, activeEnd);
 
             elements.activeBody.innerHTML = '';
             elements.activeCards.innerHTML = '';
-            if (!displayActiveTrades.length && elements.activeStatus.textContent.includes('Loading')) {
-                elements.activeStatus.textContent = 'No active trades found';
+            if (!displayActiveTrades.length) {
+                elements.activeStatus.textContent = activeFilter ? 'No matching active trades' : 'No active trades found';
                 elements.activeCards.innerHTML = '<p>No data available.</p>';
-            } else if (displayActiveTrades.length) {
+            } else {
                 displayActiveTrades.forEach(trade => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td class="token-cell">
                             <a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener">${trade.token_name}</a>
-                            ${trade.iconUrl ? `<img src="${trade.iconUrl}" alt="${trade.token_name} icon" class="token-icon" />` : ''}
+                            ${trade.iconUrl ? `<img src="${trade.iconUrl}" alt="${trade.token_name}" class="token-icon" />` : ''}
                         </td>
                         <td>$${trade.buy_price_usd.toFixed(8)}</td>
                         <td>$${trade.current_price_usd.toFixed(8)}</td>
-                        <td>$${trade.market_cap.toLocaleString()}</td>
+                        <td>$${trade.market_cap.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                         <td class="${parseFloat(trade.profit) >= 0 ? 'profit-positive' : 'profit-negative'}">${trade.profit}%</td>
                         <td>${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</td>
                     `;
@@ -901,11 +1120,11 @@
                         <p class="card-token">
                             <span class="card-label">Token:</span>
                             <a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener">${trade.token_name}</a>
-                            ${trade.iconUrl ? `<img src="${trade.iconUrl}" alt="${trade.token_name} icon" class="token-icon" />` : ''}
+                            ${trade.iconUrl ? `<img src="${trade.iconUrl}" alt="${trade.token_name}" class="token-icon" />` : ''}
                         </p>
                         <p><span class="card-label">Buy Price:</span> $${trade.buy_price_usd.toFixed(8)}</p>
                         <p><span class="card-label">Current Price:</span> $${trade.current_price_usd.toFixed(8)}</p>
-                        <p><span class="card-label">Market Cap:</span> $${trade.market_cap.toLocaleString()}</p>
+                        <p><span class="card-label">Market Cap:</span> $${trade.market_cap.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                         <p><span class="card-label">Profit:</span> <span class="${parseFloat(trade.profit) >= 0 ? 'profit-positive' : 'profit-negative'}">${trade.profit}%</span></p>
                         <p><span class="card-label">Buy Time:</span> ${trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-'}</p>
                     `;
@@ -916,7 +1135,7 @@
 
             // Display Completed Trades
             let displayCompletedTrades = [...completedTrades];
-            const completedSort = sortStates.funbags.completed;
+            const completedSort = sortStates.completed;
             if (Object.keys(completedSort).length) {
                 const column = Object.keys(completedSort)[0];
                 const direction = completedSort[column];
@@ -932,27 +1151,37 @@
                         aValue = aValue?.toLowerCase() || '';
                         bValue = bValue?.toLowerCase() || '';
                     }
-                    const comparison = aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-                    return direction === 'asc' ? comparison : -comparison;
+                    return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
                 });
             }
-
-            const completedStart = (completedPage - 1) * pageSizes.funbags.completed;
-            const completedEnd = completedStart + pageSizes.funbags.completed;
+            const completedFilter = document.getElementById('funbags-completed-filter').value.toLowerCase();
+            const profitFilter = document.getElementById('funbags-completed-profitFilter').value;
+            if (completedFilter || profitFilter !== 'all') {
+                displayCompletedTrades = displayCompletedTrades.filter(trade => {
+                    const showToken = trade.token_name.toLowerCase().includes(completedFilter);
+                    const profit = parseFloat(trade.profit) || 0;
+                    const showProfit = profitFilter === 'all' ||
+                        (profitFilter === 'positive' && profit > 0) ||
+                        (profitFilter === 'negative' && profit < 0);
+                    return showToken && showProfit;
+                });
+            }
+            const completedStart = (completedPage - 1) * pageSizes.completed;
+            const completedEnd = completedStart + pageSizes.completed;
             displayCompletedTrades = displayCompletedTrades.slice(completedStart, completedEnd);
 
             elements.completedBody.innerHTML = '';
             elements.completedCards.innerHTML = '';
-            if (!displayCompletedTrades.length && elements.completedStatus.textContent.includes('Loading')) {
-                elements.completedStatus.textContent = 'No completed trades found';
+            if (!displayCompletedTrades.length) {
+                elements.completedStatus.textContent = (completedFilter || profitFilter !== 'all') ? 'No matching completed trades' : 'No completed trades found';
                 elements.completedCards.innerHTML = '<p>No data available.</p>';
-            } else if (displayCompletedTrades.length) {
+            } else {
                 displayCompletedTrades.forEach(trade => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td class="token-cell">
                             <a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener">${trade.token_name}</a>
-                            ${trade.iconUrl ? `<img src="${trade.iconUrl}" alt="${trade.token_name} icon" class="token-icon" />` : ''}
+                            ${trade.iconUrl ? `<img src="${trade.iconUrl}" alt="${trade.token_name}" class="token-icon" />` : ''}
                         </td>
                         <td>$${trade.buy_price_usd.toFixed(8)}</td>
                         <td>$${trade.sell_price_usd.toFixed(8)}</td>
@@ -969,7 +1198,7 @@
                         <p class="card-token">
                             <span class="card-label">Token:</span>
                             <a href="https://dexscreener.com/solana/${trade.token_address}" target="_blank" rel="noopener">${trade.token_name}</a>
-                            ${trade.iconUrl ? `<img src="${trade.iconUrl}" alt="${trade.token_name} icon" class="token-icon" />` : ''}
+                            ${trade.iconUrl ? `<img src="${trade.iconUrl}" alt="${trade.token_name}" class="token-icon" />` : ''}
                         </p>
                         <p><span class="card-label">Buy Price:</span> $${trade.buy_price_usd.toFixed(8)}</p>
                         <p><span class="card-label">Sell Price:</span> $${trade.sell_price_usd.toFixed(8)}</p>
@@ -983,336 +1212,565 @@
                 elements.completedStatus.textContent = `Loaded ${displayCompletedTrades.length} of ${completedTotal} completed trades`;
             }
 
-            // Update pagination
+            // Display Bot Activity
+            let displayBotActivity = [...botActivity];
+            const botSort = sortStates.bot;
+            if (Object.keys(botSort).length) {
+                const column = Object.keys(botSort)[0];
+                const direction = botSort[column];
+                displayBotActivity.sort((a, b) => {
+                    let aValue = a[column], bValue = b[column];
+                    if (['bonding_progress', 'buy_volume_sol', 'buy_sell_ratio', 'holder_growth', 'sniper_count', 'rsi', 'volume_spike_ratio', 'dex_volume_24h', 'dex_buy_sell_ratio', 'dex_liquidity_usd', 'dex_pair_age_minutes', 'price_usd'].includes(column)) {
+                        aValue = parseFloat(aValue) || 0;
+                        bValue = parseFloat(bValue) || 0;
+                    } else if (column === 'timestamp') {
+                        aValue = aValue ? new Date(aValue).getTime() : 0;
+                        bValue = bValue ? new Date(bValue).getTime() : 0;
+                    } else if (column === 'dev_sell_detected') {
+                        aValue = aValue === 'Yes' ? 1 : 0;
+                        bValue = bValue === 'Yes' ? 1 : 0;
+                    } else {
+                        aValue = aValue?.toLowerCase() || '';
+                        bValue = bValue?.toLowerCase() || '';
+                    }
+                    return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
+                });
+            }
+            const botFilter = document.getElementById('funbags-bot-filter').value.toLowerCase();
+            if (botFilter) {
+                displayBotActivity = displayBotActivity.filter(activity => activity.token_name.toLowerCase().includes(botFilter));
+            }
+            const botStart = (botPage - 1) * pageSizes.bot;
+            const botEnd = botStart + pageSizes.bot;
+            displayBotActivity = displayBotActivity.slice(botStart, botEnd);
+
+            elements.botBody.innerHTML = '';
+            elements.botCards.innerHTML = '';
+            if (!displayBotActivity.length) {
+                elements.botStatus.textContent = botFilter ? 'No matching bot activity' : 'No bot activity found';
+                elements.botCards.innerHTML = '<p>No data available.</p>';
+            } else {
+                displayBotActivity.forEach(activity => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="token-cell">
+                            <a href="https://dexscreener.com/solana/${activity.token_address}" target="_blank" rel="noopener">${activity.token_name}</a>
+                            ${activity.iconUrl ? `<img src="${activity.iconUrl}" alt="${activity.token_name}" class="token-icon" />` : ''}
+                        </td>
+                        <td>${activity.bonding_progress.toFixed(2)}%</td>
+                        <td>${activity.buy_volume_sol.toFixed(2)}</td>
+                        <td>${activity.buy_sell_ratio.toFixed(2)}</td>
+                        <td>${activity.holder_growth.toFixed(2)}</td>
+                        <td>${activity.dev_sell_detected}</td>
+                        <td>${activity.sniper_count}</td>
+                        <td>${activity.rsi.toFixed(2)}</td>
+                        <td>${activity.volume_spike_ratio.toFixed(2)}</td>
+                        <td>$${activity.dex_volume_24h.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td>${activity.dex_buy_sell_ratio.toFixed(2)}</td>
+                        <td>$${activity.dex_liquidity_usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td>${activity.dex_pair_age_minutes.toFixed(0)}</td>
+                        <td>$${activity.price_usd.toFixed(8)}</td>
+                        <td>${activity.timestamp ? new Date(activity.timestamp).toLocaleString() : '-'}</td>
+                    `;
+                    elements.botBody.appendChild(row);
+
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <p class="card-token">
+                            <span class="card-label">Token:</span>
+                            <a href="https://dexscreener.com/solana/${activity.token_address}" target="_blank" rel="noopener">${activity.token_name}</a>
+                            ${activity.iconUrl ? `<img src="${activity.iconUrl}" alt="${activity.token_name}" class="token-icon" />` : ''}
+                        </p>
+                        <p><span class="card-label">Bonding Progress:</span> ${activity.bonding_progress.toFixed(2)}%</p>
+                        <p><span class="card-label">Buy Volume:</span> ${activity.buy_volume_sol.toFixed(2)} SOL</p>
+                        <p><span class="card-label">Buy/Sell Ratio:</span> ${activity.buy_sell_ratio.toFixed(2)}</p>
+                        <p><span class="card-label">Holder Growth:</span> ${activity.holder_growth.toFixed(2)}</p>
+                        <p><span class="card-label">Dev Sell:</span> ${activity.dev_sell_detected}</p>
+                        <p><span class="card-label">Sniper Count:</span> ${activity.sniper_count}</p>
+                        <p><span class="card-label">RSI:</span> ${activity.rsi.toFixed(2)}</p>
+                        <p><span class="card-label">Volume Spike:</span> ${activity.volume_spike_ratio.toFixed(2)}</p>
+                        <p><span class="card-label">DEX Volume (24h):</span> $${activity.dex_volume_24h.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        <p><span class="card-label">DEX B/S Ratio:</span> ${activity.dex_buy_sell_ratio.toFixed(2)}</p>
+                        <p><span class="card-label">DEX Liquidity:</span> $${activity.dex_liquidity_usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        <p><span class="card-label">Pair Age:</span> ${activity.dex_pair_age_minutes.toFixed(0)} min</p>
+                        <p><span class="card-label">Price:</span> $${activity.price_usd.toFixed(8)}</p>
+                        <p><span class="card-label">Timestamp:</span> ${activity.timestamp ? new Date(activity.timestamp).toLocaleString() : '-'}</p>
+                    `;
+                    elements.botCards.appendChild(card);
+                });
+                elements.botStatus.textContent = `Loaded ${displayBotActivity.length} of ${botTotal} bot activities`;
+            }
+
+            // Display Pre Buy Evaluations
+            let displayPrebuyEvaluations = [...prebuyEvaluations];
+            const prebuySort = sortStates.prebuy;
+            if (Object.keys(prebuySort).length) {
+                const column = Object.keys(prebuySort)[0];
+                const direction = prebuySort[column];
+                displayPrebuyEvaluations.sort((a, b) => {
+                    let aValue = a[column], bValue = b[column];
+                    if (['bonding_progress', 'buy_volume_sol', 'buy_sell_ratio', 'holder_count', 'sniper_count', 'dex_volume_24h', 'dex_buy_sell_ratio', 'dex_liquidity_usd', 'dex_pair_age_minutes', 'price_usd'].includes(column)) {
+                        aValue = parseFloat(aValue) || 0;
+                        bValue = parseFloat(bValue) || 0;
+                    } else if (column === 'timestamp') {
+                        aValue = aValue ? new Date(aValue).getTime() : 0;
+                        bValue = bValue ? new Date(bValue).getTime() : 0;
+                    } else if (column === 'dev_sell_detected' || column === 'passed') {
+                        aValue = aValue === 'Yes' ? 1 : 0;
+                        bValue = bValue === 'Yes' ? 1 : 0;
+                    } else if (column === 'reasons_failed') {
+                        aValue = aValue?.toLowerCase() || '';
+                        bValue = bValue?.toLowerCase() || '';
+                    } else {
+                        aValue = aValue?.toLowerCase() || '';
+                        bValue = bValue?.toLowerCase() || '';
+                    }
+                    return direction === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
+                });
+            }
+            const prebuyFilter = document.getElementById('funbags-prebuy-filter').value.toLowerCase();
+            const passFilter = document.getElementById('funbags-prebuy-passFilter').value;
+            if (prebuyFilter || passFilter !== 'all') {
+                displayPrebuyEvaluations = displayPrebuyEvaluations.filter(eval => {
+                    const showToken = eval.token_name.toLowerCase().includes(prebuyFilter);
+                    const showPass = passFilter === 'all' ||
+                        (passFilter === 'passed' && eval.passed === 'Yes') ||
+                        (passFilter === 'failed' && eval.passed === 'No');
+                    return showToken && showPass;
+                });
+            }
+            const prebuyStart = (prebuyPage - 1) * pageSizes.prebuy;
+            const prebuyEnd = prebuyStart + pageSizes.prebuy;
+            displayPrebuyEvaluations = displayPrebuyEvaluations.slice(prebuyStart, prebuyEnd);
+
+            elements.prebuyBody.innerHTML = '';
+            elements.prebuyCards.innerHTML = '';
+            if (!displayPrebuyEvaluations.length) {
+                elements.prebuyStatus.textContent = (prebuyFilter || passFilter !== 'all') ? 'No matching pre-buy evaluations' : 'No pre-buy evaluations found';
+                elements.prebuyCards.innerHTML = '<p>No data available.</p>';
+            } else {
+                displayPrebuyEvaluations.forEach(eval => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="token-cell">
+                            <a href="https://dexscreener.com/solana/${eval.token_address}" target="_blank" rel="noopener">${eval.token_name}</a>
+                            ${eval.iconUrl ? `<img src="${eval.iconUrl}" alt="${eval.token_name}" class="token-icon" />` : ''}
+                        </td>
+                        <td>${eval.bonding_progress.toFixed(2)}%</td>
+                        <td>${eval.buy_volume_sol.toFixed(2)}</td>
+                        <td>${eval.buy_sell_ratio.toFixed(2)}</td>
+                        <td>${eval.holder_count}</td>
+                        <td>${eval.dev_sell_detected}</td>
+                        <td>${eval.sniper_count}</td>
+                        <td>$${eval.dex_volume_24h.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td>${eval.dex_buy_sell_ratio.toFixed(2)}</td>
+                        <td>$${eval.dex_liquidity_usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td>${eval.dex_pair_age_minutes.toFixed(0)}</td>
+                        <td>$${eval.price_usd.toFixed(8)}</td>
+                        <td>${eval.passed}</td>
+                        <td>${eval.reasons_failed}</td>
+                        <td>${eval.timestamp ? new Date(eval.timestamp).toLocaleString() : '-'}</td>
+                    `;
+                    elements.prebuyBody.appendChild(row);
+
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <p class="card-token">
+                            <span class="card-label">Token:</span>
+                            <a href="https://dexscreener.com/solana/${eval.token_address}" target="_blank" rel="noopener">${eval.token_name}</a>
+                            ${eval.iconUrl ? `<img src="${eval.iconUrl}" alt="${eval.token_name}" class="token-icon" />` : ''}
+                        </p>
+                        <p><span class="card-label">Bonding Progress:</span> ${eval.bonding_progress.toFixed(2)}%</p>
+                        <p><span class="card-label">Buy Volume:</span> ${eval.buy_volume_sol.toFixed(2)} SOL</p>
+                        <p><span class="card-label">Buy/Sell Ratio:</span> ${eval.buy_sell_ratio.toFixed(2)}</p>
+                        <p><span class="card-label">Holder Count:</span> ${eval.holder_count}</p>
+                        <p><span class="card-label">Dev Sell:</span> ${eval.dev_sell_detected}</p>
+                        <p><span class="card-label">Sniper Count:</span> ${eval.sniper_count}</p>
+                        <p><span class="card-label">DEX Volume (24h):</span> $${eval.dex_volume_24h.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        <p><span class="card-label">DEX B/S Ratio:</span> ${eval.dex_buy_sell_ratio.toFixed(2)}</p>
+                        <p><span class="card-label">DEX Liquidity:</span> $${eval.dex_liquidity_usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        <p><span class="card-label">Pair Age:</span> ${eval.dex_pair_age_minutes.toFixed(0)} min</p>
+                        <p><span class="card-label">Price:</span> $${eval.price_usd.toFixed(8)}</p>
+                        <p><span class="card-label">Passed:</span> ${eval.passed}</p>
+                        <p><span class="card-label">Reasons Failed:</span> ${eval.reasons_failed}</p>
+                        <p><span class="card-label">Timestamp:</span> ${eval.timestamp ? new Date(eval.timestamp).toLocaleString() : '-'}</p>
+                    `;
+                    elements.prebuyCards.appendChild(card);
+                });
+                elements.prebuyStatus.textContent = `Loaded ${displayPrebuyEvaluations.length} of ${prebuyTotal} pre-buy evaluations`;
+            }
+
+            // Update Pagination
             elements.activeCurrent.textContent = activePage;
-            elements.activePrev.classList.toggle('disabled', activePage === 1);
-            elements.activeNext.classList.toggle('disabled', activeEnd >= activeTotal);
-
             elements.completedCurrent.textContent = completedPage;
+            elements.botCurrent.textContent = botPage;
+            elements.prebuyCurrent.textContent = prebuyPage;
+
+            elements.activePrev.classList.toggle('disabled', activePage === 1);
+            elements.activeNext.classList.toggle('disabled', activePage * pageSizes.active >= activeTotal);
             elements.completedPrev.classList.toggle('disabled', completedPage === 1);
-            elements.completedNext.classList.toggle('disabled', completedEnd >= completedTotal);
+            elements.completedNext.classList.toggle('disabled', completedPage * pageSizes.completed >= completedTotal);
+            elements.botPrev.classList.toggle('disabled', botPage === 1);
+            elements.botNext.classList.toggle('disabled', botPage * pageSizes.bot >= botTotal);
+            elements.prebuyPrev.classList.toggle('disabled', prebuyPage === 1);
+            elements.prebuyNext.classList.toggle('disabled', prebuyPage * pageSizes.prebuy >= prebuyTotal);
 
-            // Update sort indicators
-            activeTable.querySelectorAll('th[data-sort]').forEach(header => {
-                header.classList.remove('sort-asc', 'sort-desc');
-                const icon = header.querySelector('.sort-icon');
-                if (icon) icon.innerHTML = '↕';
-            });
-            if (Object.keys(activeSort).length) {
-                const column = Object.keys(activeSort)[0];
-                const direction = activeSort[column];
-                const header = activeTable.querySelector(`th[data-sort="${column}"]`);
-                if (header) {
-                    header.classList.add(`sort-${direction}`);
-                    header.querySelector('.sort-icon').textContent = direction === 'asc' ? '↑' : '↓';
+            // Update View Based on Current View State
+            ['active', 'completed', 'bot', 'prebuy'].forEach(tab => {
+                const tableContainer = elements[`${tab}Body`].closest('.table-container');
+                const cardContainer = elements[`${tab}Cards`].closest('.card-container');
+                if (viewStates[tab] === 'table') {
+                    tableContainer.classList.add('visible');
+                    tableContainer.classList.remove('hidden');
+                    cardContainer.classList.add('hidden');
+                    cardContainer.classList.remove('visible');
+                } else {
+                    cardContainer.classList.add('visible');
+                    cardContainer.classList.remove('hidden');
+                    tableContainer.classList.add('hidden');
+                    tableContainer.classList.remove('visible');
                 }
-            }
-
-            completedTable.querySelectorAll('th[data-sort]').forEach(header => {
-                header.classList.remove('sort-asc', 'sort-desc');
-                const icon = header.querySelector('.sort-icon');
-                if (icon) icon.innerHTML = '↕';
             });
-            if (Object.keys(completedSort).length) {
-                const column = Object.keys(completedSort)[0];
-                const direction = completedSort[column];
-                const header = completedTable.querySelector(`th[data-sort="${column}"]`);
-                if (header) {
-                    header.classList.add(`sort-${direction}`);
-                    header.querySelector('.sort-icon').textContent = direction === 'asc' ? '↑' : '↓';
-                }
-            }
 
-            // Apply filters if present
-            const activeFilter = document.getElementById('funbags-activeFilter').value.toLowerCase();
-            if (activeFilter) {
-                elements.activeBody.querySelectorAll('tr').forEach(row => {
-                    const tokenName = row.querySelector('td:first-child a')?.textContent.toLowerCase() || '';
-                    row.style.display = tokenName.includes(activeFilter) ? '' : 'none';
-                });
-                elements.activeCards.querySelectorAll('.card').forEach(card => {
-                    const tokenName = card.querySelector('a')?.textContent.toLowerCase() || '';
-                    card.style.display = tokenName.includes(activeFilter) ? '' : 'none';
-                });
-            }
-
-            const completedFilter = document.getElementById('funbags-completedFilter').value.toLowerCase();
-            const profitFilter = document.getElementById('funbags-profitFilter').value;
-            if (completedFilter || profitFilter !== 'all') {
-                elements.completedBody.querySelectorAll('tr').forEach(row => {
-                    const tokenName = row.querySelector('td:first-child a')?.textContent.toLowerCase() || '';
-                    const profit = parseFloat(row.querySelector('td:nth-child(4)')?.textContent || '0');
-                    const showToken = tokenName.includes(completedFilter);
-                    const showProfit = profitFilter === 'all' ||
-                        (profitFilter === 'positive' && profit > 0) ||
-                        (profitFilter === 'negative' && profit < 0);
-                    row.style.display = showToken && showProfit ? '' : 'none';
-                });
-                elements.completedCards.querySelectorAll('.card').forEach(card => {
-                    const tokenName = card.querySelector('a')?.textContent.toLowerCase() || '';
-                    const profitText = card.querySelector('.profit-positive, .profit-negative')?.textContent || '0%';
-                    const profit = parseFloat(profitText);
-                    const showToken = tokenName.includes(completedFilter);
-                    const showProfit = profitFilter === 'all' ||
-                        (profitFilter === 'positive' && profit > 0) ||
-                        (profitFilter === 'negative' && profit < 0);
-                    card.style.display = showToken && showProfit ? '' : 'none';
-                });
-            }
         } catch (error) {
-            console.error('Unexpected error in refreshTrades:', error.message);
-            if (elements.activeStatus.textContent.includes('Loading')) {
-                elements.activeStatus.textContent = `Unexpected error: ${error.message}`;
-            }
-            if (elements.completedStatus.textContent.includes('Loading')) {
-                elements.completedStatus.textContent = `Unexpected error: ${error.message}`;
-            }
+            console.error('Error in refreshData:', error.message);
+            elements.activeStatus.textContent = `Error: ${error.message}`;
+            elements.completedStatus.textContent = `Error: ${error.message}`;
+            elements.botStatus.textContent = `Error: ${error.message}`;
+            elements.prebuyStatus.textContent = `Error: ${error.message}`;
+            elements.totalProfit.textContent = 'Error';
             document.getElementById('error-message').classList.remove('hidden');
         } finally {
             elements.activeStatus.classList.remove('loading');
             elements.completedStatus.classList.remove('loading');
+            elements.botStatus.classList.remove('loading');
+            elements.prebuyStatus.classList.remove('loading');
         }
     }
-    // Attach event listeners
-    document.addEventListener('DOMContentLoaded', () => {
-        console.log('DOM loaded');
-        const elements = {
-            topRefresh: document.getElementById('funbags-topRefreshBtn'),
-            middleRefresh: document.getElementById('funbags-middleRefreshBtn'),
-            bottomRefresh: document.getElementById('funbags-bottomRefreshBtn'),
-            activePageSize: document.getElementById('funbags-activePageSize'),
-            completedPageSize: document.getElementById('funbags-completedPageSize'),
-            activePrev: document.getElementById('funbags-activePrevPage'),
-            activeNext: document.getElementById('funbags-activeNextPage'),
-            completedPrev: document.getElementById('funbags-completedPrevPage'),
-            completedNext: document.getElementById('funbags-completedNextPage'),
-            activeFilter: document.getElementById('funbags-activeFilter'),
-            completedFilter: document.getElementById('funbags-completedFilter'),
-            profitFilter: document.getElementById('funbags-profitFilter'),
-            sexyMode: document.getElementById('sexyModeToggle'),
-            exportBtn: document.getElementById('funbags-exportBtn'),
-            activeTable: document.getElementById('funbags-activeTradesBody'),
-            completedTable: document.getElementById('funbags-completedTradesBody')
-        };
 
-        if (!Object.values(elements).every(el => el)) {
-            console.error('Missing DOM elements:', Object.keys(elements).filter(key => !elements[key]));
-            alert('Failed to initialize dashboard due to missing elements.');
-            document.getElementById('error-message').classList.remove('hidden');
+    // Toggle View Function
+    function toggleView(tab) {
+        const tableContainer = document.querySelector(`#tab-content-${tab} .table-container`);
+        const cardContainer = document.querySelector(`#tab-content-${tab} .card-container`);
+        const toggleButton = document.querySelector(`#funbags-${tab}-toggleView`);
+        if (viewStates[tab] === 'table') {
+            viewStates[tab] = 'card';
+            tableContainer.classList.remove('visible');
+            tableContainer.classList.add('hidden');
+            cardContainer.classList.remove('hidden');
+            cardContainer.classList.add('visible');
+            toggleButton.innerHTML = '<i class="fas fa-table"></i>';
+        } else {
+            viewStates[tab] = 'table';
+            cardContainer.classList.remove('visible');
+            cardContainer.classList.add('hidden');
+            tableContainer.classList.remove('hidden');
+            tableContainer.classList.add('visible');
+            toggleButton.innerHTML = '<i class="fas fa-ellipsis-v"></i>';
+        }
+    }
+
+    // Sort Table Function
+    function sortTable(tableId, column, tab) {
+        const table = document.getElementById(tableId);
+        const th = table.querySelector(`th[data-sort="${column}"]`);
+        const currentSort = sortStates[tab][column];
+        sortStates[tab] = { [column]: currentSort === 'asc' ? 'desc' : 'asc' };
+
+        // Update sort icons
+        table.querySelectorAll('th').forEach(header => {
+            header.classList.remove('sort-asc', 'sort-desc');
+            const icon = header.querySelector('.sort-icon');
+            if (icon) icon.innerHTML = '';
+        });
+        th.classList.add(`sort-${sortStates[tab][column]}`);
+        th.querySelector('.sort-icon').textContent = sortStates[tab][column] === 'asc' ? '↑' : '↓';
+
+        refreshData(pageStates.active, pageStates.completed, pageStates.bot, pageStates.prebuy);
+    }
+
+    // Event Listeners
+document.addEventListener('DOMContentLoaded', async () => {
+    const viewStates = { active: 'table', completed: 'table', bot: 'table', prebuy: 'table' };
+
+    if (!await initializeSupabase()) return;
+
+    // Initialize tabs
+    const tabs = ['active', 'completed', 'bot', 'prebuy'];
+    tabs.forEach(tab => {
+        const tabBtn = document.getElementById(`tab-${tab}`);
+        const tabContent = document.getElementById(`tab-content-${tab}`);
+        if (tabBtn && tabContent) {
+            tabBtn.addEventListener('click', () => {
+                tabs.forEach(t => {
+                    document.getElementById(`tab-${t}`).classList.remove('active');
+                    document.getElementById(`tab-content-${t}`).classList.add('hidden');
+                });
+                tabBtn.classList.add('active');
+                tabContent.classList.remove('hidden');
+            });
+        }
+    });
+
+    // Set Active Trades as default tab
+    const activeTab = document.getElementById('tab-active');
+    const activeContent = document.getElementById('tab-content-active');
+    if (activeTab && activeContent) {
+        activeTab.classList.add('active');
+        activeContent.classList.remove('hidden');
+    }
+
+    // Sexy Mode Toggle
+    const sexyModeBtn = document.getElementById('sexyModeToggle');
+    if (sexyModeBtn) {
+        sexyModeBtn.addEventListener('click', () => {
+            document.body.classList.toggle('sexy');
+            const isSexy = document.body.classList.contains('sexy');
+            sexyModeBtn.innerHTML = `<i class="fas fa-${isSexy ? 'sun' : 'moon'} mr-2"></i> ${isSexy ? 'Normal Mode' : 'Sexy Mode'}`;
+        });
+    }
+
+    // Refresh Buttons
+    tabs.forEach(tab => {
+        const refreshBtn = document.getElementById(`funbags-${tab}-refresh`);
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                pageStates[tab] = 1;
+                refreshData(pageStates.active, pageStates.completed, pageStates.bot, pageStates.prebuy);
+            });
+        }
+    });
+
+    // Export Buttons
+    const activeExportBtn = document.getElementById('funbags-active-export');
+    if (activeExportBtn) {
+        activeExportBtn.addEventListener('click', () => {
+            const data = dataCache.active.map(trade => ({
+                Token: trade.token_name,
+                'Buy Price (USD)': trade.buy_price_usd.toFixed(8),
+                'Current Price (USD)': trade.current_price_usd.toFixed(8),
+                'Market Cap (USD)': trade.market_cap.toFixed(2),
+                'Profit (%)': trade.profit,
+                'Buy Time': trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-',
+            }));
+            exportToCSV(data, 'active_trades.csv');
+        });
+    }
+
+    const completedExportBtn = document.getElementById('funbags-completed-export');
+    if (completedExportBtn) {
+        completedExportBtn.addEventListener('click', () => {
+            const data = dataCache.completed.map(trade => ({
+                Token: trade.token_name,
+                'Buy Price (USD)': trade.buy_price_usd.toFixed(8),
+                'Sell Price (USD)': trade.sell_price_usd.toFixed(8),
+                'Profit (%)': trade.profit,
+                'Total Profit (USD)': trade.total_profit_usd.toFixed(2),
+                'Buy Time': trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-',
+                'Sell Time': trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-',
+            }));
+            exportToCSV(data, 'completed_trades.csv');
+        });
+    }
+
+    const prebuyExportBtn = document.getElementById('funbags-prebuy-export');
+    if (prebuyExportBtn) {
+        prebuyExportBtn.addEventListener('click', () => {
+            const data = dataCache.prebuy.map(eval => ({
+                Token: eval.token_name,
+                'Bonding Progress (%)': eval.bonding_progress.toFixed(2),
+                'Buy Volume (SOL)': eval.buy_volume_sol.toFixed(2),
+                'Buy/Sell Ratio': eval.buy_sell_ratio.toFixed(2),
+                'Holder Count': eval.holder_count,
+                'Dev Sell': eval.dev_sell_detected,
+                'Sniper Count': eval.sniper_count,
+                'DEX Volume (USD)': eval.dex_volume_24h.toFixed(2),
+                'DEX B/S Ratio': eval.dex_buy_sell_ratio.toFixed(2),
+                'DEX Liquidity (USD)': eval.dex_liquidity_usd.toFixed(2),
+                'Pair Age (Min)': eval.dex_pair_age_minutes.toFixed(0),
+                'Price (USD)': eval.price_usd.toFixed(8),
+                Passed: eval.passed,
+                'Reasons Failed': eval.reasons_failed,
+                Timestamp: eval.timestamp ? new Date(eval.timestamp).toLocaleString() : '-',
+            }));
+            exportToCSV(data, 'prebuy_evaluations.csv');
+        });
+    }
+
+    // Toggle View Buttons
+    tabs.forEach(tab => {
+        const toggleBtn = document.getElementById(`funbags-${tab}-toggleView`);
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => toggleView(tab));
+        }
+    });
+
+    // Page Size Selectors
+    tabs.forEach(tab => {
+        const pageSizeSelect = document.getElementById(`funbags-${tab}-pageSize`);
+        if (pageSizeSelect) {
+            pageSizeSelect.addEventListener('change', () => {
+                pageSizes[tab] = parseInt(pageSizeSelect.value);
+                pageStates[tab] = 1;
+                refreshData(pageStates.active, pageStates.completed, pageStates.bot, pageStates.prebuy);
+            });
+        }
+    });
+
+    // Filters
+    const activeFilter = document.getElementById('funbags-active-filter');
+    if (activeFilter) {
+        activeFilter.addEventListener('input', debounce(() => {
+            pageStates.active = 1;
+            refreshData(pageStates.active, pageStates.completed, pageStates.bot, pageStates.prebuy);
+        }));
+    }
+
+    const completedFilter = document.getElementById('funbags-completed-filter');
+    if (completedFilter) {
+        completedFilter.addEventListener('input', debounce(() => {
+            pageStates.completed = 1;
+            refreshData(pageStates.active, pageStates.completed, pageStates.bot, pageStates.prebuy);
+        }));
+    }
+
+    const completedProfitFilter = document.getElementById('funbags-completed-profitFilter');
+    if (completedProfitFilter) {
+        completedProfitFilter.addEventListener('change', () => {
+            pageStates.completed = 1;
+            refreshData(pageStates.active, pageStates.completed, pageStates.bot, pageStates.prebuy);
+        });
+    }
+
+    const botFilter = document.getElementById('funbags-bot-filter');
+    if (botFilter) {
+        botFilter.addEventListener('input', debounce(() => {
+            pageStates.bot = 1;
+            refreshData(pageStates.active, pageStates.completed, pageStates.bot, pageStates.prebuy);
+        }));
+    }
+
+    const prebuyFilter = document.getElementById('funbags-prebuy-filter');
+    if (prebuyFilter) {
+        prebuyFilter.addEventListener('input', debounce(() => {
+            pageStates.prebuy = 1;
+            refreshData(pageStates.active, pageStates.completed, pageStates.bot, pageStates.prebuy);
+        }));
+    }
+
+    const prebuyPassFilter = document.getElementById('funbags-prebuy-passFilter');
+    if (prebuyPassFilter) {
+        prebuyPassFilter.addEventListener('change', () => {
+            pageStates.prebuy = 1;
+            refreshData(pageStates.active, pageStates.completed, pageStates.bot, pageStates.prebuy);
+        });
+    }
+
+    // Pagination
+    const activePrevPage = document.getElementById('funbags-active-prevPage');
+    if (activePrevPage) {
+        activePrevPage.addEventListener('click', () => {
+            if (pageStates.active > 1) {
+                pageStates.active--;
+                refreshData(pageStates.active, pageStates.completed, pageStates.bot, pageStates.prebuy);
+            }
+        });
+    }
+
+    const activeNextPage = document.getElementById('funbags-active-nextPage');
+    if (activeNextPage) {
+        activeNextPage.addEventListener('click', () => {
+            pageStates.active++;
+            refreshData(pageStates.active, pageStates.completed, pageStates.bot, pageStates.prebuy);
+        });
+    }
+
+    const completedPrevPage = document.getElementById('funbags-completed-prevPage');
+    if (completedPrevPage) {
+        completedPrevPage.addEventListener('click', () => {
+            if (pageStates.completed > 1) {
+                pageStates.completed--;
+                refreshData(pageStates.active, pageStates.completed, pageStates.bot, pageStates.prebuy);
+            }
+        });
+    }
+
+    const completedNextPage = document.getElementById('funbags-completed-nextPage');
+    if (completedNextPage) {
+        completedNextPage.addEventListener('click', () => {
+            pageStates.completed++;
+            refreshData(pageStates.active, pageStates.completed, pageStates.bot, pageStates.prebuy);
+        });
+    }
+
+    const botPrevPage = document.getElementById('funbags-bot-prevPage');
+    if (botPrevPage) {
+        botPrevPage.addEventListener('click', () => {
+            if (pageStates.bot > 1) {
+                pageStates.bot--;
+                refreshData(pageStates.active, pageStates.completed, pageStates.bot, pageStates.prebuy);
+            }
+        });
+    }
+
+    const botNextPage = document.getElementById('funbags-bot-nextPage');
+    if (botNextPage) {
+        botNextPage.addEventListener('click', () => {
+            pageStates.bot++;
+            refreshData(pageStates.active, pageStates.completed, pageStates.bot, pageStates.prebuy);
+        });
+    }
+
+    const prebuyPrevPage = document.getElementById('funbags-prebuy-prevPage');
+    if (prebuyPrevPage) {
+        prebuyPrevPage.addEventListener('click', () => {
+            if (pageStates.prebuy > 1) {
+                pageStates.prebuy--;
+                refreshData(pageStates.active, pageStates.completed, pageStates.bot, pageStates.prebuy);
+            }
+        });
+    }
+
+    const prebuyNextPage = document.getElementById('funbags-prebuy-nextPage');
+    if (prebuyNextPage) {
+        prebuyNextPage.addEventListener('click', () => {
+            pageStates.prebuy++;
+            refreshData(pageStates.active, pageStates.completed, pageStates.bot, pageStates.prebuy);
+        });
+    }
+
+    // Sorting
+    ['activeTradesTable', 'completedTradesTable', 'botActivityTable', 'prebuyEvaluationsTable'].forEach((tableId, index) => {
+        const table = document.getElementById(`funbags-${tableId}`);
+        const tab = tabs[index];
+        if (!table) {
+            console.error(`Table with ID 'funbags-${tableId}' not found in the DOM`);
             return;
         }
-
-        elements.topRefresh.addEventListener('click', debounce(() => {
-            console.log('Top refresh button clicked');
-            refreshTrades(1, 1);
-        }, 1000));
-        elements.middleRefresh.addEventListener('click', debounce(() => {
-            console.log('Middle refresh button clicked');
-            refreshTrades(1, 1);
-        }, 1000));
-        elements.bottomRefresh.addEventListener('click', debounce(() => {
-            console.log('Bottom refresh button clicked');
-            refreshTrades(1, 1);
-        }, 1000));
-
-        elements.activePageSize.addEventListener('change', e => {
-            console.log('Active page size changed to', e.target.value);
-            pageSizes.funbags.active = parseInt(e.target.value);
-            refreshTrades(pageStates.funbags.active, pageStates.funbags.completed);
-        });
-
-        elements.completedPageSize.addEventListener('change', e => {
-            console.log('Completed page size changed to', e.target.value);
-            pageSizes.funbags.completed = parseInt(e.target.value);
-            refreshTrades(pageStates.funbags.active, 1);
-        });
-
-        elements.activePrev.addEventListener('click', () => {
-            if (pageStates.funbags.active > 1) {
-                console.log('Active prev page clicked');
-                pageStates.funbags.active--;
-                refreshTrades(pageStates.funbags.active, pageStates.funbags.completed);
-            }
-        });
-
-        elements.activeNext.addEventListener('click', () => {
-            console.log('Active next page clicked');
-            pageStates.funbags.active++;
-            refreshTrades(pageStates.funbags.active, pageStates.funbags.completed);
-        });
-
-        elements.completedPrev.addEventListener('click', () => {
-            if (pageStates.funbags.completed > 1) {
-                console.log('Completed prev page clicked');
-                pageStates.funbags.completed--;
-                refreshTrades(pageStates.funbags.active, pageStates.funbags.completed);
-            }
-        });
-
-        elements.completedNext.addEventListener('click', () => {
-            console.log('Completed next page clicked');
-            pageStates.funbags.completed++;
-            refreshTrades(pageStates.funbags.active, pageStates.funbags.completed);
-        });
-
-        elements.activeFilter.addEventListener('input', debounce(() => {
-            console.log('Active filter input:', elements.activeFilter.value);
-            const filter = elements.activeFilter.value.toLowerCase();
-            elements.activeBody.querySelectorAll('tr').forEach(row => {
-                const tokenName = row.querySelector('td:first-child a')?.textContent.toLowerCase() || '';
-                row.style.display = tokenName.includes(filter) ? '' : 'none';
-            });
-            elements.activeTable.closest('.table-container').querySelectorAll('.card').forEach(card => {
-                const tokenName = card.querySelector('a')?.textContent.toLowerCase() || '';
-                card.style.display = tokenName.includes(filter) ? '' : 'none';
-            });
-        }, 300));
-
-        elements.completedFilter.addEventListener('input', debounce(() => {
-            console.log('Completed filter input:', elements.completedFilter.value);
-            const filter = elements.completedFilter.value.toLowerCase();
-            const profitFilter = elements.profitFilter.value;
-            elements.completedTable.querySelectorAll('tr').forEach(row => {
-                const tokenName = row.querySelector('td:first-child a')?.textContent.toLowerCase() || '';
-                const profit = parseFloat(row.querySelector('td:nth-child(4)')?.textContent || '0');
-                const showToken = tokenName.includes(filter);
-                const showProfit = profitFilter === 'all' ||
-                    (profitFilter === 'positive' && profit > 0) ||
-                    (profitFilter === 'negative' && profit < 0);
-                row.style.display = showToken && showProfit ? '' : 'none';
-            });
-            elements.completedTable.closest('.table-container').querySelectorAll('.card').forEach(card => {
-                const tokenName = card.querySelector('a')?.textContent.toLowerCase() || '';
-                const profitText = card.querySelector('.profit-positive, .profit-negative')?.textContent || '0%';
-                const profit = parseFloat(profitText);
-                const showToken = tokenName.includes(filter);
-                const showProfit = profitFilter === 'all' ||
-                    (profitFilter === 'positive' && profit > 0) ||
-                    (profitFilter === 'negative' && profit < 0);
-                card.style.display = showToken && showProfit ? '' : 'none';
-            });
-        }, 300));
-
-        elements.profitFilter.addEventListener('change', () => {
-            console.log('Profit filter changed to', elements.profitFilter.value);
-            const filter = elements.completedFilter.value.toLowerCase();
-            const profitFilter = elements.profitFilter.value;
-            elements.completedTable.querySelectorAll('tr').forEach(row => {
-                const tokenName = row.querySelector('td:first-child a')?.textContent.toLowerCase() || '';
-                const profit = parseFloat(row.querySelector('td:nth-child(4)')?.textContent || '0');
-                const showToken = tokenName.includes(filter);
-                const showProfit = profitFilter === 'all' ||
-                    (profitFilter === 'positive' && profit > 0) ||
-                    (profitFilter === 'negative' && profit < 0);
-                row.style.display = showToken && showProfit ? '' : 'none';
-            });
-            elements.completedTable.closest('.table-container').querySelectorAll('.card').forEach(card => {
-                const tokenName = card.querySelector('a')?.textContent.toLowerCase() || '';
-                const profitText = card.querySelector('.profit-positive, .profit-negative')?.textContent || '0%';
-                const profit = parseFloat(profitText);
-                const showToken = tokenName.includes(filter);
-                const showProfit = profitFilter === 'all' ||
-                    (profitFilter === 'positive' && profit > 0) ||
-                    (profitFilter === 'negative' && profit < 0);
-                card.style.display = showToken && showProfit ? '' : 'none';
+        table.querySelectorAll('th[data-sort]').forEach(th => {
+            th.addEventListener('click', () => {
+                const column = th.getAttribute('data-sort');
+                sortTable(`funbags-${tableId}`, column, tab);
             });
         });
-
-        elements.sexyMode.addEventListener('click', () => {
-            console.log('Sexy mode toggled');
-            document.body.classList.toggle('sexy');
-            elements.sexyMode.innerHTML = document.body.classList.contains('sexy') ?
-                '<i class="fas fa-sun mr-2"></i> Normal Mode' :
-                '<i class="fas fa-moon mr-2"></i> Sexy Mode';
-        });
-
-        elements.exportBtn.addEventListener('click', () => {
-            console.log('Export button clicked');
-            const csvRows = ['Token,Buy Price USD,Sell Price USD,Profit %,Total Profit USD,Buy Time,Sell Time'];
-            dataCache.funbags.completed.forEach(trade => {
-                const buyTime = trade.buy_timestamp ? new Date(trade.buy_timestamp).toLocaleString() : '-';
-                const sellTime = trade.sell_timestamp ? new Date(trade.sell_timestamp).toLocaleString() : '-';
-                csvRows.push(`"${trade.token_name}",${trade.buy_price_usd.toFixed(8)},${trade.sell_price_usd.toFixed(8)},${trade.profit},${trade.total_profit_usd.toFixed(2)},"${buyTime}","${sellTime}"`);
-            });
-            const csvContent = csvRows.join('\n');
-            const blob = new Blob([csvContent], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'completed_trades.csv';
-            a.click();
-            window.URL.revokeObjectURL(url);
-        });
-
-        elements.activeTable.closest('table').addEventListener('click', e => {
-            const header = e.target.closest('th[data-sort]');
-            if (header) {
-                console.log('Active table sort clicked:', header.dataset.sort);
-                const column = header.dataset.sort;
-                const direction = sortStates.funbags.active[column];
-                sortStates.funbags.active = {};
-                sortStates.funbags.active[column] = direction === 'asc' ? 'desc' : 'asc';
-                refreshTrades(pageStates.funbags.active, pageStates.funbags.completed);
-            }
-        });
-
-        elements.completedTable.closest('table').addEventListener('click', e => {
-            const header = e.target.closest('th[data-sort]');
-            if (header) {
-                console.log('Completed table sort clicked:', header.dataset.sort);
-                const column = header.dataset.sort;
-                const direction = sortStates.funbags.completed[column];
-                sortStates.funbags.completed = {};
-                sortStates.funbags.completed[column] = direction === 'asc' ? 'desc' : 'asc';
-                refreshTrades(pageStates.funbags.active, pageStates.funbags.completed);
-            }
-        });
-
-        // Initial load
-        (async () => {
-            console.log('Starting initial load');
-            const supabaseInitialized = await initializeSupabase();
-            if (supabaseInitialized) {
-                await fetchMoralisTokenData();
-                await refreshTrades(1, 1);
-            } else {
-                console.error('Skipping data load due to Supabase initialization failure');
-                document.getElementById('error-message').classList.remove('hidden');
-            }
-        })();
-
-        // Auto-refresh trades every 3 seconds
-        let isManualRefresh = false;
-
-        function wrappedRefreshTrades(activePage = 1, completedPage = 1) {
-            isManualRefresh = true;
-            refreshTrades(activePage, completedPage).finally(() => {
-                isManualRefresh = false;
-            });
-        }
-
-        elements.topRefresh.addEventListener('click', debounce(() => {
-            console.log('Top refresh button clicked');
-            wrappedRefreshTrades(1, 1);
-        }, 1000));
-        elements.middleRefresh.addEventListener('click', debounce(() => {
-            console.log('Middle refresh button clicked');
-            wrappedRefreshTrades(1, 1);
-        }, 1000));
-        elements.bottomRefresh.addEventListener('click', debounce(() => {
-            console.log('Bottom refresh button clicked');
-            wrappedRefreshTrades(1, 1);
-        }, 1000));
-
-        setInterval(() => {
-            if (!isManualRefresh) {
-                console.log('Auto-refreshing trades');
-                refreshTrades(pageStates.funbags.active, pageStates.funbags.completed);
-            } else {
-                console.log('Skipping auto-refresh due to manual refresh');
-            }
-        }, 3000);
     });
+
+    // Initial data load
+    refreshData();
+
+    // Auto-refresh tables every 3 seconds
+    const refreshInterval = setInterval(() => {
+        console.log('Auto-refreshing tables at', new Date().toISOString());
+        refreshData(pageStates.active, pageStates.completed, pageStates.bot, pageStates.prebuy);
+    }, 3000);
+
+    // Clear interval on page unload to prevent memory leaks
+    window.addEventListener('unload', () => {
+        clearInterval(refreshInterval);
+        console.log('Cleared auto-refresh interval');
+    });
+});
 </script>
-</body>
 </html>
